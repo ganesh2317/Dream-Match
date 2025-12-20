@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  password     String
+  fullName     String
+  gender       String?
+  age          Int?
+  avatarUrl    String?  @default("https://ui-avatars.com/api/?background=007AFF&color=fff")
+  bio          String?
+  streakCount  Int      @default(0)
+  lastPostedAt DateTime?
+  
+  dreams       Dream[]
+  
+  // Basic relationship for matches (simplified for MVP)
+  sentMatches     Match[]  @relation("Sender")
+  receivedMatches Match[]  @relation("Receiver")
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Dream {
+  id          String   @id @default(uuid())
+  description String
+  imageUrl    String
+  theme       String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+model Match {
+  id        String   @id @default(uuid())
+  senderId  String
+  receiverId String
+  sender    User     @relation("Sender", fields: [senderId], references: [id])
+  receiver  User     @relation("Receiver", fields: [receiverId], references: [id])
+  score     Float    // Compatibility score
+  status    String   @default("pending") // pending, accepted, rejected
+  
+  createdAt DateTime @default(now())
+}

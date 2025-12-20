@@ -1,0 +1,39 @@
+:root {
+  /* iOS Color Palette */
+  --ios-blue: #007AFF;
+  --ios-green: #34C759;
+  --ios-red: #FF3B30;
+  --ios-gray: #8E8E93;
+  --ios-gray-light: #F2F2F7;
+  --ios-gray-content: #E5E5EA;
+  --ios-text-primary: #000000;
+  --ios-text-secondary: #8E8E93;
+  --ios-background: #F2F2F7;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --blur-amount: 20px;
+
+  /* Layout */
+  --sidebar-width: 280px;
+  --border-radius-lg: 24px;
+  --border-radius-md: 16px;
+  --border-radius-sm: 12px;
+  
+  /* Animation */
+  --ease-spring: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-fast: 0.2s var(--ease-spring);
+  --transition-normal: 0.4s var(--ease-spring);
+}
+
+.dark-mode {
+  --ios-text-primary: #FFFFFF;
+  --ios-text-secondary: #8E8E93;
+  --ios-background: #000000;
+  --glass-bg: rgba(30, 30, 30, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --ios-gray-light: #1C1C1E;
+  --ios-gray-content: #2C2C2E;
+}
