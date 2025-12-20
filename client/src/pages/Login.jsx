@@ -30,14 +30,22 @@ const Login = () => {
             justifyContent: 'center',
             padding: '20px'
         }}>
-            <GlassCard style={{ width: '100%', maxWidth: '400px' }}>
-                <h2 style={{ textAlign: 'center', marginBottom: '8px', fontSize: '28px' }}>Welcome Back</h2>
-                <p style={{ textAlign: 'center', color: 'var(--ios-text-secondary)', marginBottom: '32px' }}>
+            <GlassCard style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
+                <h1 style={{
+                    textAlign: 'center',
+                    marginBottom: '8px',
+                    fontSize: '32px',
+                    background: 'var(--primary-gradient)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontWeight: 800
+                }}>Welcome Back</h1>
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '32px' }}>
                     Continue your dream journey.
                 </p>
 
                 {error && (
-                    <div style={{ padding: '12px', background: 'rgba(255, 59, 48, 0.1)', color: 'var(--ios-red)', borderRadius: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                    <div style={{ padding: '12px', background: 'rgba(255, 118, 117, 0.1)', color: 'var(--error)', borderRadius: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', border: '1px solid rgba(255, 118, 117, 0.2)' }}>
                         <AlertCircle size={16} /> {error}
                     </div>
                 )}
@@ -48,6 +56,7 @@ const Login = () => {
                         placeholder="Username"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
                     />
                     <Input
                         icon={Lock}
@@ -55,36 +64,32 @@ const Login = () => {
                         placeholder="Password"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
                     />
 
                     <button
                         type="submit"
                         style={{
                             width: '100%',
-                            padding: '14px',
-                            backgroundColor: 'var(--ios-blue)',
-                            color: 'white',
-                            borderRadius: 'var(--border-radius-md)',
+                            padding: '16px',
+                            borderRadius: '12px',
                             fontSize: '16px',
                             fontWeight: 600,
-                            marginTop: '16px',
+                            marginTop: '24px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '8px',
-                            transition: 'transform var(--transition-fast)'
+                            gap: '8px'
                         }}
-                        onMouseDown={(e) => e.target.style.transform = 'scale(0.98)'}
-                        onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
                     >
                         Sign In <ArrowRight size={18} />
                     </button>
                 </form>
 
-                <div style={{ marginTop: '24px', textAlign: 'center' }}>
-                    <span style={{ color: 'var(--ios-text-secondary)', fontSize: '14px' }}>
+                <div style={{ marginTop: '32px', textAlign: 'center' }}>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
                         New here?{' '}
-                        <Link to="/register" style={{ color: 'var(--ios-blue)', textDecoration: 'none', fontWeight: 600 }}>
+                        <Link to="/register" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
                             Create an account
                         </Link>
                     </span>

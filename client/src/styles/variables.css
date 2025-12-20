@@ -1,39 +1,35 @@
 :root {
-  /* iOS Color Palette */
-  --ios-blue: #007AFF;
-  --ios-green: #34C759;
-  --ios-red: #FF3B30;
-  --ios-gray: #8E8E93;
-  --ios-gray-light: #F2F2F7;
-  --ios-gray-content: #E5E5EA;
-  --ios-text-primary: #000000;
-  --ios-text-secondary: #8E8E93;
-  --ios-background: #F2F2F7;
+  /* Core Colors - Professional Obsidian Theme */
+  --bg-dark: #000000;
+  --bg-gradient: linear-gradient(180deg, #121212 0%, #000000 100%);
 
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  --blur-amount: 20px;
+  /* Brand Colors - Sophisticated & Clean */
+  --primary: #6c5ce7;
+  /* Royal Purple - Professional yet creative */
+  --primary-gradient: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  --accent: #74b9ff;
+  --success: #00b894;
+  --error: #ff7675;
 
-  /* Layout */
-  --sidebar-width: 280px;
-  --border-radius-lg: 24px;
-  --border-radius-md: 16px;
-  --border-radius-sm: 12px;
-  
-  /* Animation */
-  --ease-spring: cubic-bezier(0.25, 0.8, 0.25, 1);
-  --transition-fast: 0.2s var(--ease-spring);
-  --transition-normal: 0.4s var(--ease-spring);
-}
+  /* Surface Structure - High Contrast Layers */
+  /* Cards should be distinct from background */
+  --glass-bg: rgba(30, 30, 30, 0.85);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --glass-blur: blur(20px);
 
-.dark-mode {
-  --ios-text-primary: #FFFFFF;
-  --ios-text-secondary: #8E8E93;
-  --ios-background: #000000;
-  --glass-bg: rgba(30, 30, 30, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --ios-gray-light: #1C1C1E;
-  --ios-gray-content: #2C2C2E;
+  /* Typography - Clean & sharp */
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  /* Light Gray, very readable */
+  --text-muted: #6e6e6e;
+
+  /* Spacing & Forms - Sharper, less rounded for pro look */
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-spring: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
