@@ -98,7 +98,11 @@ const getMe = async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: req.user.id },
-            include: { dreams: true }
+            include: {
+                dreams: { orderBy: { createdAt: 'desc' } },
+                sentMatches: { include: { receiver: true } },
+                receivedMatches: { include: { sender: true } }
+            }
         });
 
         if (!user) return res.status(404).json({ message: 'User not found' });

@@ -5,7 +5,7 @@ import Feed from '../components/Feed';
 import Notifications from '../components/Notifications';
 import Messages from '../components/Messages';
 import Profile from '../components/Profile';
-import { Flame, X } from 'lucide-react';
+import { Flame, X, Sparkles, Wand2, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getMockMatches } from '../utils/mockData';
 
@@ -16,11 +16,9 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
 
-    // Poll for dreams (simulate real-time)
     const fetchDreams = async () => {
         try {
             const token = localStorage.getItem('token');
-            // If public feed, maybe no token needed? But backend requires it for like status.
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
             const res = await fetch('http://localhost:3000/api/dreams', { headers });
             if (res.ok) {
@@ -36,11 +34,10 @@ const Dashboard = () => {
 
     useEffect(() => {
         fetchDreams();
-        const interval = setInterval(fetchDreams, 5000);
+        const interval = setInterval(fetchDreams, 10000);
         return () => clearInterval(interval);
     }, []);
 
-    // Render Content based on Tab
     const renderContent = () => {
         switch (activeTab) {
             case 'feed': return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;
@@ -52,9 +49,8 @@ const Dashboard = () => {
     };
 
     return (
-        <div style={{ display: 'flex', height: '100vh', padding: '24px', gap: '24px' }}>
+        <div style={{ display: 'flex', height: '100vh', background: 'var(--bg-gradient)', padding: '20px', gap: '20px', overflow: 'hidden' }}>
 
-            {/* Left Sidebar */}
             <Sidebar
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
@@ -63,41 +59,48 @@ const Dashboard = () => {
                 logout={logout}
             />
 
-            {/* Main Content Area */}
-            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '12px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px', scrollBehavior: 'smooth' }}>
                 {renderContent()}
             </div>
 
-            {/* Right Sidebar (Stats/Streaks) */}
-            <div style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <GlassCard>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                        <h3>Streaks</h3>
-                        <Flame color="#ffa502" fill="#ffa502" />
+            {/* Right Sidebar */}
+            <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <GlassCard style={{ padding: '24px', background: 'rgba(255, 159, 67, 0.05)', border: '1px solid rgba(255, 159, 67, 0.1)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                        <h3 style={{ fontSize: '18px' }}>Your Streak</h3>
+                        <div style={{ background: 'rgba(255, 159, 67, 0.2)', padding: '8px', borderRadius: '12px' }}>
+                            <Flame color="#ff9f43" fill="#ff9f43" size={20} />
+                        </div>
                     </div>
-                    <div style={{ fontSize: '48px', fontWeight: 700, textAlign: 'center', color: '#ffa502', textShadow: '0 0 20px rgba(255, 165, 0, 0.4)' }}>
+                    <div style={{ fontSize: '56px', fontWeight: 800, textAlign: 'center', color: '#ff9f43', letterSpacing: '-2px', textShadow: '0 10px 30px rgba(255, 159, 67, 0.3)' }}>
                         {user?.streakCount || 0}
                     </div>
-                    <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Days Streak</div>
+                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>Days Active</div>
                 </GlassCard>
 
-                <GlassCard>
-                    <h3>Suggested Matches</h3>
-                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <GlassCard style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Sparkles size={18} color="var(--primary)" /> Potential Matches
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {getMockMatches().map(match => (
-                            <div key={match.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s', background: 'rgba(255,255,255,0.08)' }} className="hover-bg">
-                                <img src={match.avatarUrl} style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)' }} />
-                                <div>
-                                    <div style={{ fontWeight: 600 }}>{match.username}</div>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Dream Match: 95%</div>
+                            <div key={match.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '16px', cursor: 'pointer', transition: '0.2s', border: '1px solid transparent' }} className="hover-bg"
+                                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+                                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                            >
+                                <img src={match.avatarUrl} style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'cover' }} />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: 700, fontSize: '14px' }}>{match.username}</div>
+                                    <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 600 }}>98% Dream Match</div>
                                 </div>
+                                <Zap size={14} color="var(--primary)" fill="var(--primary)" />
                             </div>
                         ))}
                     </div>
+                    <button style={{ marginTop: 'auto', width: '100%', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontSize: '13px' }}>View All</button>
                 </GlassCard>
             </div>
 
-            {/* Create Dream Modal */}
             {showCreateModal && (
                 <CreateDreamModal user={user} onClose={() => setShowCreateModal(false)} onPosted={fetchDreams} />
             )}
@@ -109,28 +112,35 @@ const Dashboard = () => {
 const CreateDreamModal = ({ user, onClose, onPosted }) => {
     const [step, setStep] = useState(1);
     const [description, setDescription] = useState('');
+    const [style, setStyle] = useState('surreal');
     const [images, setImages] = useState([]);
     const [selectedImage, setSelectedImage] = useState(null);
     const [generating, setGenerating] = useState(false);
 
+    const STYLES = [
+        { id: 'surreal', label: 'Surrealism', emoji: '🌌' },
+        { id: 'ethereal', label: 'Ethereal', emoji: '✨' },
+        { id: 'cyberpunk', label: 'Cyberpunk', emoji: '🌆' },
+        { id: 'oil', label: 'Oil Painting', emoji: '🎨' },
+    ];
+
     const handleGenerate = async () => {
         if (!description) return;
         setGenerating(true);
-        // Using Pollinations.ai for REAL generation without API key
-        // We generate 4 variants by appending random seeds to the prompt
-        const prompt = encodeURIComponent(description);
 
-        // Generate 4 "different" image URLs (the browser will fetch them)
-        // Note: We use a timestamp to bypass cache for fresh generation
+        // Enhance prompt for better results
+        const enhancedPrompt = `${description}, ${style} style, vivid cinematic lighting, highly detailed, masterwork, 8k, dreamlike atmosphere`;
+        const promptParam = encodeURIComponent(enhancedPrompt);
+
         const variants = [
-            `https://image.pollinations.ai/prompt/${prompt}?seed=${Math.floor(Math.random() * 1000)}&n=1`,
-            `https://image.pollinations.ai/prompt/${prompt}?seed=${Math.floor(Math.random() * 1000)}&n=2`,
-            `https://image.pollinations.ai/prompt/${prompt}?seed=${Math.floor(Math.random() * 1000)}&n=3`,
-            `https://image.pollinations.ai/prompt/${prompt}?seed=${Math.floor(Math.random() * 1000)}&n=4`,
+            `https://image.pollinations.ai/prompt/${promptParam}?seed=${Math.floor(Math.random() * 10000)}&width=1024&height=1024`,
+            `https://image.pollinations.ai/prompt/${promptParam}?seed=${Math.floor(Math.random() * 10000)}&width=1024&height=1024`,
+            `https://image.pollinations.ai/prompt/${promptParam}?seed=${Math.floor(Math.random() * 10000)}&width=1024&height=1024`,
+            `https://image.pollinations.ai/prompt/${promptParam}?seed=${Math.floor(Math.random() * 10000)}&width=1024&height=1024`,
         ];
 
-        // Simulate a short wait for UX, though the images load lazily
-        await new Promise(r => setTimeout(r, 2000));
+        // Ensure we wait at least 3 seconds for a better "AI thinking" feel
+        await new Promise(r => setTimeout(r, 3000));
 
         setImages(variants);
         setGenerating(false);
@@ -155,10 +165,8 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
             });
 
             if (res.ok) {
-                // Success
                 onPosted();
-                // To force streak update in UI (since we don't have global state setter easily accessible here without refactor)
-                // We reload. 
+                // We show a success state or just reload for simplicity
                 window.location.reload();
             } else {
                 alert('Failed to post dream');
@@ -170,66 +178,106 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
     };
 
     return (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', zIndex: 100 }}>
-            <GlassCard style={{ width: '600px', background: 'var(--bg-dark)', border: '1px solid rgba(255,255,255,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                    <h3>{step === 1 ? 'Visualize your dream' : 'Select the best match'}</h3>
-                    <X style={{ cursor: 'pointer' }} onClick={onClose} />
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(15px)', zIndex: 1000, padding: '20px' }} className="fade-in">
+            <GlassCard style={{ width: '100%', maxWidth: '700px', background: 'var(--bg-dark)', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', overflowY: 'auto', padding: '40px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                    <h2 style={{ fontSize: '28px', fontWeight: 800 }}>{step === 1 ? 'Visualize Your Dream' : 'Choose Your Vision'}</h2>
+                    <div onClick={onClose} style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '50%' }}><X size={20} /></div>
                 </div>
 
                 {step === 1 ? (
-                    <>
-                        <h4 style={{ marginBottom: '12px', color: 'var(--text-secondary)', fontWeight: 400 }}>Describe what you saw... (be specific)</h4>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="A futuristic city made of crystal floating in the clouds during sunset..."
-                            style={{
-                                width: '100%',
-                                height: '140px',
-                                padding: '16px',
-                                borderRadius: '12px',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                background: 'rgba(0,0,0,0.3)',
-                                color: 'white',
-                                marginBottom: '24px',
-                                fontSize: '16px',
-                                fontFamily: 'inherit',
-                                resize: 'none'
-                            }}
-                        />
+                    <div className="fade-in">
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '12px' }}>Describe what you saw</label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="A crystal castle floating above a sea of neon clouds..."
+                                style={{
+                                    width: '100%',
+                                    height: '160px',
+                                    padding: '20px',
+                                    borderRadius: '20px',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    color: 'white',
+                                    fontSize: '17px',
+                                    fontFamily: 'inherit',
+                                    resize: 'none',
+                                    outline: 'none',
+                                    transition: 'border 0.2s'
+                                }}
+                                onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '32px' }}>
+                            <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '12px' }}>Dream Style</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                                {STYLES.map(s => (
+                                    <div
+                                        key={s.id}
+                                        onClick={() => setStyle(s.id)}
+                                        style={{
+                                            padding: '16px 8px',
+                                            borderRadius: '16px',
+                                            border: style === s.id ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)',
+                                            background: style === s.id ? 'rgba(99, 102, 241, 0.1)' : 'rgba(255,255,255,0.03)',
+                                            textAlign: 'center',
+                                            cursor: 'pointer',
+                                            transition: '0.2s'
+                                        }}
+                                    >
+                                        <div style={{ fontSize: '24px', marginBottom: '4px' }}>{s.emoji}</div>
+                                        <div style={{ fontSize: '11px', fontWeight: 700 }}>{s.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         <button
                             onClick={handleGenerate}
-                            disabled={generating}
-                            style={{ width: '100%', padding: '16px', opacity: generating ? 0.7 : 1, transition: '0.2s', fontWeight: 600 }}
+                            disabled={generating || !description}
+                            style={{ width: '100%', padding: '18px', fontSize: '16px', borderRadius: '16px' }}
                         >
-                            {generating ? 'Dreaming (AI Generating)...' : 'Generate Visuals'}
+                            {generating ? 'Tapping into the subconscious...' : (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Wand2 size={20} /> Generate Visions</span>
+                            )}
                         </button>
-                    </>
+                    </div>
                 ) : (
-                    <>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
+                    <div className="fade-in">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
                             {images.map((img, i) => (
-                                <div key={i} style={{ position: 'relative', aspectRatio: '1' }}>
-                                    <img
-                                        src={img}
-                                        onClick={() => setSelectedImage(img)}
-                                        style={{
-                                            width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px', cursor: 'pointer',
-                                            border: selectedImage === img ? '4px solid var(--primary)' : '2px solid transparent',
-                                            transform: selectedImage === img ? 'scale(0.98)' : 'scale(1)',
-                                            transition: '0.2s',
-                                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                                        }}
-                                    />
+                                <div
+                                    key={i}
+                                    onClick={() => setSelectedImage(img)}
+                                    style={{
+                                        position: 'relative',
+                                        aspectRatio: '1',
+                                        borderRadius: '20px',
+                                        overflow: 'hidden',
+                                        cursor: 'pointer',
+                                        border: selectedImage === img ? '4px solid var(--primary)' : '2px solid transparent',
+                                        transition: '0.2s',
+                                        transform: selectedImage === img ? 'scale(0.96)' : 'scale(1)'
+                                    }}
+                                >
+                                    <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    {selectedImage === img && (
+                                        <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--primary)', borderRadius: '50%', padding: '4px' }}>
+                                            <Zap size={16} color="white" fill="white" />
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
                         <div style={{ display: 'flex', gap: '16px' }}>
-                            <button onClick={() => setStep(1)} style={{ flex: 1, padding: '16px', background: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontWeight: 600 }}>Back</button>
-                            <button onClick={handlePost} style={{ flex: 1, padding: '16px', borderRadius: '12px', fontWeight: 600 }}>Post Dream</button>
+                            <button onClick={() => setStep(1)} style={{ flex: 1, padding: '16px', background: 'rgba(255,255,255,0.05)', color: 'white' }}>Try Different Prompt</button>
+                            <button onClick={handlePost} disabled={!selectedImage} style={{ flex: 1, padding: '16px' }}>Share with the World</button>
                         </div>
-                    </>
+                    </div>
                 )}
             </GlassCard>
         </div>

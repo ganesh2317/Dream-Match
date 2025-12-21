@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { User as UserIcon, Edit2, Save, X, Camera } from 'lucide-react';
+import { User as UserIcon, Edit2, Save, X, Camera, Flame, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Profile = ({ user: propUser }) => {
     const { user: contextUser } = useAuth();
-    // Use prop user if viewing others (future proof), else context user
     const user = propUser || contextUser;
 
     const [isEditing, setIsEditing] = useState(false);
@@ -57,26 +56,29 @@ const Profile = ({ user: propUser }) => {
         }
     };
 
-    if (!user) return <div style={{ color: 'white' }}>Loading Profile...</div>;
+    if (!user) return (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+            <div className="loading-spinner"></div>
+        </div>
+    );
 
     const userDreams = user.dreams || [];
 
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '40px' }}>
-            <GlassCard style={{ position: 'relative', overflow: 'hidden', marginBottom: '24px' }}>
-                {/* Header Background */}
+        <div style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '80px' }} className="fade-in">
+            {/* Profile Header Card */}
+            <GlassCard style={{ padding: '0', overflow: 'hidden', marginBottom: '40px' }}>
+                {/* Banner Background */}
                 <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '140px',
+                    height: '180px',
                     background: 'var(--primary-gradient)',
-                    opacity: 0.8
-                }} />
+                    position: 'relative'
+                }}>
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.4))' }}></div>
+                </div>
 
-                <div style={{ position: 'relative', marginTop: '70px', padding: '0 24px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div style={{ padding: '0 40px 40px 40px', marginTop: '-60px', position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
                         <div style={{ position: 'relative' }}>
                             <img
                                 src={preview}
@@ -84,126 +86,164 @@ const Profile = ({ user: propUser }) => {
                                 style={{
                                     width: '140px',
                                     height: '140px',
-                                    borderRadius: '50%',
-                                    border: '4px solid var(--bg-dark)',
+                                    borderRadius: '30px',
+                                    border: '6px solid var(--bg-dark)',
                                     objectFit: 'cover',
-                                    backgroundColor: '#2a2a2a'
+                                    backgroundColor: '#1a1a1a',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
                                 }}
                             />
                             {isEditing && (
                                 <label style={{
                                     position: 'absolute',
-                                    bottom: '10px',
-                                    right: '10px',
+                                    bottom: '-10px',
+                                    right: '-10px',
                                     background: 'var(--primary)',
-                                    borderRadius: '50%',
-                                    width: '32px',
-                                    height: '32px',
+                                    borderRadius: '12px',
+                                    width: '40px',
+                                    height: '40px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     cursor: 'pointer',
-                                    border: '2px solid var(--bg-dark)'
+                                    border: '4px solid var(--bg-dark)',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                                 }}>
-                                    <Camera size={16} color="white" />
+                                    <Camera size={20} color="white" />
                                     <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
                                 </label>
                             )}
                         </div>
 
                         {!isEditing ? (
-                            <button onClick={() => setIsEditing(true)} style={{ padding: '8px 16px', fontSize: '14px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
-                                <Edit2 size={16} style={{ marginRight: '8px' }} /> Edit Profile
+                            <button onClick={() => setIsEditing(true)} style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 20px', borderRadius: '12px' }}>
+                                <Edit2 size={16} /> Edit Profile
                             </button>
                         ) : (
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => setIsEditing(false)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                    <X size={16} />
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button onClick={() => setIsEditing(false)} style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 15px', borderRadius: '12px' }}>
+                                    <X size={18} />
                                 </button>
-                                <button onClick={handleSave} disabled={saving}>
-                                    <Save size={16} style={{ marginRight: '8px' }} /> {saving ? 'Saving...' : 'Save'}
+                                <button onClick={handleSave} disabled={saving} style={{ padding: '10px 24px', borderRadius: '12px' }}>
+                                    <Save size={18} /> {saving ? 'Saving...' : 'Save'}
                                 </button>
                             </div>
                         )}
                     </div>
 
-                    <div style={{ marginTop: '24px' }}>
-                        <h2 style={{ fontSize: '32px', marginBottom: '4px' }}>{user.fullName}</h2>
-                        <div style={{ color: 'var(--accent)', marginBottom: '16px', fontWeight: 600 }}>@{user.username}</div>
+                    <div style={{ display: 'flex', gap: '60px', alignItems: 'flex-start' }}>
+                        <div style={{ flex: 1 }}>
+                            <h2 style={{ fontSize: '36px', fontWeight: 800, marginBottom: '4px', letterSpacing: '-1px' }}>{user.fullName}</h2>
+                            <div style={{ color: 'var(--primary)', marginBottom: '20px', fontWeight: 700, fontSize: '18px' }}>@{user.username}</div>
 
-                        {isEditing ? (
-                            <div>
-                                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                                    Bio ({bio.length}/100)
-                                </label>
-                                <textarea
-                                    value={bio}
-                                    onChange={e => setBio(e.target.value.slice(0, 100))}
-                                    placeholder="Tell us about yourself..."
-                                    style={{
-                                        width: '100%',
-                                        padding: '16px',
-                                        background: 'rgba(255,255,255,0.05)',
-                                        border: '1px solid var(--glass-border)',
-                                        borderRadius: '12px',
-                                        color: 'white',
-                                        fontSize: '16px',
-                                        minHeight: '100px',
-                                        resize: 'none',
-                                        fontFamily: 'inherit'
-                                    }}
-                                />
-                            </div>
-                        ) : (
-                            <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '16px', maxWidth: '600px' }}>
-                                {user.bio || <span style={{ fontStyle: 'italic', opacity: 0.5 }}>No bio yet.</span>}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Stats Row */}
-                    <div style={{ display: 'flex', gap: '48px', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingBottom: '24px' }}>
-                        <div>
-                            <div style={{ fontSize: '24px', fontWeight: 700, color: '#ffa502' }}>{user.streakCount || 0}</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Day Streak</div>
+                            {isEditing ? (
+                                <div style={{ maxWidth: '500px' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                                        About Me ({bio.length}/100)
+                                    </label>
+                                    <textarea
+                                        value={bio}
+                                        onChange={e => setBio(e.target.value.slice(0, 100))}
+                                        placeholder="Tell us about your dreams..."
+                                        style={{
+                                            width: '100%',
+                                            padding: '16px',
+                                            background: 'rgba(255,255,255,0.03)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '16px',
+                                            color: 'white',
+                                            fontSize: '16px',
+                                            minHeight: '100px',
+                                            resize: 'none',
+                                            fontFamily: 'inherit',
+                                            transition: 'border 0.2s'
+                                        }}
+                                        onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                    />
+                                </div>
+                            ) : (
+                                <p style={{ lineHeight: '1.7', color: 'var(--text-secondary)', fontSize: '17px', maxWidth: '600px' }}>
+                                    {user.bio || <span style={{ fontStyle: 'italic', opacity: 0.3 }}>No bio added yet.</span>}
+                                </p>
+                            )}
                         </div>
-                        <div>
-                            <div style={{ fontSize: '24px', fontWeight: 700 }}>{userDreams.length}</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Dreams Logged</div>
+
+                        {/* Stats Row */}
+                        <div style={{ display: 'flex', gap: '32px' }}>
+                            <StatBox icon={Flame} value={user.streakCount || 0} label="Streak" color="#ff9f43" />
+                            <StatBox icon={ImageIcon} value={userDreams.length} label="Dreams" color="var(--primary)" />
                         </div>
                     </div>
                 </div>
             </GlassCard>
 
-            <h3 style={{ margin: '32px 0 16px 0', fontSize: '24px' }}>Dream History</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+                <h3 style={{ fontSize: '26px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Sparkles size={24} color="var(--primary)" /> Dream Gallery
+                </h3>
+            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-                {userDreams.length > 0 ? userDreams.map(dream => (
-                    <div key={dream.id} style={{ borderRadius: '16px', overflow: 'hidden', position: 'relative', aspectRatio: '1', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <img
-                            src={dream.imageUrl}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                        <div style={{
-                            position: 'absolute', bottom: 0, left: 0, right: 0,
-                            padding: '12px', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)'
-                        }}>
-                            <div style={{ fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {dream.description}
-                            </div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                {new Date(dream.createdAt).toLocaleDateString()}
+            {userDreams.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+                    {userDreams.map((dream, index) => (
+                        <div
+                            key={dream.id}
+                            style={{
+                                borderRadius: '24px',
+                                overflow: 'hidden',
+                                position: 'relative',
+                                aspectRatio: '1',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                cursor: 'pointer',
+                                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                            }}
+                            className="dream-thumb"
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'scale(1.02) translateY(-5px)';
+                                e.currentTarget.querySelector('.overlay').style.opacity = '1';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                                e.currentTarget.querySelector('.overlay').style.opacity = '0';
+                            }}
+                        >
+                            <img
+                                src={dream.imageUrl}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            <div className="overlay" style={{
+                                position: 'absolute', inset: 0,
+                                padding: '24px', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)',
+                                display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+                                opacity: 0, transition: '0.3s'
+                            }}>
+                                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                    {new Date(dream.createdAt).toLocaleDateString()}
+                                </div>
+                                <div style={{ fontSize: '15px', fontWeight: 600, color: 'white', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    {dream.description}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )) : (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                        No dreams recorded yet.
-                    </div>
-                )}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <GlassCard style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
+                    <ImageIcon size={48} style={{ marginBottom: '20px', opacity: 0.1 }} />
+                    <p>Your dream gallery is empty.</p>
+                </GlassCard>
+            )}
         </div>
     );
 };
+
+const StatBox = ({ icon: Icon, value, label, color }) => (
+    <div style={{ textAlign: 'center', padding: '16px 24px', borderRadius: '20px', background: 'rgba(255,255,255,0.03)', minWidth: '100px' }}>
+        <Icon size={20} color={color} style={{ marginBottom: '8px' }} />
+        <div style={{ fontSize: '24px', fontWeight: 800, color: 'white' }}>{value}</div>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+    </div>
+);
 
 export default Profile;

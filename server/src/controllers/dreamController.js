@@ -26,8 +26,16 @@ const createDream = async (req, res) => {
         const { description, imageUrl } = req.body;
         const userId = req.user.id;
 
-        // Always increment streak for every post (Activity based streak)
-        // This satisfies the user request "Posted 2 dreams -> Streak 2"
+        // Create the dream first
+        const dream = await prisma.dream.create({
+            data: {
+                description,
+                imageUrl,
+                userId,
+            },
+        });
+
+        // Increment streak
         const user = await prisma.user.update({
             where: { id: userId },
             data: {
@@ -36,13 +44,48 @@ const createDream = async (req, res) => {
             }
         });
 
-        const dream = await prisma.dream.create({
-            data: {
-                description,
-                imageUrl,
-                userId,
-            },
-        });
+        // --- DREAM MATCHING LOGIC ---
+        // Find other dreams with similar keywords (simplified)
+        const keywords = description.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+
+        if (keywords.length > 0) {
+            const potentialMatches = await prisma.dream.findMany({
+                where: {
+                    userId: { not: userId },
+                    OR: keywords.map(kw => ({
+                        description: { contains: kw }
+                    }))
+                },
+                take: 5,
+                include: { user: true }
+            });
+
+            // Create match records for unique users
+            const matchedUserIds = [...new Set(potentialMatches.map(pm => pm.userId))];
+
+            for (const targetUserId of matchedUserIds) {
+                // Check if match already exists
+                const existing = await prisma.match.findFirst({
+                    where: {
+                        OR: [
+                            { senderId: userId, receiverId: targetUserId },
+                            { senderId: targetUserId, receiverId: userId }
+                        ]
+                    }
+                });
+
+                if (!existing) {
+                    await prisma.match.create({
+                        data: {
+                            senderId: userId,
+                            receiverId: targetUserId,
+                            score: 0.95, // High score for keyword match
+                            status: 'pending'
+                        }
+                    });
+                }
+            }
+        }
 
         res.status(201).json({ ...dream, newStreak: user.streakCount });
     } catch (error) {

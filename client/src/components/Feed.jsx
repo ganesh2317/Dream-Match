@@ -1,6 +1,6 @@
 import React from 'react';
 import GlassCard from './GlassCard';
-import { Flame, Heart, MessageCircle, Eye } from 'lucide-react';
+import { Flame, Heart, MessageCircle, Eye, Share2 } from 'lucide-react';
 
 const Feed = ({ dreams, loading, onRefresh }) => {
 
@@ -19,72 +19,90 @@ const Feed = ({ dreams, loading, onRefresh }) => {
     };
 
     return (
-        <>
-            <h2 style={{ marginBottom: '24px' }}>Timeline</h2>
+        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+            <h2 style={{ marginBottom: '32px', fontSize: '28px', fontWeight: 800 }}>Explore Dreams</h2>
 
             {loading ? (
-                <div style={{ textAlign: 'center', marginTop: '40px', color: 'var(--text-secondary)' }}>
-                    Loading dreams...
+                <div style={{ textAlign: 'center', marginTop: '60px' }}>
+                    <div className="loading-spinner" style={{ margin: '0 auto 16px', width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                    <p style={{ color: 'var(--text-muted)' }}>Peeking into the dream world...</p>
                 </div>
             ) : dreams.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '40px' }}>
-                    No dreams logged yet.<br />Tap <b>Post Dream</b> to start your streak!
-                </div>
+                <GlassCard style={{ textAlign: 'center', padding: '60px 40px' }}>
+                    <h3 style={{ marginBottom: '12px' }}>No dreams here yet</h3>
+                    <p style={{ color: 'var(--text-muted)' }}>The world is waiting to see your visions. Be the first to share!</p>
+                </GlassCard>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '60px' }}>
                     {dreams.map((dream) => {
                         const user = dream.user || {};
-                        // Fallback for older data if any, or API structure
-                        const avatar = user.avatarUrl || dream.userAvatar;
-                        const username = user.username || dream.username;
-                        const streak = user.streakCount || dream.userStreak || 0;
+                        const avatar = user.avatarUrl || `https://ui-avatars.com/api/?name=${user.username}&background=random`;
+                        const username = user.username || 'dreamer';
+                        const streak = user.streakCount || 0;
                         const likes = dream._count?.likes || 0;
                         const comments = dream._count?.comments || 0;
-                        const views = (dream.views || 0) + (dream._count?.views || 0); // views is Int field on Dream
+                        const views = dream.views || 0;
 
                         return (
-                            <GlassCard key={dream.id} style={{ transition: 'transform 0.2s' }} className="feed-card">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                                    <img src={avatar} style={{ width: '42px', height: '42px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
+                            <GlassCard key={dream.id} style={{ padding: '0', overflow: 'hidden', border: 'none' }} className="fade-in">
+                                {/* Card Header */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '20px' }}>
+                                    <img src={avatar} style={{ width: '44px', height: '44px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.05)' }} />
                                     <div>
-                                        <div style={{ fontWeight: 600, fontSize: '15px' }}>{username}</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                            {new Date(dream.createdAt).toLocaleDateString()}
+                                        <div style={{ fontWeight: 700, fontSize: '15px' }}>{username}</div>
+                                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                            {new Date(dream.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                         </div>
                                     </div>
-                                    {/* Show streak badge if user has one */}
+
                                     {streak > 0 && (
-                                        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#ffa502', background: 'rgba(255, 165, 0, 0.15)', padding: '6px 12px', borderRadius: '100px', border: '1px solid rgba(255, 165, 0, 0.2)' }}>
-                                            <Flame size={14} fill="#ffa502" /> {streak}
+                                        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#ff9f43', background: 'rgba(255, 159, 67, 0.1)', padding: '6px 12px', borderRadius: '100px', fontWeight: 700 }}>
+                                            <Flame size={14} fill="#ff9f43" /> {streak}
                                         </div>
                                     )}
                                 </div>
 
-                                <div style={{ position: 'relative', height: '400px', borderRadius: '16px', marginBottom: '20px', overflow: 'hidden', background: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <img src={dream.imageUrl} alt="dream" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                                {/* Dream Image */}
+                                <div style={{ position: 'relative', width: '100%', aspectRatio: '1.2/1', background: '#050505', overflow: 'hidden' }}>
+                                    <img
+                                        src={dream.imageUrl}
+                                        alt="dream"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onDoubleClick={() => handleLike(dream.id)}
+                                    />
+                                    <div style={{ position: 'absolute', bottom: '20px', right: '20px', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'white' }}>
+                                        <Eye size={14} /> {views}
+                                    </div>
                                 </div>
 
-                                <h3 style={{ fontSize: '18px', fontWeight: 500, lineHeight: '1.5', color: 'rgba(255,255,255,0.9)', marginBottom: '16px' }}>{dream.description}</h3>
+                                {/* Content Section */}
+                                <div style={{ padding: '24px' }}>
+                                    <p style={{ fontSize: '17px', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px', fontWeight: 400 }}>
+                                        {dream.description}
+                                    </p>
 
-                                {/* Action Buttons */}
-                                <div style={{ display: 'flex', gap: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <button
-                                        onClick={() => handleLike(dream.id)}
-                                        style={{
-                                            background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '8px',
-                                            color: dream.isLiked ? 'var(--error)' : 'var(--text-secondary)',
-                                            fontSize: '14px', fontWeight: 500
-                                        }}
-                                    >
-                                        <Heart size={20} fill={dream.isLiked ? 'currentColor' : 'none'} /> {likes}
-                                    </button>
+                                    {/* Action Buttons */}
+                                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                        <button
+                                            onClick={() => handleLike(dream.id)}
+                                            style={{
+                                                background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '8px',
+                                                color: dream.isLiked ? 'var(--error)' : 'var(--text-secondary)',
+                                                fontSize: '14px', fontWeight: 600, boxShadow: 'none', transform: 'none'
+                                            }}
+                                        >
+                                            <Heart size={22} fill={dream.isLiked ? 'currentColor' : 'none'} style={{ transition: 'all 0.2s' }} />
+                                            <span>{likes}</span>
+                                        </button>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>
-                                        <MessageCircle size={20} /> {comments}
-                                    </div>
+                                        <button style={{ background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600, boxShadow: 'none', transform: 'none' }}>
+                                            <MessageCircle size={22} />
+                                            <span>{comments}</span>
+                                        </button>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '14px', marginLeft: 'auto' }}>
-                                        <Eye size={20} /> {dream.views || 0}
+                                        <button style={{ marginLeft: 'auto', background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600, boxShadow: 'none', transform: 'none' }}>
+                                            <Share2 size={20} />
+                                        </button>
                                     </div>
                                 </div>
                             </GlassCard>
@@ -92,7 +110,11 @@ const Feed = ({ dreams, loading, onRefresh }) => {
                     })}
                 </div>
             )}
-        </>
+
+            <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+            `}</style>
+        </div>
     );
 };
 
