@@ -1,22 +1,22 @@
 :root {
   /* Core Colors - Clean Apple-inspired Dark Mode */
-  --bg-dark: #0a0a0c;
-  --bg-gradient: radial-gradient(circle at top right, #1a1a2e 0%, #0a0a0c 100%);
+  --bg-dark: #050507;
+  --bg-gradient: radial-gradient(circle at top right, #1a1a35 0%, #050507 100%);
 
   /* Brand Colors - Sophisticated Indigo/Violet */
-  --primary: #6366f1;
-  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  --accent: #38bdf8;
+  --primary: #4f46e5;
+  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --accent: #0ea5e9;
   --success: #10b981;
   --error: #ef4444;
   --warning: #f59e0b;
 
   /* Glassmorphism Refined */
-  --glass-bg: rgba(23, 23, 23, 0.7);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  --glass-blur: blur(20px);
-  --glass-hover: rgba(255, 255, 255, 0.03);
+  --glass-bg: rgba(18, 18, 22, 0.75);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  --glass-blur: blur(25px);
+  --glass-hover: rgba(255, 255, 255, 0.05);
 
   /* Typography */
   --text-primary: #ffffff;

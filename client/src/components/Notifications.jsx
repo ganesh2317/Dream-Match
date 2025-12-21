@@ -45,8 +45,8 @@ const Notifications = () => {
                     }}>
                         <Sparkles size={48} color="var(--primary)" opacity={0.6} />
                     </div>
-                    <h3 style={{ marginBottom: '12px', fontSize: '22px' }}>Quiet in the dreamscape</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '16px' }}>When someone shares a dream similar to yours, you'll see it here.</p>
+                    <h3 style={{ marginBottom: '12px', fontSize: '22px' }}>No current notifications</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '16px' }}>But don't worry, you will soon find a match. Keep sharing your visions!</p>
                 </GlassCard>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

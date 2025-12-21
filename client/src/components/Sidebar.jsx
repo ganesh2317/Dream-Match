@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, MessageCircle, PlusSquare, Bell, Settings, User as UserIcon, LogOut } from 'lucide-react';
+import { Home, MessageCircle, PlusSquare, Bell, Settings, User as UserIcon, LogOut, Search } from 'lucide-react';
 import GlassCard from './GlassCard';
 
 const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) => {
@@ -32,6 +32,7 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
 
             <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <NavItem icon={Home} label="Timeline" active={activeTab === 'feed'} onClick={() => setActiveTab('feed')} />
+                <NavItem icon={Search} label="Search" active={activeTab === 'search'} onClick={() => setActiveTab('search')} />
                 <NavItem icon={MessageCircle} label="Messages" active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} />
                 <NavItem icon={PlusSquare} label="Share Dream" onClick={() => setShowCreateModal(true)} type="action" />
                 <NavItem icon={Bell} label="Matches" active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} />

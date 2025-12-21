@@ -5,6 +5,7 @@ import Feed from '../components/Feed';
 import Notifications from '../components/Notifications';
 import Messages from '../components/Messages';
 import Profile from '../components/Profile';
+import Search from '../components/Search';
 import { Flame, X, Sparkles, Wand2, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getMockMatches } from '../utils/mockData';
@@ -20,7 +21,7 @@ const Dashboard = () => {
         try {
             const token = localStorage.getItem('token');
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const res = await fetch('http://localhost:3000/api/dreams', { headers });
+            const res = await fetch('/api/dreams', { headers });
             if (res.ok) {
                 const data = await res.json();
                 setDreams(data);
@@ -41,6 +42,7 @@ const Dashboard = () => {
     const renderContent = () => {
         switch (activeTab) {
             case 'feed': return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;
+            case 'search': return <Search />;
             case 'messages': return <Messages currentUser={user} />;
             case 'notifications': return <Notifications />;
             case 'profile': return <Profile user={user} />;
@@ -152,7 +154,7 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
 
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:3000/api/dreams', {
+            const res = await fetch('/api/dreams', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

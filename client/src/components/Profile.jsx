@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { User as UserIcon, Edit2, Save, X, Camera, Flame, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { User as UserIcon, Edit2, Save, X, Camera, Flame, Image as ImageIcon, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Profile = ({ user: propUser }) => {
@@ -34,7 +34,7 @@ const Profile = ({ user: propUser }) => {
         setSaving(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:3000/api/auth/profile', {
+            const res = await fetch('/api/auth/profile', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -115,7 +115,20 @@ const Profile = ({ user: propUser }) => {
                             )}
                         </div>
 
-                        {!isEditing ? (
+                        {user.id !== contextUser?.id ? (
+                            <button
+                                onClick={() => {/* Toggle Follow logic here */ }}
+                                style={{
+                                    padding: '12px 28px',
+                                    borderRadius: '14px',
+                                    fontSize: '15px',
+                                    background: user.isFollowing ? 'rgba(255,255,255,0.08)' : 'var(--primary)',
+                                    border: user.isFollowing ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                                }}
+                            >
+                                {user.isFollowing ? 'Following' : 'Follow Soul'}
+                            </button>
+                        ) : !isEditing ? (
                             <button onClick={() => setIsEditing(true)} style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 20px', borderRadius: '12px' }}>
                                 <Edit2 size={16} /> Edit Profile
                             </button>
@@ -170,8 +183,10 @@ const Profile = ({ user: propUser }) => {
                         </div>
 
                         {/* Stats Row */}
-                        <div style={{ display: 'flex', gap: '32px' }}>
+                        <div style={{ display: 'flex', gap: '24px' }}>
                             <StatBox icon={Flame} value={user.streakCount || 0} label="Streak" color="#ff9f43" />
+                            <StatBox icon={Users} value={user._count?.followers || 0} label="Followers" color="var(--accent)" />
+                            <StatBox icon={Users} value={user._count?.following || 0} label="Following" color="var(--success)" />
                             <StatBox icon={ImageIcon} value={userDreams.length} label="Dreams" color="var(--primary)" />
                         </div>
                     </div>

@@ -24,9 +24,11 @@ app.use((req, res, next) => {
 // Routes
 const authRoutes = require('./src/routes/authRoutes');
 const dreamRoutes = require('./src/routes/dreamRoutes');
+const userRoutes = require('./src/routes/userRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/dreams', dreamRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
     res.send('Dream Social API is running...');

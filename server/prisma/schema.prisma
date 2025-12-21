@@ -30,8 +30,25 @@ model User {
   sentMatches     Match[]  @relation("Sender")
   receivedMatches Match[]  @relation("Receiver")
 
+  // Following Social System
+  followers Follow[] @relation("Following")
+  following Follow[] @relation("Follower")
+  
+  notifications Notification[] @relation("NotificationRecipient")
+  sentNotifications Notification[] @relation("NotificationSender")
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  follower    User   @relation("Follower", fields: [followerId], references: [id])
+  following   User   @relation("Following", fields: [followingId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
 }
 
 model Dream {
@@ -80,4 +97,19 @@ model Match {
   status    String   @default("pending") // pending, accepted, rejected
   
   createdAt DateTime @default(now())
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  type        String   // LIKE, FOLLOW, MATCH, COMMENT
+  senderId    String
+  receiverId  String
+  dreamId     String?
+  message     String?
+  read        Boolean  @default(false)
+  
+  sender      User     @relation("NotificationSender", fields: [senderId], references: [id])
+  receiver    User     @relation("NotificationRecipient", fields: [receiverId], references: [id])
+  
+  createdAt   DateTime @default(now())
 }

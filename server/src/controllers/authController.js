@@ -46,6 +46,11 @@ const login = async (req, res) => {
         // Find user
         const user = await prisma.user.findUnique({
             where: { username },
+            include: {
+                _count: {
+                    select: { followers: true, following: true }
+                }
+            }
         });
 
         if (!user) {
@@ -85,7 +90,8 @@ const login = async (req, res) => {
                 fullName: user.fullName,
                 avatarUrl: user.avatarUrl,
                 streakCount: finalStreak,
-                bio: user.bio
+                bio: user.bio,
+                _count: user._count
             },
         });
     } catch (error) {
@@ -101,7 +107,10 @@ const getMe = async (req, res) => {
             include: {
                 dreams: { orderBy: { createdAt: 'desc' } },
                 sentMatches: { include: { receiver: true } },
-                receivedMatches: { include: { sender: true } }
+                receivedMatches: { include: { sender: true } },
+                _count: {
+                    select: { followers: true, following: true }
+                }
             }
         });
 

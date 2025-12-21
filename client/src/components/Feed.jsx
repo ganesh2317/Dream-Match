@@ -8,7 +8,7 @@ const Feed = ({ dreams, loading, onRefresh }) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            await fetch(`http://localhost:3000/api/dreams/${dreamId}/like`, {
+            await fetch(`/api/dreams/${dreamId}/like`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });

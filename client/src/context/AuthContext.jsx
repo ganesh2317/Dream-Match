@@ -6,17 +6,21 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const API_URL = 'http://localhost:3000/api/auth';
+    const API_URL = '/api/auth';
 
     const fetchMe = async (token) => {
         try {
             const res = await fetch(`${API_URL}/me`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            const data = await res.json();
-            if (res.ok) {
+
+            const contentType = res.headers.get("content-type");
+            if (res.ok && contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await res.json();
                 setUser(data);
             } else {
+                const text = await res.text();
+                console.error('Session check failed (non-JSON):', text);
                 localStorage.removeItem('token');
                 setUser(null);
             }
@@ -46,14 +50,21 @@ export const AuthProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            const data = await res.json();
 
-            if (!res.ok) throw new Error(data.message || 'Login failed');
-
-            localStorage.setItem('token', data.token);
-            setUser(data.user);
-            return data.user;
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Login failed');
+                localStorage.setItem('token', data.token);
+                setUser(data.user);
+                return data.user;
+            } else {
+                const errorText = await res.text();
+                console.error('Login failed (non-JSON):', errorText);
+                throw new Error('Server returned an invalid response. Please check if the backend is running.');
+            }
         } catch (e) {
+            console.error('Login error:', e);
             throw e;
         } finally {
             setLoading(false);
