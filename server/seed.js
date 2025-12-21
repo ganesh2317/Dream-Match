@@ -1,30 +1,36 @@
+
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
 async function main() {
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    console.log('Seeding database...');
 
-    try {
-        const user = await prisma.user.upsert({
-            where: { username: 'demo' },
-            update: {},
-            create: {
-                username: 'demo',
-                fullName: 'Demo User',
-                password: hashedPassword,
-                gender: 'other',
-                age: 25,
-                avatarUrl: 'https://ui-avatars.com/api/?name=Demo+User&background=007AFF&color=fff'
-            },
-        });
-        console.log('User created:', user);
-    } catch (e) {
-        console.error(e);
-    } finally {
-        await prisma.$disconnect();
-    }
+    const username = 'demo';
+    const password = 'password123';
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.upsert({
+        where: { username },
+        update: {},
+        create: {
+            username,
+            fullName: 'Demo User',
+            password: hashedPassword,
+            avatarUrl: 'https://ui-avatars.com/api/?name=Demo&background=random',
+            streakCount: 5, // Testing streak
+        },
+    });
+
+    console.log(`User created: ${user.username} / ${password}`);
 }
 
-main();
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

@@ -30,7 +30,7 @@ const Login = () => {
             justifyContent: 'center',
             padding: '20px'
         }}>
-            <GlassCard style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
+            <GlassCard style={{ width: '100%', maxWidth: '400px', padding: '40px', background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)' }}>
                 <h1 style={{
                     textAlign: 'center',
                     marginBottom: '8px',
@@ -56,7 +56,12 @@ const Login = () => {
                         placeholder="Username"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'white',
+                            fontSize: '16px'
+                        }}
                     />
                     <Input
                         icon={Lock}
@@ -64,7 +69,13 @@ const Login = () => {
                         placeholder="Password"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'white',
+                            marginTop: '16px',
+                            fontSize: '16px'
+                        }}
                     />
 
                     <button
@@ -75,11 +86,12 @@ const Login = () => {
                             borderRadius: '12px',
                             fontSize: '16px',
                             fontWeight: 600,
-                            marginTop: '24px',
+                            marginTop: '32px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '8px'
+                            gap: '8px',
+                            boxShadow: '0 4px 14px 0 rgba(0,0,0,0.39)'
                         }}
                     >
                         Sign In <ArrowRight size={18} />

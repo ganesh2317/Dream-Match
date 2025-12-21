@@ -36,7 +36,7 @@ const Register = () => {
             justifyContent: 'center',
             padding: '20px'
         }}>
-            <GlassCard style={{ width: '100%', maxWidth: '450px', padding: '40px' }}>
+            <GlassCard style={{ width: '100%', maxWidth: '450px', padding: '40px', background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)' }}>
                 <h1 style={{
                     textAlign: 'center',
                     marginBottom: '8px',
@@ -62,23 +62,29 @@ const Register = () => {
                         placeholder="Full Name"
                         value={formData.fullName}
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                        style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--glass-border)', color: 'white', fontSize: '16px' }}
                     />
                     <Input
                         icon={User}
                         placeholder="Username"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'white',
+                            fontSize: '16px',
+                            marginTop: '16px'
+                        }}
                     />
-                    <div style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
                         <div style={{ flex: 1 }}>
                             <Input
                                 type="number"
                                 placeholder="Age"
                                 value={formData.age}
                                 onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                                style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--glass-border)', color: 'white', fontSize: '16px' }}
                             />
                         </div>
                         <div style={{ flex: 1 }}>
@@ -89,14 +95,13 @@ const Register = () => {
                                     width: '100%',
                                     padding: '14px',
                                     borderRadius: '12px',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    background: 'rgba(0, 0, 0, 0.2)',
+                                    border: '1px solid var(--glass-border)',
+                                    background: 'rgba(255, 255, 255, 0.05)',
                                     fontSize: '16px',
-                                    color: 'var(--text-secondary)',
                                     height: '52px',
-                                    marginBottom: '16px',
                                     outline: 'none',
-                                    color: 'white'
+                                    color: 'white',
+                                    cursor: 'pointer'
                                 }}
                             >
                                 <option value="male" style={{ color: 'black' }}>Male</option>
@@ -112,7 +117,13 @@ const Register = () => {
                         placeholder="Password"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'white',
+                            fontSize: '16px',
+                            marginTop: '16px'
+                        }}
                     />
 
                     <button
@@ -123,11 +134,12 @@ const Register = () => {
                             borderRadius: '12px',
                             fontSize: '16px',
                             fontWeight: 600,
-                            marginTop: '24px',
+                            marginTop: '32px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '8px'
+                            gap: '8px',
+                            boxShadow: '0 4px 14px 0 rgba(0,0,0,0.39)'
                         }}
                     >
                         Create Account <ArrowRight size={18} />

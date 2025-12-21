@@ -6,82 +6,82 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // Check for active session
-        const storedUser = localStorage.getItem('currentUser');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
+    const API_URL = 'http://localhost:3000/api/auth';
+
+    const fetchMe = async (token) => {
+        try {
+            const res = await fetch(`${API_URL}/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setUser(data);
+            } else {
+                localStorage.removeItem('token');
+                setUser(null);
+            }
+        } catch (e) {
+            console.error('Session check failed', e);
+            localStorage.removeItem('token');
+            setUser(null);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
+    };
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetchMe(token);
+        } else {
+            setLoading(false);
+        }
     }, []);
 
     const login = async (username, password) => {
         setLoading(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-
         try {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            // Verify credentials
-            const foundUser = users.find(u => u.username === username && u.password === password);
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
 
-            if (foundUser) {
-                const userSession = { ...foundUser };
-                delete userSession.password; // Don't store password in session
-                localStorage.setItem('currentUser', JSON.stringify(userSession));
-                setUser(userSession);
-                setLoading(false);
-                return userSession;
-            } else {
-                setLoading(false);
-                if (username === 'demo' && password === 'password123') {
-                    // Emergency demo user
-                    const demoUser = { id: 'demo', username: 'demo', fullName: 'Demo User', avatarUrl: 'https://ui-avatars.com/api/?name=Demo&background=random', streakCount: 0 };
+            if (!res.ok) throw new Error(data.message || 'Login failed');
 
-                    localStorage.setItem('currentUser', JSON.stringify(demoUser));
-                    setUser(demoUser);
-                    return demoUser;
-                }
-                throw new Error('Invalid username or password');
-            }
+            localStorage.setItem('token', data.token);
+            setUser(data.user);
+            return data.user;
         } catch (e) {
-            setLoading(false);
             throw e;
+        } finally {
+            setLoading(false);
         }
     };
 
     const register = async (formData) => {
         setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 800));
-
         try {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const res = await fetch(`${API_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const data = await res.json();
 
-            // Check uniqueness
-            if (users.find(u => u.username === formData.username)) {
-                throw new Error('Username already taken');
-            }
+            if (!res.ok) throw new Error(data.message || 'Registration failed');
 
-            const newUser = {
-                id: Date.now().toString(),
-                ...formData,
-                message: 'Registered successfully',
-                streakCount: 0,
-                avatarUrl: `https://ui-avatars.com/api/?name=${formData.fullName}&background=random`
-            };
-
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            setLoading(false);
-            return newUser;
+            return data;
         } catch (e) {
-            setLoading(false);
             throw e;
+        } finally {
+            setLoading(false);
         }
     };
 
     const logout = () => {
-        localStorage.removeItem('currentUser');
+        localStorage.removeItem('token');
         setUser(null);
     };
 

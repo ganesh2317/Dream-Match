@@ -17,16 +17,25 @@ const Dashboard = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     // Poll for dreams (simulate real-time)
-    const fetchDreams = () => {
-        // Read from global storage
-        const storedDreams = JSON.parse(localStorage.getItem('dreams') || '[]');
-        setDreams(storedDreams.reverse());
-        setLoading(false);
+    const fetchDreams = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            // If public feed, maybe no token needed? But backend requires it for like status.
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+            const res = await fetch('http://localhost:3000/api/dreams', { headers });
+            if (res.ok) {
+                const data = await res.json();
+                setDreams(data);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
         fetchDreams();
-        // Refresh feed every 5 seconds to see other users' posts
         const interval = setInterval(fetchDreams, 5000);
         return () => clearInterval(interval);
     }, []);
@@ -34,11 +43,11 @@ const Dashboard = () => {
     // Render Content based on Tab
     const renderContent = () => {
         switch (activeTab) {
-            case 'feed': return <Feed dreams={dreams} loading={loading} />;
+            case 'feed': return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;
             case 'messages': return <Messages currentUser={user} />;
             case 'notifications': return <Notifications />;
-            case 'profile': return <Profile />;
-            default: return <Feed dreams={dreams} loading={loading} />;
+            case 'profile': return <Profile user={user} />;
+            default: return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;
         }
     };
 
@@ -131,39 +140,33 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
     const handlePost = async () => {
         if (!selectedImage) return;
 
-        const newDream = {
-            id: Date.now().toString(),
-            description,
-            imageUrl: selectedImage,
-            createdAt: new Date(),
-            userId: user.id,
-            username: user.username,
-            userAvatar: user.avatarUrl,
-            userStreak: user.streakCount + 1 // Preview the increment
-        };
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:3000/api/dreams', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    description,
+                    imageUrl: selectedImage
+                })
+            });
 
-        const currentDreams = JSON.parse(localStorage.getItem('dreams') || '[]');
-        currentDreams.push(newDream);
-        localStorage.setItem('dreams', JSON.stringify(currentDreams));
-
-        // Update user streak logic: 
-        // Simple increment for demo. In real app, check dates.
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const currentUserIdx = users.findIndex(u => u.username === user.username);
-
-        let newStreak = (user.streakCount || 0) + 1;
-
-        if (currentUserIdx !== -1) {
-            users[currentUserIdx].streakCount = newStreak;
-            localStorage.setItem('users', JSON.stringify(users));
+            if (res.ok) {
+                // Success
+                onPosted();
+                // To force streak update in UI (since we don't have global state setter easily accessible here without refactor)
+                // We reload. 
+                window.location.reload();
+            } else {
+                alert('Failed to post dream');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error posting dream');
         }
-
-        // Update session
-        const session = { ...user, streakCount: newStreak };
-        localStorage.setItem('currentUser', JSON.stringify(session));
-
-        onPosted();
-        window.location.reload(); // Force refresh to show new streak
     };
 
     return (

@@ -1,35 +1,34 @@
 :root {
-  /* Core Colors - Professional Obsidian Theme */
+  /* Core Colors - Apple-inspired Dark Mode */
   --bg-dark: #000000;
-  --bg-gradient: linear-gradient(180deg, #121212 0%, #000000 100%);
+  --bg-gradient: linear-gradient(180deg, #050505 0%, #1a1a1a 100%);
 
-  /* Brand Colors - Sophisticated & Clean */
-  --primary: #6c5ce7;
-  /* Royal Purple - Professional yet creative */
-  --primary-gradient: linear-gradient(135deg, #6c5ce7, #a29bfe);
-  --accent: #74b9ff;
-  --success: #00b894;
-  --error: #ff7675;
+  /* Brand Colors - Vibrant & Trending */
+  --primary: #5c6bc0;
+  /* Indigo-ish */
+  --primary-gradient: linear-gradient(120deg, #5c6bc0, #8e24aa);
+  --accent: #29b6f6;
+  /* Light Blue */
+  --success: #00e676;
+  --error: #ff5252;
 
-  /* Surface Structure - High Contrast Layers */
-  /* Cards should be distinct from background */
-  --glass-bg: rgba(30, 30, 30, 0.85);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --glass-blur: blur(20px);
+  /* Glassmorphism Variables */
+  --glass-bg: rgba(30, 30, 30, 0.6);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(16px);
 
-  /* Typography - Clean & sharp */
+  /* Typography */
   --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  /* Light Gray, very readable */
-  --text-muted: #6e6e6e;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.45);
 
-  /* Spacing & Forms - Sharper, less rounded for pro look */
-  --radius-lg: 16px;
-  --radius-md: 12px;
+  /* Radius */
+  --radius-lg: 20px;
+  --radius-md: 14px;
   --radius-sm: 8px;
 
   /* Transitions */
-  --transition-fast: 0.2s ease;
-  --transition-spring: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-fast: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-spring: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }

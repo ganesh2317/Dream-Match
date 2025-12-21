@@ -23,6 +23,8 @@ model User {
   lastPostedAt DateTime?
   
   dreams       Dream[]
+  likes        Like[]
+  comments     Comment[]
   
   // Basic relationship for matches (simplified for MVP)
   sentMatches     Match[]  @relation("Sender")
@@ -40,7 +42,32 @@ model Dream {
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   
+  views       Int      @default(0)
+  likes       Like[]
+  comments    Comment[]
+
   createdAt   DateTime @default(now())
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  dreamId   String
+  user      User     @relation(fields: [userId], references: [id])
+  dream     Dream    @relation(fields: [dreamId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dreamId]) // Prevent duplicate likes
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  userId    String
+  dreamId   String
+  user      User     @relation(fields: [userId], references: [id])
+  dream     Dream    @relation(fields: [dreamId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Match {
