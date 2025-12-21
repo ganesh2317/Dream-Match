@@ -16,6 +16,8 @@ const Dashboard = () => {
     const [dreams, setDreams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [viewingUser, setViewingUser] = useState(null);
+    const [messageUser, setMessageUser] = useState(null);
 
     const fetchDreams = async () => {
         try {
@@ -39,11 +41,21 @@ const Dashboard = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleOpenMessage = (user) => {
+        setMessageUser(user);
+        setViewingUser(null);
+        setActiveTab('messages');
+    };
+
     const renderContent = () => {
+        if (viewingUser) {
+            return <Profile user={viewingUser} onBack={() => setViewingUser(null)} onMessage={handleOpenMessage} />;
+        }
+
         switch (activeTab) {
             case 'feed': return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;
-            case 'search': return <Search />;
-            case 'messages': return <Messages currentUser={user} />;
+            case 'search': return <Search onViewProfile={setViewingUser} />;
+            case 'messages': return <Messages currentUser={user} initialUser={messageUser} onClearInitial={() => setMessageUser(null)} />;
             case 'notifications': return <Notifications />;
             case 'profile': return <Profile user={user} />;
             default: return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;

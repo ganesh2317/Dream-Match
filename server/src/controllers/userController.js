@@ -50,6 +50,16 @@ const followUser = async (req, res) => {
             create: { followerId, followingId }
         });
 
+        // Create notification for the user being followed
+        await prisma.notification.create({
+            data: {
+                type: 'FOLLOW',
+                senderId: followerId,
+                receiverId: followingId,
+                message: 'started following you'
+            }
+        });
+
         res.json({ success: true });
     } catch (error) {
         console.error(error);

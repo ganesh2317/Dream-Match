@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { User as UserIcon, Edit2, Save, X, Camera, Flame, Image as ImageIcon, Sparkles, Users } from 'lucide-react';
+import { User as UserIcon, Edit2, Save, X, Camera, Flame, Image as ImageIcon, Sparkles, Users, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Profile = ({ user: propUser }) => {
+const Profile = ({ user: propUser, onBack, onMessage }) => {
     const { user: contextUser } = useAuth();
-    const user = propUser || contextUser;
+    const [user, setUser] = useState(propUser || contextUser);
+    const [userDreams, setUserDreams] = useState([]);
 
     const [isEditing, setIsEditing] = useState(false);
     const [bio, setBio] = useState('');
@@ -13,11 +14,28 @@ const Profile = ({ user: propUser }) => {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        if (user) {
-            setBio(user.bio || '');
-            setPreview(user.avatarUrl || '');
-        }
-    }, [user]);
+        const fetchUserProfile = async () => {
+            if (propUser && propUser.id !== contextUser?.id) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const res = await fetch(`/api/users/profile/${propUser.username}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setUser(data);
+                        setUserDreams(data.dreams || []);
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            } else if (user) {
+                setUserDreams(user.dreams || []);
+            }
+        };
+
+        fetchUserProfile();
+    }, [propUser, contextUser, user]);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -62,10 +80,26 @@ const Profile = ({ user: propUser }) => {
         </div>
     );
 
-    const userDreams = user.dreams || [];
-
     return (
         <div style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '80px' }} className="fade-in">
+            {onBack && (
+                <button
+                    onClick={onBack}
+                    style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px',
+                        padding: '10px 20px',
+                        marginBottom: '20px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    ← Back to Search
+                </button>
+            )}
             {/* Profile Header Card */}
             <GlassCard style={{ padding: '0', overflow: 'hidden', marginBottom: '40px' }}>
                 {/* Banner Background */}
@@ -116,18 +150,35 @@ const Profile = ({ user: propUser }) => {
                         </div>
 
                         {user.id !== contextUser?.id ? (
-                            <button
-                                onClick={() => {/* Toggle Follow logic here */ }}
-                                style={{
-                                    padding: '12px 28px',
-                                    borderRadius: '14px',
-                                    fontSize: '15px',
-                                    background: user.isFollowing ? 'rgba(255,255,255,0.08)' : 'var(--primary)',
-                                    border: user.isFollowing ? '1px solid rgba(255,255,255,0.1)' : 'none'
-                                }}
-                            >
-                                {user.isFollowing ? 'Following' : 'Follow Soul'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button
+                                    onClick={() => onMessage && onMessage(user)}
+                                    style={{
+                                        padding: '12px 28px',
+                                        borderRadius: '14px',
+                                        fontSize: '15px',
+                                        background: 'rgba(255,255,255,0.08)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <MessageCircle size={16} /> Message
+                                </button>
+                                <button
+                                    onClick={() => {/* Toggle Follow logic here */ }}
+                                    style={{
+                                        padding: '12px 28px',
+                                        borderRadius: '14px',
+                                        fontSize: '15px',
+                                        background: user.isFollowing ? 'rgba(255,255,255,0.08)' : 'var(--primary)',
+                                        border: user.isFollowing ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                                    }}
+                                >
+                                    {user.isFollowing ? 'Following' : 'Follow Soul'}
+                                </button>
+                            </div>
                         ) : !isEditing ? (
                             <button onClick={() => setIsEditing(true)} style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 20px', borderRadius: '12px' }}>
                                 <Edit2 size={16} /> Edit Profile

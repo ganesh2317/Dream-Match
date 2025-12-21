@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
 import { Search as SearchIcon, UserPlus, UserMinus, User, Zap } from 'lucide-react';
 
-const Search = () => {
+const Search = ({ onViewProfile }) => {
     const [query, setQuery] = useState('');
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -67,7 +67,7 @@ const Search = () => {
                     </div>
                 ) : users.length > 0 ? (
                     users.map(user => (
-                        <UserCard key={user.id} user={user} />
+                        <UserCard key={user.id} user={user} onViewProfile={onViewProfile} />
                     ))
                 ) : query && !loading ? (
                     <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
@@ -85,7 +85,7 @@ const Search = () => {
     );
 };
 
-const UserCard = ({ user }) => {
+const UserCard = ({ user, onViewProfile }) => {
     const [isFollowing, setIsFollowing] = useState(false); // Simplified for now, real state should come from API
 
     const toggleFollow = async (e) => {
@@ -106,7 +106,11 @@ const UserCard = ({ user }) => {
     };
 
     return (
-        <GlassCard style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }} className="hover-bg">
+        <GlassCard
+            onClick={() => onViewProfile && onViewProfile(user)}
+            style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s' }}
+            className="hover-bg"
+        >
             <img src={user.avatarUrl} alt={user.username} style={{ width: '60px', height: '60px', borderRadius: '18px', objectFit: 'cover' }} />
             <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '16px' }}>{user.fullName}</div>

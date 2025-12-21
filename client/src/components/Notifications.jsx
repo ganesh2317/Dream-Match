@@ -1,94 +1,141 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { Bell, Zap, Heart, UserPlus, Sparkles } from 'lucide-react';
+import { Heart, UserPlus, Sparkles, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Notifications = () => {
     const { user } = useAuth();
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Combine sent and received matches as notifications
-    const matches = [
-        ...(user?.receivedMatches || []).map(m => ({
-            id: m.id,
-            type: 'match',
-            user: m.sender,
-            score: m.score,
-            createdAt: m.createdAt,
-            status: m.status
-        })),
-        ...(user?.sentMatches || []).map(m => ({
-            id: m.id,
-            type: 'match',
-            user: m.receiver,
-            score: m.score,
-            createdAt: m.createdAt,
-            status: m.status
-        }))
-    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const fetchNotifications = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/notifications', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const markAsRead = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`/api/notifications/${id}/read`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setNotifications(notifications.map(n =>
+                n.id === id ? { ...n, read: true } : n
+            ));
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const getIcon = (type) => {
+        switch (type) {
+            case 'LIKE':
+                return <Heart size={20} color="#ff6b6b" fill="#ff6b6b" />;
+            case 'FOLLOW':
+                return <UserPlus size={20} color="var(--primary)" />;
+            default:
+                return <Sparkles size={20} color="var(--accent)" />;
+        }
+    };
+
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+                <div className="loading-spinner"></div>
+            </div>
+        );
+    }
 
     return (
-        <div style={{ maxWidth: '680px', margin: '0 auto', paddingBottom: '60px' }} className="fade-in">
-            <h2 style={{ marginBottom: '32px', fontSize: '28px', fontWeight: 800 }}>Vibrations</h2>
+        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+            <h2 style={{ marginBottom: '32px', fontSize: '28px', fontWeight: 800 }}>Notifications</h2>
 
-            {matches.length === 0 ? (
-                <GlassCard style={{ textAlign: 'center', padding: '100px 40px', background: 'rgba(255,255,255,0.02)' }}>
+            {notifications.length === 0 ? (
+                <GlassCard style={{ textAlign: 'center', padding: '80px 40px' }}>
                     <div style={{
-                        width: '100px',
-                        height: '100px',
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
                         background: 'rgba(99, 102, 241, 0.1)',
-                        borderRadius: '30px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        margin: '0 auto 32px auto',
-                        rotate: '-10deg'
+                        margin: '0 auto 24px'
                     }}>
-                        <Sparkles size={48} color="var(--primary)" opacity={0.6} />
+                        <Sparkles size={40} color="var(--primary)" opacity={0.6} />
                     </div>
-                    <h3 style={{ marginBottom: '12px', fontSize: '22px' }}>No current notifications</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '16px' }}>But don't worry, you will soon find a match. Keep sharing your visions!</p>
+                    <h3 style={{ marginBottom: '12px', fontSize: '22px' }}>No notifications yet</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '16px' }}>
+                        When someone likes your dreams or follows you, you'll see it here!
+                    </p>
                 </GlassCard>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {matches.map((notification) => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {notifications.map((notification) => (
                         <GlassCard
                             key={notification.id}
+                            onClick={() => !notification.read && markAsRead(notification.id)}
                             style={{
-                                padding: '16px 24px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '20px',
-                                border: '1px solid rgba(99, 102, 241, 0.15)',
-                                background: 'rgba(99, 102, 241, 0.03)'
+                                padding: '20px',
+                                cursor: 'pointer',
+                                background: notification.read ? 'var(--glass-bg)' : 'rgba(99, 102, 241, 0.05)',
+                                border: notification.read ? '1px solid var(--glass-border)' : '1px solid rgba(99, 102, 241, 0.2)',
+                                transition: 'all 0.2s'
                             }}
                             className="hover-bg"
                         >
-                            <div style={{ position: 'relative' }}>
+                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                 <img
-                                    src={notification.user?.avatarUrl}
-                                    style={{ width: '56px', height: '56px', borderRadius: '18px', objectFit: 'cover' }}
+                                    src={notification.sender.avatarUrl}
+                                    alt={notification.sender.username}
+                                    style={{
+                                        width: '48px',
+                                        height: '48px',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover'
+                                    }}
                                 />
-                                <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--primary)', borderRadius: '50%', padding: '4px', border: '3px solid var(--bg-dark)' }}>
-                                    <Zap size={10} color="white" fill="white" />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <span style={{ fontWeight: 700, fontSize: '15px' }}>
+                                            {notification.sender.fullName}
+                                        </span>
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+                                            {notification.message}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                                        {new Date(notification.createdAt).toLocaleDateString(undefined, {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '15px', fontWeight: 700 }}>
-                                    New <span style={{ color: 'var(--primary)' }}>Dream Match</span> found!
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {getIcon(notification.type)}
+                                    {notification.read && (
+                                        <Check size={16} color="var(--success)" />
+                                    )}
                                 </div>
-                                <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                                    Your visions resonate with <b>@{notification.user?.username}</b>
-                                </div>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>
-                                    {new Date(notification.createdAt).toLocaleDateString()} • {Math.round(notification.score * 100)}% Match
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button style={{ padding: '8px 16px', fontSize: '13px', background: 'var(--primary)', borderRadius: '10px' }}>
-                                    Connect
-                                </button>
                             </div>
                         </GlassCard>
                     ))}

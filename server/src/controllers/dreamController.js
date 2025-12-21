@@ -163,18 +163,39 @@ const getFeed = async (req, res) => {
 
 const likeDream = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id: dreamId } = req.params;
         const userId = req.user.id;
 
-        const existing = await prisma.like.findUnique({
-            where: { userId_dreamId: { userId, dreamId: id } }
+        // Toggle like
+        const existingLike = await prisma.like.findUnique({
+            where: { userId_dreamId: { userId, dreamId } }
         });
 
-        if (existing) {
-            await prisma.like.delete({ where: { id: existing.id } });
+        if (existingLike) {
+            await prisma.like.delete({ where: { id: existingLike.id } });
             res.json({ liked: false });
         } else {
-            await prisma.like.create({ data: { userId, dreamId: id } });
+            await prisma.like.create({
+                data: { userId, dreamId }
+            });
+
+            // Create notification for dream owner
+            const dream = await prisma.dream.findUnique({
+                where: { id: dreamId },
+                select: { userId: true }
+            });
+
+            if (dream && dream.userId !== userId) {
+                await prisma.notification.create({
+                    data: {
+                        type: 'LIKE',
+                        senderId: userId,
+                        receiverId: dream.userId,
+                        dreamId,
+                        message: 'liked your dream'
+                    }
+                });
+            }
             res.json({ liked: true });
         }
     } catch (error) {
