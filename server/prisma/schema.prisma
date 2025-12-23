@@ -59,6 +59,7 @@ model Dream {
   id          String   @id @default(uuid())
   description String
   imageUrl    String
+  videoUrl    String?
   theme       String?
   userId      String
   user        User     @relation(fields: [userId], references: [id])

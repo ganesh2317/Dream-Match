@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, MessageCircle, PlusSquare, Bell, Settings, User as UserIcon, LogOut, Search } from 'lucide-react';
+import { Home, MessageCircle, PlusSquare, Bell, Settings, User as UserIcon, LogOut, Search, Video, Users } from 'lucide-react';
 import GlassCard from './GlassCard';
 
 const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) => {
@@ -35,7 +35,9 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
                 <NavItem icon={Search} label="Search" active={activeTab === 'search'} onClick={() => setActiveTab('search')} />
                 <NavItem icon={MessageCircle} label="Messages" active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} />
                 <NavItem icon={PlusSquare} label="Share Dream" onClick={() => setShowCreateModal(true)} type="action" />
-                <NavItem icon={Bell} label="Matches" active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} />
+                <NavItem icon={Video} label="Visuals" active={activeTab === 'visuals'} onClick={() => setActiveTab('visuals')} />
+                <NavItem icon={Users} label="Matches" active={activeTab === 'matches'} onClick={() => setActiveTab('matches')} />
+                <NavItem icon={Bell} label="Notifications" active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} />
             </nav>
 
             <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>

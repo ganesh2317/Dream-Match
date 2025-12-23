@@ -1,8 +1,8 @@
 import React from 'react';
 import GlassCard from './GlassCard';
-import { Flame, Heart, MessageCircle, Eye, Share2 } from 'lucide-react';
+import { Flame, Heart, MessageCircle, Eye, Share2, Sparkles } from 'lucide-react';
 
-const Feed = ({ dreams, loading, onRefresh }) => {
+const Feed = ({ dreams, loading, onRefresh, onViewVisual }) => {
 
     const handleLike = async (dreamId) => {
         try {
@@ -70,8 +70,21 @@ const Feed = ({ dreams, loading, onRefresh }) => {
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         onDoubleClick={() => handleLike(dream.id)}
                                     />
-                                    <div style={{ position: 'absolute', bottom: '20px', right: '20px', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'white' }}>
-                                        <Eye size={14} /> {views}
+                                    <div style={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '8px' }}>
+                                        {dream.videoUrl && (
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onViewVisual(dream.id);
+                                                }}
+                                                style={{ background: 'var(--primary-gradient)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'white', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)' }}
+                                            >
+                                                <Sparkles size={14} /> Watch Visual
+                                            </div>
+                                        )}
+                                        <div style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'white' }}>
+                                            <Eye size={14} /> {views}
+                                        </div>
                                     </div>
                                 </div>
 

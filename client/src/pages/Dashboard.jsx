@@ -3,16 +3,19 @@ import GlassCard from '../components/GlassCard';
 import Sidebar from '../components/Sidebar';
 import Feed from '../components/Feed';
 import Notifications from '../components/Notifications';
+import Matches from '../components/Matches';
 import Messages from '../components/Messages';
 import Profile from '../components/Profile';
 import Search from '../components/Search';
-import { Flame, X, Sparkles, Wand2, Zap } from 'lucide-react';
+import Visuals from '../components/Visuals';
+import { Moon, X, Sparkles, Wand2, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getMockMatches } from '../utils/mockData';
 
 const Dashboard = () => {
     const { user, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('feed');
+    const [initialVisualId, setInitialVisualId] = useState(null);
     const [dreams, setDreams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -49,15 +52,26 @@ const Dashboard = () => {
 
     const renderContent = () => {
         if (viewingUser) {
-            return <Profile user={viewingUser} onBack={() => setViewingUser(null)} onMessage={handleOpenMessage} />;
+            return <Profile user={viewingUser} onBack={() => setViewingUser(null)} onMessage={handleOpenMessage} onViewVisual={(id) => {
+                setInitialVisualId(id);
+                setActiveTab('visuals');
+            }} />;
         }
 
         switch (activeTab) {
-            case 'feed': return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;
+            case 'feed': return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
+                setInitialVisualId(id);
+                setActiveTab('visuals');
+            }} />;
             case 'search': return <Search onViewProfile={setViewingUser} />;
             case 'messages': return <Messages currentUser={user} initialUser={messageUser} onClearInitial={() => setMessageUser(null)} />;
+            case 'matches': return <Matches onMessage={handleOpenMessage} />;
             case 'notifications': return <Notifications />;
-            case 'profile': return <Profile user={user} />;
+            case 'visuals': return <Visuals dreams={dreams} onRefresh={fetchDreams} initialDreamId={initialVisualId} />;
+            case 'profile': return <Profile user={user} onViewVisual={(id) => {
+                setInitialVisualId(id);
+                setActiveTab('visuals');
+            }} />;
             default: return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;
         }
     };
@@ -79,14 +93,14 @@ const Dashboard = () => {
 
             {/* Right Sidebar */}
             <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <GlassCard style={{ padding: '24px', background: 'rgba(255, 159, 67, 0.05)', border: '1px solid rgba(255, 159, 67, 0.1)' }}>
+                <GlassCard style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                        <h3 style={{ fontSize: '18px' }}>Your Streak</h3>
-                        <div style={{ background: 'rgba(255, 159, 67, 0.2)', padding: '8px', borderRadius: '12px' }}>
-                            <Flame color="#ff9f43" fill="#ff9f43" size={20} />
+                        <h3 style={{ fontSize: '18px' }}>Your Dream Streak</h3>
+                        <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '8px', borderRadius: '12px' }}>
+                            <Moon color="var(--primary)" fill="var(--primary)" size={20} />
                         </div>
                     </div>
-                    <div style={{ fontSize: '56px', fontWeight: 800, textAlign: 'center', color: '#ff9f43', letterSpacing: '-2px', textShadow: '0 10px 30px rgba(255, 159, 67, 0.3)' }}>
+                    <div style={{ fontSize: '56px', fontWeight: 800, textAlign: 'center', color: 'var(--primary)', letterSpacing: '-2px', textShadow: '0 10px 30px rgba(99, 102, 241, 0.3)' }}>
                         {user?.streakCount || 0}
                     </div>
                     <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>Days Active</div>
@@ -128,6 +142,7 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
     const [description, setDescription] = useState('');
     const [style, setStyle] = useState('surreal');
     const [images, setImages] = useState([]);
+    const [videoUrl, setVideoUrl] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
     const [generating, setGenerating] = useState(false);
 
@@ -142,23 +157,28 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
         if (!description) return;
         setGenerating(true);
 
-        // Enhance prompt for better results
-        const enhancedPrompt = `${description}, ${style} style, vivid cinematic lighting, highly detailed, masterwork, 8k, dreamlike atmosphere`;
-        const promptParam = encodeURIComponent(enhancedPrompt);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/dreams/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ description: `${description} (${style} style)` })
+            });
 
-        const variants = [
-            `https://image.pollinations.ai/prompt/${promptParam}?seed=${Math.floor(Math.random() * 10000)}&width=1024&height=1024`,
-            `https://image.pollinations.ai/prompt/${promptParam}?seed=${Math.floor(Math.random() * 10000)}&width=1024&height=1024`,
-            `https://image.pollinations.ai/prompt/${promptParam}?seed=${Math.floor(Math.random() * 10000)}&width=1024&height=1024`,
-            `https://image.pollinations.ai/prompt/${promptParam}?seed=${Math.floor(Math.random() * 10000)}&width=1024&height=1024`,
-        ];
-
-        // Ensure we wait at least 3 seconds for a better "AI thinking" feel
-        await new Promise(r => setTimeout(r, 3000));
-
-        setImages(variants);
-        setGenerating(false);
-        setStep(2);
+            if (res.ok) {
+                const data = await res.json();
+                setImages(data.images);
+                setVideoUrl(data.videoUrl);
+                setStep(2);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setGenerating(false);
+        }
     };
 
     const handlePost = async () => {
@@ -174,14 +194,14 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
                 },
                 body: JSON.stringify({
                     description,
-                    imageUrl: selectedImage
+                    imageUrl: selectedImage,
+                    videoUrl: videoUrl
                 })
             });
 
             if (res.ok) {
                 onPosted();
-                // We show a success state or just reload for simplicity
-                window.location.reload();
+                onClose();
             } else {
                 alert('Failed to post dream');
             }
