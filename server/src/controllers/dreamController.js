@@ -1,7 +1,77 @@
 const prisma = require('../utils/prisma');
 const { differenceInCalendarDays } = require('../utils/streak');
 
-// AI Image & Visual Generation using Pollinations.ai (Refined for Accuracy & Realism)
+// AI Image & Visual Generation using Pollinations.ai (Enhanced for Accuracy & Realism)
+// Uses intelligent keyword extraction and real-world photographic references
+
+// Helper function to extract and enhance keywords from dream description
+const extractKeyElements = (description) => {
+    const lowerDesc = description.toLowerCase();
+
+    // Common subject categories with realistic descriptors
+    const subjectEnhancements = {
+        // Animals
+        dog: 'real dog, detailed fur texture, natural canine features',
+        cat: 'real cat, detailed fur texture, realistic feline features',
+        bird: 'real bird, detailed feathers, natural avian features',
+        horse: 'real horse, detailed coat, muscular anatomy',
+        fish: 'real fish, detailed scales, underwater lighting',
+        // People
+        person: 'real human, natural skin texture, realistic proportions',
+        man: 'real man, natural skin texture, realistic male features',
+        woman: 'real woman, natural skin texture, realistic female features',
+        child: 'real child, natural skin texture, youthful features',
+        // Nature
+        tree: 'real tree, detailed bark texture, natural foliage',
+        flower: 'real flower, detailed petals, natural botanical features',
+        mountain: 'real mountain, rocky texture, atmospheric perspective',
+        ocean: 'real ocean, water reflections, natural wave patterns',
+        forest: 'real forest, detailed vegetation, dappled sunlight',
+        river: 'real river, water reflections, natural current flow',
+        // Objects
+        car: 'real car, detailed body work, realistic reflections',
+        house: 'real house, architectural details, natural materials',
+        building: 'real building, architectural details, urban environment',
+        // Weather/Time
+        sunset: 'golden hour lighting, warm orange and pink tones, dramatic sky',
+        sunrise: 'early morning light, soft pink and blue tones, misty atmosphere',
+        rain: 'rain droplets, wet surfaces, overcast lighting',
+        snow: 'snow covered, winter atmosphere, cold blue tones',
+        night: 'nighttime setting, moonlight, stars visible'
+    };
+
+    // Scene composition elements
+    const compositionEnhancements = [];
+
+    // Detect and add appropriate subject enhancements
+    const detectedSubjects = [];
+    for (const [keyword, enhancement] of Object.entries(subjectEnhancements)) {
+        if (lowerDesc.includes(keyword)) {
+            detectedSubjects.push(enhancement);
+        }
+    }
+
+    // Add lighting based on context
+    if (!lowerDesc.includes('sunset') && !lowerDesc.includes('sunrise') && !lowerDesc.includes('night')) {
+        compositionEnhancements.push('natural daylight');
+    }
+
+    // Add perspective hints
+    if (lowerDesc.includes('flying') || lowerDesc.includes('above') || lowerDesc.includes('sky')) {
+        compositionEnhancements.push('aerial perspective, wide angle view');
+    } else if (lowerDesc.includes('close') || lowerDesc.includes('face') || lowerDesc.includes('detail')) {
+        compositionEnhancements.push('close-up shot, shallow depth of field');
+    } else {
+        compositionEnhancements.push('medium shot, balanced composition');
+    }
+
+    // Build enhanced prompt
+    const subjectPart = detectedSubjects.length > 0 ? detectedSubjects.join(', ') : '';
+    const compositionPart = compositionEnhancements.join(', ');
+
+    return { subjectPart, compositionPart };
+};
+
 const generateDreamImages = async (req, res) => {
     try {
         const { description } = req.body;
@@ -11,24 +81,51 @@ const generateDreamImages = async (req, res) => {
 
         console.log(`Generating high-fidelity visuals for: ${description}`);
 
-        // Enhanced photorealistic quality suffixes
-        const imgQualitySuffix = "photorealistic, cinematic RAW photo, highly detailed texture, 8k UHD, Fujifilm XT4, professional photography, natural lighting, masterpiece, hyper-realistic, no blur";
-        const vidQualitySuffix = "cinematic animation, slow motion drift, highly detailed environment, fluid movement, dream visualization, 60fps, ultra-realistic textures";
+        // Extract key elements for accurate representation
+        const { subjectPart, compositionPart } = extractKeyElements(description);
 
-        const encodedImgPrompt = encodeURIComponent(`${description}, ${imgQualitySuffix}`);
-        const encodedVidPrompt = encodeURIComponent(`${description}, ${vidQualitySuffix}`);
+        // Professional photography quality suffix - emphasis on REAL and ACCURATE
+        const imgQualitySuffix = [
+            'award-winning National Geographic photograph',
+            'shot on Canon EOS R5, 85mm lens',
+            'hyperrealistic, photorealistic',
+            'RAW photo, 8k UHD resolution',
+            'natural lighting, true-to-life colors',
+            'masterpiece, highly detailed',
+            'no blur, sharp focus',
+            subjectPart,
+            compositionPart
+        ].filter(Boolean).join(', ');
 
-        // Generate 4 image variations
+        const vidQualitySuffix = [
+            'cinematic film still',
+            'hyperrealistic visualization',
+            'atmospheric lighting',
+            'highly detailed environment',
+            'professional cinematography',
+            'award-winning visual',
+            subjectPart,
+            compositionPart
+        ].filter(Boolean).join(', ');
+
+        // Build the full prompt with clear instruction structure
+        const imgPrompt = `${description}. Style: ${imgQualitySuffix}`;
+        const vidPrompt = `${description}. Style: ${vidQualitySuffix}`;
+
+        const encodedImgPrompt = encodeURIComponent(imgPrompt);
+        const encodedVidPrompt = encodeURIComponent(vidPrompt);
+
+        // Generate 4 image variations with different seeds
         const images = [1, 2, 3, 4].map(i => {
             const seed = Math.floor(Math.random() * 9999999) + i;
             return `https://image.pollinations.ai/prompt/${encodedImgPrompt}?seed=${seed}&width=1024&height=1024&nologo=true&enhance=true`;
         });
 
-        // Generate a "video" URL
+        // Generate a "video" URL (tall format for reels/stories)
         const vidSeed = Math.floor(Math.random() * 9999999);
         const videoUrl = `https://image.pollinations.ai/prompt/${encodedVidPrompt}?seed=${vidSeed}&width=1024&height=1792&nologo=true&enhance=true`;
 
-        console.log(`Successfully generated high-fidelity visuals for: ${description}`);
+        console.log(`Successfully generated high-fidelity visuals with enhanced prompts`);
         res.json({ images, videoUrl });
     } catch (error) {
         console.error('Image Generation Error:', error);

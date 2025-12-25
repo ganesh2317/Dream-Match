@@ -3,6 +3,7 @@ const prisma = require('../utils/prisma');
 const searchUsers = async (req, res) => {
     try {
         const { query } = req.query;
+        const currentUserId = req.user.id;
         if (!query) return res.json([]);
 
         const users = await prisma.user.findMany({
@@ -11,7 +12,7 @@ const searchUsers = async (req, res) => {
                     { username: { contains: query } },
                     { fullName: { contains: query } }
                 ],
-                NOT: { id: req.user.id }
+                NOT: { id: currentUserId }
             },
             select: {
                 id: true,
@@ -21,12 +22,26 @@ const searchUsers = async (req, res) => {
                 bio: true,
                 _count: {
                     select: { followers: true, following: true }
+                },
+                // Check if current user is following each result
+                followers: {
+                    where: { followerId: currentUserId },
+                    select: { followerId: true }
                 }
             },
             take: 10
         });
 
-        res.json(users);
+        // Transform to include isFollowing boolean
+        const usersWithFollowStatus = users.map(user => {
+            const { followers, ...userData } = user;
+            return {
+                ...userData,
+                isFollowing: followers.length > 0
+            };
+        });
+
+        res.json(usersWithFollowStatus);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error searching users' });

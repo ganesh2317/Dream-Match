@@ -86,7 +86,7 @@ const Search = ({ onViewProfile }) => {
 };
 
 const UserCard = ({ user, onViewProfile }) => {
-    const [isFollowing, setIsFollowing] = useState(false); // Simplified for now, real state should come from API
+    const [isFollowing, setIsFollowing] = useState(user.isFollowing || false);
 
     const toggleFollow = async (e) => {
         e.stopPropagation();
@@ -108,10 +108,10 @@ const UserCard = ({ user, onViewProfile }) => {
     return (
         <GlassCard
             onClick={() => onViewProfile && onViewProfile(user)}
-            style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s' }}
+            style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
             className="hover-bg"
         >
-            <img src={user.avatarUrl} alt={user.username} style={{ width: '60px', height: '60px', borderRadius: '18px', objectFit: 'cover' }} />
+            <img src={user.avatarUrl} alt={user.username} style={{ width: '60px', height: '60px', borderRadius: '18px', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} />
             <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '16px' }}>{user.fullName}</div>
                 <div style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: 600 }}>@{user.username}</div>
@@ -123,9 +123,11 @@ const UserCard = ({ user, onViewProfile }) => {
                     padding: '10px 20px',
                     borderRadius: '12px',
                     fontSize: '13px',
+                    fontWeight: 600,
                     background: isFollowing ? 'rgba(255,255,255,0.05)' : 'var(--primary)',
                     border: isFollowing ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                    color: isFollowing ? 'white' : 'white'
+                    color: 'white',
+                    transition: 'all 0.2s'
                 }}
             >
                 {isFollowing ? 'Following' : 'Follow'}
