@@ -51,11 +51,18 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
                         background: activeTab === 'profile' ? 'var(--glass-hover)' : 'transparent',
                         borderRadius: 'var(--radius-md)',
                         cursor: 'pointer',
-                        transition: '0.2s',
-                        border: activeTab === 'profile' ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent'
+                        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        border: activeTab === 'profile' ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
+                        transform: 'scale(1) translateY(0)'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
-                    onMouseLeave={e => activeTab !== 'profile' && (e.currentTarget.style.background = 'transparent')}
+                    onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'scale(1.02) translateY(-5px)';
+                        e.currentTarget.style.background = 'var(--glass-hover)';
+                    }}
+                    onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                        if (activeTab !== 'profile') e.currentTarget.style.background = 'transparent';
+                    }}
                 >
                     <img src={user?.avatarUrl} alt="avatar" style={{ width: '42px', height: '42px', borderRadius: '50%', border: '2px solid var(--primary)', padding: '2px' }} />
                     <div style={{ overflow: 'hidden' }}>
@@ -86,15 +93,18 @@ const NavItem = ({ icon: Icon, label, active, onClick, type = 'nav' }) => {
                 background: active ? 'var(--primary-gradient)' : isAction ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                 fontWeight: active || isAction ? 600 : 500,
                 color: active ? 'white' : isAction ? 'var(--primary)' : 'var(--text-secondary)',
-                transition: 'all 0.2s',
+                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                 boxShadow: active ? '0 8px 20px rgba(99, 102, 241, 0.3)' : 'none',
                 marginBottom: isAction ? '12px' : '0',
-                marginTop: isAction ? '12px' : '0'
+                marginTop: isAction ? '12px' : '0',
+                transform: 'scale(1) translateY(0)'
             }}
             onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02) translateY(-5px)';
                 if (!active) e.currentTarget.style.background = isAction ? 'rgba(99, 102, 241, 0.15)' : 'var(--glass-hover)';
             }}
             onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1) translateY(0)';
                 if (!active) e.currentTarget.style.background = isAction ? 'rgba(99, 102, 241, 0.1)' : 'transparent';
             }}
         >
