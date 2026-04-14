@@ -1,4 +1,4 @@
-const API_URL = '/api';
+const API_URL = import.meta.env.PROD ? 'https://server-nine-mu-70.vercel.app/api' : '/api';
 
 export const api = {
     async get(endpoint) {
