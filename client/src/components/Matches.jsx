@@ -11,7 +11,7 @@ const Matches = ({ onMessage }) => {
     const fetchMatches = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('/api/matches', {
+            const res = await fetch('/api/dreams/matches', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {

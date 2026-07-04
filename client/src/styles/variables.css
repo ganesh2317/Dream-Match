@@ -1,28 +1,28 @@
 :root {
-  /* Core Colors - Clean Apple-inspired Dark Mode */
-  --bg-dark: #050507;
-  --bg-gradient: radial-gradient(circle at top right, #1a1a35 0%, #050507 100%);
+  /* Core Colors - Gorgeous Cosmic Dark Mode */
+  --bg-dark: #0a0a0f;
+  --bg-gradient: radial-gradient(circle at top right, #0d0e1b 0%, #050508 100%);
 
-  /* Brand Colors - Sophisticated Indigo/Violet */
-  --primary: #4f46e5;
-  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  /* Brand Colors - Sophisticated Neon/Dreamy Indigo/Violet */
+  --primary: #6366f1;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   --accent: #0ea5e9;
   --success: #10b981;
   --error: #ef4444;
   --warning: #f59e0b;
 
-  /* Glassmorphism Refined */
-  --glass-bg: rgba(18, 18, 22, 0.75);
+  /* Glassmorphism Refined for Premium Dark Mode */
+  --glass-bg: rgba(15, 17, 30, 0.7);
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-  --glass-blur: blur(25px);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(20px);
   --glass-hover: rgba(255, 255, 255, 0.05);
 
   /* Typography */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.85);
-  --text-muted: rgba(255, 255, 255, 0.5);
-  --text-dim: rgba(255, 255, 255, 0.3);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
 
   /* Radius */
   --radius-xl: 24px;

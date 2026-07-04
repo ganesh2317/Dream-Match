@@ -77,7 +77,12 @@ const getMessages = async (req, res) => {
         }
 
         const messages = await prisma.message.findMany({
-            where: { conversationId: conversation.id },
+            where: {
+                OR: [
+                    { senderId: userId, receiverId: otherUserId },
+                    { senderId: otherUserId, receiverId: userId }
+                ]
+            },
             include: {
                 sender: {
                     select: {
@@ -94,11 +99,17 @@ const getMessages = async (req, res) => {
         // Mark messages as read
         await prisma.message.updateMany({
             where: {
-                conversationId: conversation.id,
+                senderId: otherUserId,
                 receiverId: userId,
                 read: false
             },
             data: { read: true }
+        });
+
+        // Reset unread count for current user's conversation
+        await prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { unreadCount: 0 }
         });
 
         res.json(messages);

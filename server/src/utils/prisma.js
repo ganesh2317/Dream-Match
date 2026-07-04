@@ -8,8 +8,8 @@ if (process.env.VERCEL) {
     const tmpDbPath = '/tmp/dev.db';
     try {
         if (!fs.existsSync(tmpDbPath)) {
-            const originalDbPath = path.join(__dirname, '../../dev.db');
-            const fallbackDbPath = path.join(process.cwd(), 'dev.db');
+            const originalDbPath = path.join(__dirname, '../../prisma/dev.db');
+            const fallbackDbPath = path.join(process.cwd(), 'prisma/dev.db');
             const source = fs.existsSync(originalDbPath) ? originalDbPath : fallbackDbPath;
             
             if (fs.existsSync(source)) {

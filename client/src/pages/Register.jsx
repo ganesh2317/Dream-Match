@@ -13,7 +13,7 @@ const Register = () => {
         age: '',
         gender: 'prefer-not-to-say'
     });
-    const { register } = useAuth();
+    const { register, login } = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState('');
 
@@ -22,7 +22,8 @@ const Register = () => {
         setError('');
         try {
             await register(formData);
-            navigate('/login');
+            await login(formData.username, formData.password);
+            navigate('/');
         } catch (err) {
             setError(err.message);
         }
