@@ -52,28 +52,45 @@ const getMessages = async (req, res) => {
         const { userId: otherUserId } = req.params;
 
         // Find or create conversation
-        let conversation = await prisma.conversation.findFirst({
+        let conversation = await prisma.conversation.findUnique({
             where: {
-                userId,
-                otherUserId
+                userId_otherUserId: {
+                    userId,
+                    otherUserId
+                }
             }
         });
 
         if (!conversation) {
-            conversation = await prisma.conversation.create({
-                data: {
-                    userId,
-                    otherUserId
-                }
-            });
+            try {
+                conversation = await prisma.conversation.create({
+                    data: {
+                        userId,
+                        otherUserId
+                    }
+                });
+            } catch (e) {
+                conversation = await prisma.conversation.findUnique({
+                    where: {
+                        userId_otherUserId: {
+                            userId,
+                            otherUserId
+                        }
+                    }
+                });
+            }
 
-            // Create reverse conversation for the other user
-            await prisma.conversation.create({
-                data: {
-                    userId: otherUserId,
-                    otherUserId: userId
-                }
-            });
+            // Create reverse conversation for the other user if it doesn't exist
+            try {
+                await prisma.conversation.create({
+                    data: {
+                        userId: otherUserId,
+                        otherUserId: userId
+                    }
+                });
+            } catch (e) {
+                // Ignore key constraint failures if it already exists
+            }
         }
 
         const messages = await prisma.message.findMany({
@@ -108,7 +125,12 @@ const getMessages = async (req, res) => {
 
         // Reset unread count for current user's conversation
         await prisma.conversation.update({
-            where: { id: conversation.id },
+            where: {
+                userId_otherUserId: {
+                    userId,
+                    otherUserId
+                }
+            },
             data: { unreadCount: 0 }
         });
 
@@ -129,38 +151,64 @@ const sendMessage = async (req, res) => {
             return res.status(400).json({ message: 'Message content is required' });
         }
 
-        // Find or create conversation for sender
-        let senderConversation = await prisma.conversation.findFirst({
+        // Find or create conversation for sender using high-perf findUnique
+        let senderConversation = await prisma.conversation.findUnique({
             where: {
-                userId: senderId,
-                otherUserId: receiverId
+                userId_otherUserId: {
+                    userId: senderId,
+                    otherUserId: receiverId
+                }
             }
         });
 
         if (!senderConversation) {
-            senderConversation = await prisma.conversation.create({
-                data: {
-                    userId: senderId,
-                    otherUserId: receiverId
-                }
-            });
+            try {
+                senderConversation = await prisma.conversation.create({
+                    data: {
+                        userId: senderId,
+                        otherUserId: receiverId
+                    }
+                });
+            } catch (e) {
+                senderConversation = await prisma.conversation.findUnique({
+                    where: {
+                        userId_otherUserId: {
+                            userId: senderId,
+                            otherUserId: receiverId
+                        }
+                    }
+                });
+            }
         }
 
         // Find or create conversation for receiver
-        let receiverConversation = await prisma.conversation.findFirst({
+        let receiverConversation = await prisma.conversation.findUnique({
             where: {
-                userId: receiverId,
-                otherUserId: senderId
+                userId_otherUserId: {
+                    userId: receiverId,
+                    otherUserId: senderId
+                }
             }
         });
 
         if (!receiverConversation) {
-            receiverConversation = await prisma.conversation.create({
-                data: {
-                    userId: receiverId,
-                    otherUserId: senderId
-                }
-            });
+            try {
+                receiverConversation = await prisma.conversation.create({
+                    data: {
+                        userId: receiverId,
+                        otherUserId: senderId
+                    }
+                });
+            } catch (e) {
+                receiverConversation = await prisma.conversation.findUnique({
+                    where: {
+                        userId_otherUserId: {
+                            userId: receiverId,
+                            otherUserId: senderId
+                        }
+                    }
+                });
+            }
         }
 
         // Create message
@@ -201,6 +249,26 @@ const sendMessage = async (req, res) => {
                 unreadCount: { increment: 1 }
             }
         });
+
+        // Broadcast to sockets
+        const io = req.app.get('io');
+        const userSockets = req.app.get('userSockets');
+        if (io && userSockets) {
+            // Recipient
+            const recipientSockets = userSockets.get(receiverId);
+            if (recipientSockets) {
+                recipientSockets.forEach(socketId => {
+                    io.to(socketId).emit('message_received', message);
+                });
+            }
+            // Sender (other sessions/tabs)
+            const senderSockets = userSockets.get(senderId);
+            if (senderSockets) {
+                senderSockets.forEach(socketId => {
+                    io.to(socketId).emit('message_received', message);
+                });
+            }
+        }
 
         res.json(message);
     } catch (error) {

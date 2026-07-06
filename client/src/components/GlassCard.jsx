@@ -1,6 +1,6 @@
 import React from 'react';
 
-const GlassCard = ({ children, className = '', style = {} }) => {
+const GlassCard = ({ children, className = '', style = {}, ...props }) => {
     return (
         <div
             className={`glass-panel ${className}`}
@@ -16,6 +16,7 @@ const GlassCard = ({ children, className = '', style = {} }) => {
                 transition: 'all var(--transition-normal)',
                 ...style
             }}
+            {...props}
         >
             {children}
         </div>

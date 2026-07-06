@@ -85,4 +85,33 @@ describe('Dream Social REST API Tests', () => {
         expect(res.statusCode).toBe(200);
         expect(Array.isArray(res.body)).toBe(true);
     });
+
+    test('POST /api/dreams/generate should succeed and return metadata (pending: true)', async () => {
+        const res = await request(app)
+            .post('/api/dreams/generate')
+            .set('Authorization', `Bearer ${testUserToken}`)
+            .send({ description: 'A futuristic city in the clouds' });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.pending).toBe(true);
+        expect(Array.isArray(res.body.variations)).toBe(true);
+        expect(res.body.variations.length).toBe(4);
+        expect(res.body.video).toBeDefined();
+        expect(res.body.video.prompt).toBeDefined();
+    });
+
+    test('POST /api/dreams/generate-single should succeed and return a Base64 image string', async () => {
+        const res = await request(app)
+            .post('/api/dreams/generate-single')
+            .set('Authorization', `Bearer ${testUserToken}`)
+            .send({
+                prompt: 'A futuristic city in the clouds. Style: cyberpunk',
+                seed: 12345,
+                width: 128,
+                height: 128
+            });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.image).toBeDefined();
+        expect(res.body.image).toContain('data:image/');
+        expect(res.body.image).toContain('base64,');
+    }, 30000);
 });

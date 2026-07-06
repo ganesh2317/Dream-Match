@@ -57,11 +57,13 @@ const authLimiter = rateLimit({
     message: { message: 'Too many authentication attempts, please try again after 15 minutes.' }
 });
 
-// Apply Rate Limiters
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/dreams/generate', authLimiter);
-app.use('/api', apiLimiter);
+// Apply Rate Limiters (disabled in local development to avoid blocking automated tests)
+if (process.env.NODE_ENV === 'production') {
+    app.use('/api/auth/login', authLimiter);
+    app.use('/api/auth/register', authLimiter);
+    app.use('/api/dreams/generate', authLimiter);
+    app.use('/api', apiLimiter);
+}
 
 // Routes
 const authRoutes = require('./src/routes/authRoutes');
@@ -90,8 +92,47 @@ app.use((err, req, res, next) => {
     });
 });
 
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: allowedOrigins,
+        credentials: true
+    }
+});
+
+const userSockets = new Map();
+app.set('io', io);
+app.set('userSockets', userSockets);
+
+io.on('connection', (socket) => {
+    socket.on('register', (userId) => {
+        if (userId) {
+            socket.userId = userId;
+            if (!userSockets.has(userId)) {
+                userSockets.set(userId, new Set());
+            }
+            userSockets.get(userId).add(socket.id);
+            console.log(`User ${userId} registered socket ${socket.id}`);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        if (socket.userId && userSockets.has(socket.userId)) {
+            const sockets = userSockets.get(socket.userId);
+            sockets.delete(socket.id);
+            if (sockets.size === 0) {
+                userSockets.delete(socket.userId);
+            }
+            console.log(`User ${socket.userId} disconnected socket ${socket.id}`);
+        }
+    });
+});
+
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+    server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
 }

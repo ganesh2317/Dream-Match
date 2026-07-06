@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
 import GlassCard from './GlassCard';
 import { Send, MessageCircle, ArrowLeft, Check, CheckCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -6,13 +7,70 @@ import { useAuth } from '../context/AuthContext';
 const Messages = ({ initialUser, onClearInitial }) => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(() => {
+        const stored = localStorage.getItem('selectedChatUser');
+        try {
+            return stored ? JSON.parse(stored) : null;
+        } catch (e) {
+            return null;
+        }
+    });
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const chatEndRef = useRef(null);
     const pollingRef = useRef(null);
+    const socketRef = useRef(null);
+
+    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const socket = io(socketUrl, {
+            transports: ['websocket', 'polling']
+        });
+        socketRef.current = socket;
+
+        socket.emit('register', user.id);
+
+        socket.on('message_received', (newMessage) => {
+            setSelectedUser((currentSelectedUser) => {
+                if (currentSelectedUser && 
+                    (newMessage.senderId === currentSelectedUser.id || 
+                     newMessage.receiverId === currentSelectedUser.id)) {
+                    
+                    setMessages((prevMessages) => {
+                        if (prevMessages.some(m => m.id === newMessage.id)) {
+                            return prevMessages;
+                        }
+                        const pendingIndex = prevMessages.findIndex(m => m.pending && m.content === newMessage.content && m.senderId === newMessage.senderId);
+                        if (pendingIndex > -1) {
+                            const next = [...prevMessages];
+                            next[pendingIndex] = { ...newMessage, pending: false };
+                            return next;
+                        }
+                        return [...prevMessages, newMessage];
+                    });
+                }
+                return currentSelectedUser;
+            });
+            fetchConversations();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (selectedUser) {
+            localStorage.setItem('selectedChatUser', JSON.stringify(selectedUser));
+        } else {
+            localStorage.removeItem('selectedChatUser');
+        }
+    }, [selectedUser]);
 
     const fetchConversations = async () => {
         try {

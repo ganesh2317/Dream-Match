@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
     const { user, logout } = useAuth();
-    const [activeTab, setActiveTab] = useState('feed');
+    const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'feed');
     const [initialVisualId, setInitialVisualId] = useState(null);
     const [dreams, setDreams] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -75,6 +75,16 @@ const Dashboard = () => {
             window.removeEventListener('resize', handleResize);
         };
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('activeTab', activeTab);
+    }, [activeTab]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('activeTab');
+        localStorage.removeItem('selectedChatUser');
+        logout();
+    };
 
     const handleOpenMessage = (user) => {
         setMessageUser(user);
@@ -151,7 +161,7 @@ const Dashboard = () => {
                     setActiveTab={setActiveTab}
                     setShowCreateModal={setShowCreateModal}
                     user={user}
-                    logout={logout}
+                    logout={handleLogout}
                 />
             )}
 
@@ -174,7 +184,7 @@ const Dashboard = () => {
                                 setShowMobileSidebar(false);
                             }}
                             user={user}
-                            logout={logout}
+                            logout={handleLogout}
                         />
                     </div>
                 </div>
@@ -260,6 +270,14 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [generating, setGenerating] = useState(false);
 
+    // Dynamic state management for sequential generations
+    const [loadingStates, setLoadingStates] = useState([false, false, false, false]);
+    const [videoLoading, setVideoLoading] = useState(false);
+    const [failedStates, setFailedStates] = useState([false, false, false, false]);
+    const [videoFailed, setVideoFailed] = useState(false);
+    const [variationsMeta, setVariationsMeta] = useState([]);
+    const [videoMeta, setVideoMeta] = useState(null);
+
     const STYLES = [
         { id: 'surreal', label: 'Surrealism', emoji: '🌌' },
         { id: 'ethereal', label: 'Ethereal', emoji: '✨' },
@@ -267,9 +285,99 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
         { id: 'oil', label: 'Oil Painting', emoji: '🎨' },
     ];
 
+    const fetchVariation = async (index, meta, token) => {
+        setLoadingStates(prev => {
+            const next = [...prev];
+            next[index] = true;
+            return next;
+        });
+        setFailedStates(prev => {
+            const next = [...prev];
+            next[index] = false;
+            return next;
+        });
+
+        try {
+            const res = await fetch('/api/dreams/generate-single', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    prompt: meta.prompt,
+                    seed: meta.seed,
+                    width: 512,
+                    height: 512
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setImages(prev => {
+                    const next = [...prev];
+                    next[index] = data.image;
+                    return next;
+                });
+            } else {
+                setFailedStates(prev => {
+                    const next = [...prev];
+                    next[index] = true;
+                    return next;
+                });
+            }
+        } catch (error) {
+            console.error(`Error loading variation ${index}:`, error);
+            setFailedStates(prev => {
+                const next = [...prev];
+                next[index] = true;
+                return next;
+            });
+        } finally {
+            setLoadingStates(prev => {
+                const next = [...prev];
+                next[index] = false;
+                return next;
+            });
+        }
+    };
+
+    const fetchVideo = async (meta, token) => {
+        setVideoLoading(true);
+        setVideoFailed(false);
+        try {
+            const res = await fetch('/api/dreams/generate-single', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    prompt: meta.prompt,
+                    seed: meta.seed,
+                    width: 512,
+                    height: 896
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setVideoUrl(data.image);
+            } else {
+                setVideoFailed(true);
+            }
+        } catch (error) {
+            console.error('Error loading video:', error);
+            setVideoFailed(true);
+        } finally {
+            setVideoLoading(false);
+        }
+    };
+
     const handleGenerate = async () => {
         if (!description) return;
         setGenerating(true);
+        setStep(2);
 
         try {
             const token = localStorage.getItem('token');
@@ -284,14 +392,49 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
 
             if (res.ok) {
                 const data = await res.json();
-                setImages(data.images);
-                setVideoUrl(data.videoUrl);
-                setStep(2);
+                if (data.pending) {
+                    setVariationsMeta(data.variations);
+                    setVideoMeta(data.video);
+                    setImages([null, null, null, null]);
+                    setLoadingStates([true, true, true, true]);
+                    setFailedStates([false, false, false, false]);
+
+                    // Sequentially fetch all 4 variations to bypass concurrency caps safely
+                    for (let i = 0; i < data.variations.length; i++) {
+                        await fetchVariation(i, data.variations[i], token);
+                    }
+                    await fetchVideo(data.video, token);
+                } else {
+                    setImages(data.images);
+                    setVideoUrl(data.videoUrl);
+                    setLoadingStates([false, false, false, false]);
+                    setVideoLoading(false);
+                }
+            } else {
+                alert('Failed to initialize image generation');
+                setStep(1);
             }
         } catch (error) {
             console.error(error);
+            alert('Error generating images');
+            setStep(1);
         } finally {
             setGenerating(false);
+        }
+    };
+
+    const handleRetryVariation = async (index) => {
+        const token = localStorage.getItem('token');
+        const meta = variationsMeta[index];
+        if (meta && token) {
+            await fetchVariation(index, meta, token);
+        }
+    };
+
+    const handleRetryVideo = async () => {
+        const token = localStorage.getItem('token');
+        if (videoMeta && token) {
+            await fetchVideo(videoMeta, token);
         }
     };
 
@@ -396,40 +539,99 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
                     </div>
                 ) : (
                     <div className="fade-in">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
-                            {images.map((img, i) => (
-                                <div
-                                    key={i}
-                                    onClick={() => setSelectedImage(img)}
-                                    style={{
-                                        position: 'relative',
-                                        aspectRatio: '1',
-                                        borderRadius: '20px',
-                                        overflow: 'hidden',
-                                        cursor: 'pointer',
-                                        border: selectedImage === img ? '4px solid var(--primary)' : '2px solid transparent',
-                                        transition: '0.2s',
-                                        transform: selectedImage === img ? 'scale(0.96)' : 'scale(1)'
-                                    }}
-                                >
-                                    <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    {selectedImage === img && (
-                                        <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--primary)', borderRadius: '50%', padding: '4px' }}>
-                                            <Zap size={16} color="white" fill="white" />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                        <div style={{ marginBottom: '20px', fontSize: '13px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span>Status: </span>
+                            {images.filter(Boolean).length === 4 ? (
+                                <span style={{ color: 'var(--success)', fontWeight: 600 }}>All visions generated successfully!</span>
+                            ) : (
+                                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                                    Generating visions sequentially ({images.filter(Boolean).length}/4 loaded)...
+                                </span>
+                            )}
                         </div>
-                        <div style={{ display: 'flex', gap: '16px' }}>
-                            <button onClick={() => setStep(1)} style={{ flex: 1, padding: '16px', background: 'rgba(255,255,255,0.05)', color: 'white' }}>Try Different Prompt</button>
-                            <button onClick={handlePost} disabled={!selectedImage} style={{ flex: 1, padding: '16px' }}>Share with the World</button>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+                            {[0, 1, 2, 3].map((index) => {
+                                const img = images[index];
+                                const isLoading = loadingStates[index];
+                                const isFailed = failedStates[index];
+
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={() => img && setSelectedImage(img)}
+                                        style={{
+                                            position: 'relative',
+                                            aspectRatio: '1',
+                                            borderRadius: '20px',
+                                            overflow: 'hidden',
+                                            cursor: img ? 'pointer' : 'default',
+                                            border: selectedImage === img && img ? '4px solid var(--primary)' : '2px solid rgba(255,255,255,0.05)',
+                                            background: 'rgba(255,255,255,0.02)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: '0.2s',
+                                            transform: selectedImage === img && img ? 'scale(0.96)' : 'scale(1)'
+                                        }}
+                                    >
+                                        {isLoading ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                                                <div className="loading-spinner" style={{ width: '30px', height: '30px' }}></div>
+                                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Visualizing...</span>
+                                            </div>
+                                        ) : isFailed ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '10px', textAlign: 'center' }}>
+                                                <span style={{ fontSize: '12px', color: '#ff7675', fontWeight: 600 }}>Queue timed out</span>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleRetryVariation(index); }}
+                                                    style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                                                >
+                                                    Retry
+                                                </button>
+                                            </div>
+                                        ) : img ? (
+                                            <>
+                                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`variation ${index + 1}`} />
+                                                {selectedImage === img && (
+                                                    <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--primary)', borderRadius: '50%', padding: '4px' }}>
+                                                        <Zap size={16} color="white" fill="white" />
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                                                <div className="loading-spinner" style={{ width: '30px', height: '30px' }}></div>
+                                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Waiting...</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div style={{ display: 'flex', gap: '16px', flexDirection: 'column' }}>
+                            {videoFailed && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', background: 'rgba(255, 118, 117, 0.1)', border: '1px solid rgba(255, 118, 117, 0.2)', borderRadius: '12px', fontSize: '13px', color: '#ff7675' }}>
+                                    <span>Video/Reel generation failed.</span>
+                                    <button onClick={handleRetryVideo} style={{ padding: '4px 10px', fontSize: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>Retry Video</button>
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                                <button onClick={() => setStep(1)} style={{ flex: 1, padding: '16px', background: 'rgba(255,255,255,0.05)', color: 'white' }}>Try Different Prompt</button>
+                                <button
+                                    onClick={handlePost}
+                                    disabled={!selectedImage || videoLoading}
+                                    style={{ flex: 1, padding: '16px' }}
+                                >
+                                    {videoLoading ? 'Generating Reel...' : 'Share with the World'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
             </GlassCard>
         </div>
-    )
-}
+    );
+};
 
 export default Dashboard;

@@ -72,6 +72,207 @@ const extractKeyElements = (description) => {
     return { subjectPart, compositionPart };
 };
 
+const fetchImageAsBase64 = async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    return `data:${contentType};base64,${base64}`;
+};
+
+const generateImageFromProvider = async (prompt, seed, width, height) => {
+    // 1. Together AI
+    if (process.env.TOGETHER_API_KEY) {
+        try {
+            console.log('Generating using Together AI...');
+            const res = await fetch('https://api.together.xyz/v1/images/generations', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.TOGETHER_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'black-forest-labs/FLUX.1-schnell',
+                    prompt: prompt,
+                    width: width,
+                    height: height,
+                    steps: 4,
+                    n: 1,
+                    response_format: 'b64_json'
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.data && data.data[0] && data.data[0].b64_json) {
+                    return `data:image/jpeg;base64,${data.data[0].b64_json}`;
+                }
+            }
+            console.warn('Together AI failed, falling back...');
+        } catch (e) {
+            console.error('Together AI Error:', e);
+        }
+    }
+
+    // 2. Fal AI
+    if (process.env.FAL_KEY) {
+        try {
+            console.log('Generating using Fal AI...');
+            const res = await fetch('https://queue.fal.run/fal-ai/flux/schnell', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Key ${process.env.FAL_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    image_size: { width, height },
+                    num_inference_steps: 4,
+                    enable_safety_checker: false,
+                    sync_mode: true
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.images && data.images[0] && data.images[0].url) {
+                    return await fetchImageAsBase64(data.images[0].url);
+                }
+            }
+            console.warn('Fal AI failed, falling back...');
+        } catch (e) {
+            console.error('Fal AI Error:', e);
+        }
+    }
+
+    // 3. OpenAI
+    if (process.env.OPENAI_API_KEY) {
+        try {
+            console.log('Generating using OpenAI...');
+            const res = await fetch('https://api.openai.com/v1/images/generations', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'dall-e-3',
+                    prompt: prompt,
+                    n: 1,
+                    size: `${width}x${height}`,
+                    response_format: 'b64_json'
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.data && data.data[0] && data.data[0].b64_json) {
+                    return `data:image/jpeg;base64,${data.data[0].b64_json}`;
+                }
+            }
+            console.warn('OpenAI failed, falling back...');
+        } catch (e) {
+            console.error('OpenAI Error:', e);
+        }
+    }
+
+    // 4. Replicate
+    if (process.env.REPLICATE_API_TOKEN) {
+        try {
+            console.log('Generating using Replicate...');
+            const res = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.REPLICATE_API_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    input: {
+                        prompt: prompt,
+                        width: width,
+                        height: height,
+                        num_outputs: 1
+                    }
+                })
+            });
+            if (res.ok) {
+                let prediction = await res.json();
+                let attempts = 0;
+                while (prediction.status !== 'succeeded' && prediction.status !== 'failed' && attempts < 15) {
+                    await new Promise(r => setTimeout(r, 1000));
+                    const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+                        headers: { 'Authorization': `Bearer ${process.env.REPLICATE_API_TOKEN}` }
+                    });
+                    if (pollRes.ok) {
+                        prediction = await pollRes.json();
+                    }
+                    attempts++;
+                }
+                if (prediction.status === 'succeeded' && prediction.output && prediction.output[0]) {
+                    return await fetchImageAsBase64(prediction.output[0]);
+                }
+            }
+            console.warn('Replicate failed, falling back...');
+        } catch (e) {
+            console.error('Replicate Error:', e);
+        }
+    }
+
+    // 5. Hugging Face
+    if (process.env.HUGGINGFACE_TOKEN) {
+        try {
+            console.log('Generating using Hugging Face...');
+            const res = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.HUGGINGFACE_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ inputs: prompt })
+            });
+            if (res.ok) {
+                const buffer = await res.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString('base64');
+                const contentType = res.headers.get('content-type') || 'image/jpeg';
+                return `data:${contentType};base64,${base64}`;
+            }
+            console.warn('Hugging Face failed, falling back...');
+        } catch (e) {
+            console.error('Hugging Face Error:', e);
+        }
+    }
+
+    // 6. Stability AI
+    if (process.env.STABILITY_API_KEY) {
+        try {
+            console.log('Generating using Stability AI...');
+            const formData = new FormData();
+            formData.append('prompt', prompt);
+            formData.append('output_format', 'jpeg');
+            const res = await fetch('https://api.stability.ai/v2beta/stable-image/generate/core', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
+                    'accept': 'image/*'
+                },
+                body: formData
+            });
+            if (res.ok) {
+                const buffer = await res.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString('base64');
+                return `data:image/jpeg;base64,${base64}`;
+            }
+            console.warn('Stability AI failed, falling back...');
+        } catch (e) {
+            console.error('Stability AI Error:', e);
+        }
+    }
+
+    // Fallback: Pollinations.ai
+    console.log('Generating using Pollinations.ai (fallback)...');
+    const encodedPrompt = encodeURIComponent(prompt);
+    const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${seed}&width=${width}&height=${height}&nologo=true`;
+    return await fetchImageAsBase64(url);
+};
+
 const generateDreamImages = async (req, res) => {
     try {
         const { description } = req.body;
@@ -84,7 +285,7 @@ const generateDreamImages = async (req, res) => {
         // Extract key elements for accurate representation
         const { subjectPart, compositionPart } = extractKeyElements(description);
 
-        // Professional photography quality suffix - emphasis on REAL and ACCURATE
+        // Professional photography quality suffix
         const imgQualitySuffix = [
             'award-winning National Geographic photograph',
             'shot on Canon EOS R5, 85mm lens',
@@ -108,28 +309,64 @@ const generateDreamImages = async (req, res) => {
             compositionPart
         ].filter(Boolean).join(', ');
 
-        // Build the full prompt with clear instruction structure
         const imgPrompt = `${description}. Style: ${imgQualitySuffix}`;
         const vidPrompt = `${description}. Style: ${vidQualitySuffix}`;
 
-        const encodedImgPrompt = encodeURIComponent(imgPrompt);
-        const encodedVidPrompt = encodeURIComponent(vidPrompt);
+        // Check if any API key is defined for fast parallel generation
+        const hasApiKey = process.env.TOGETHER_API_KEY ||
+                          process.env.FAL_KEY ||
+                          process.env.OPENAI_API_KEY ||
+                          process.env.REPLICATE_API_TOKEN ||
+                          process.env.HUGGINGFACE_TOKEN ||
+                          process.env.STABILITY_API_KEY;
 
-        // Generate 4 image variations with different seeds
-        const images = [1, 2, 3, 4].map(i => {
+        if (hasApiKey) {
+            console.log('API key detected. Generating all images in parallel on backend...');
+            const imagePromises = [1, 2, 3, 4].map(async (i) => {
+                const seed = Math.floor(Math.random() * 9999999) + i;
+                return await generateImageFromProvider(imgPrompt, seed, 512, 512);
+            });
+            const videoPromise = (async () => {
+                const seed = Math.floor(Math.random() * 9999999);
+                return await generateImageFromProvider(vidPrompt, seed, 512, 896);
+            })();
+
+            const images = await Promise.all(imagePromises);
+            const videoUrl = await videoPromise;
+            return res.json({ images, videoUrl });
+        }
+
+        // If no API key, return prompt metadata so client can fetch sequentially
+        console.log('No API key detected. Returning metadata for client-side sequential generation...');
+        const variations = [1, 2, 3, 4].map(i => {
             const seed = Math.floor(Math.random() * 9999999) + i;
-            return `https://image.pollinations.ai/prompt/${encodedImgPrompt}?seed=${seed}&width=1024&height=1024&nologo=true&enhance=true`;
+            return { seed, prompt: imgPrompt };
         });
+        const videoSeed = Math.floor(Math.random() * 9999999);
 
-        // Generate a "video" URL (tall format for reels/stories)
-        const vidSeed = Math.floor(Math.random() * 9999999);
-        const videoUrl = `https://image.pollinations.ai/prompt/${encodedVidPrompt}?seed=${vidSeed}&width=1024&height=1792&nologo=true&enhance=true`;
-
-        console.log(`Successfully generated high-fidelity visuals with enhanced prompts`);
-        res.json({ images, videoUrl });
+        res.json({
+            pending: true,
+            variations,
+            video: { seed: videoSeed, prompt: vidPrompt }
+        });
     } catch (error) {
         console.error('Image Generation Error:', error);
         res.status(500).json({ message: 'Error generating visuals' });
+    }
+};
+
+const generateSingleImage = async (req, res) => {
+    try {
+        const { prompt, seed, width = 512, height = 512 } = req.body;
+        if (!prompt) {
+            return res.status(400).json({ message: 'Prompt is required' });
+        }
+        console.log(`Generating single image with seed ${seed}`);
+        const imageBase64 = await generateImageFromProvider(prompt, seed, width, height);
+        res.json({ image: imageBase64 });
+    } catch (error) {
+        console.error('Single Image Generation Error:', error);
+        res.status(500).json({ message: 'Error generating image variation' });
     }
 };
 
@@ -383,4 +620,4 @@ const getMatches = async (req, res) => {
     }
 };
 
-module.exports = { generateDreamImages, createDream, getFeed, likeDream, commentDream, viewDream, getMatches };
+module.exports = { generateDreamImages, generateSingleImage, createDream, getFeed, likeDream, commentDream, viewDream, getMatches };
