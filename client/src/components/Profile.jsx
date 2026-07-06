@@ -4,7 +4,7 @@ import { User as UserIcon, Edit2, Save, X, Camera, Flame, Image as ImageIcon, Sp
 import { useAuth } from '../context/AuthContext';
 
 const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
-    const { user: contextUser } = useAuth();
+    const { user: contextUser, updateUser } = useAuth();
     const [user, setUser] = useState(propUser || contextUser);
     const [userDreams, setUserDreams] = useState([]);
     const [galleryTab, setGalleryTab] = useState('dreams'); // 'dreams' or 'visuals'
@@ -13,6 +13,40 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
     const [bio, setBio] = useState('');
     const [preview, setPreview] = useState('');
     const [saving, setSaving] = useState(false);
+    
+    const [isFollowingState, setIsFollowingState] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            setIsFollowingState(user.isFollowing || false);
+        }
+    }, [user?.isFollowing]);
+
+    const handleFollowToggle = async () => {
+        const endpoint = isFollowingState ? 'unfollow' : 'follow';
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/users/${endpoint}/${user.id}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setIsFollowingState(!isFollowingState);
+                setUser(prev => {
+                    const countOffset = isFollowingState ? -1 : 1;
+                    return {
+                        ...prev,
+                        _count: {
+                            ...prev._count,
+                            followers: Math.max(0, (prev._count?.followers || 0) + countOffset)
+                        }
+                    };
+                });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -76,7 +110,10 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
             });
 
             if (res.ok) {
-                window.location.reload();
+                const data = await res.json();
+                updateUser({ bio: data.bio, avatarUrl: data.avatarUrl });
+                setUser(prev => ({ ...prev, bio: data.bio, avatarUrl: data.avatarUrl }));
+                setPreview('');
             } else {
                 alert('Failed to update profile');
             }
@@ -181,9 +218,26 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                                     </div>
                                 )
                             ) : (
-                                <button onClick={() => onMessage(user)} style={{ padding: '10px 24px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <MessageCircle size={16} /> Message
-                                </button>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        onClick={handleFollowToggle}
+                                        style={{
+                                            padding: '10px 24px',
+                                            borderRadius: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            background: isFollowingState ? 'rgba(255,255,255,0.05)' : 'var(--primary)',
+                                            border: isFollowingState ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                                            color: 'white'
+                                        }}
+                                    >
+                                        {isFollowingState ? 'Following' : 'Follow'}
+                                    </button>
+                                    <button onClick={() => onMessage(user)} style={{ padding: '10px 24px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <MessageCircle size={16} /> Message
+                                    </button>
+                                </div>
                             )}
                         </div>
 

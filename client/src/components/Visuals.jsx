@@ -59,8 +59,41 @@ const Visuals = ({ dreams, onRefresh, initialDreamId }) => {
     );
 };
 
-const VisualItem = ({ dream }) => {
+const VisualItem = ({ dream, onRefresh }) => {
     const [liked, setLiked] = useState(dream.isLiked || false);
+    const [likeCount, setLikeCount] = useState(dream._count?.likes || 0);
+
+    useEffect(() => {
+        setLiked(dream.isLiked || false);
+        setLikeCount(dream._count?.likes || 0);
+    }, [dream.isLiked, dream._count?.likes]);
+
+    const handleLike = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            
+            // Optimistic update
+            const nextLiked = !liked;
+            setLiked(nextLiked);
+            setLikeCount(prev => nextLiked ? prev + 1 : Math.max(0, prev - 1));
+
+            const res = await fetch(`/api/dreams/${dream.id}/like`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setLiked(data.liked);
+                if (onRefresh) onRefresh();
+            }
+        } catch (e) {
+            console.error(e);
+            // Revert on error
+            setLiked(dream.isLiked || false);
+            setLikeCount(dream._count?.likes || 0);
+        }
+    };
 
     return (
         <div style={{
@@ -112,12 +145,12 @@ const VisualItem = ({ dream }) => {
             }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                     <div
-                        onClick={() => setLiked(!liked)}
+                        onClick={handleLike}
                         style={{ padding: '12px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: '50%', cursor: 'pointer' }}
                     >
                         <Heart size={28} color={liked ? "#ff4757" : "white"} fill={liked ? "#ff4757" : "none"} />
                     </div>
-                    <span style={{ fontSize: '12px', fontWeight: 600 }}>{dream._count?.likes || 0}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600 }}>{likeCount}</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>

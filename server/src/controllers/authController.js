@@ -8,9 +8,45 @@ const register = async (req, res) => {
     try {
         const { fullName, username, password, gender, age } = req.body;
 
-        // Check if user exists
+        // Validations
+        if (!fullName || typeof fullName !== 'string' || fullName.trim().length < 2) {
+            return res.status(400).json({ message: 'Full name must be at least 2 characters' });
+        }
+        if (fullName.trim().length > 50) {
+            return res.status(400).json({ message: 'Full name must be under 50 characters' });
+        }
+
+        if (!username || typeof username !== 'string') {
+            return res.status(400).json({ message: 'Username is required' });
+        }
+        const cleanUsername = username.trim();
+        if (cleanUsername.length < 3 || cleanUsername.length > 20) {
+            return res.status(400).json({ message: 'Username must be between 3 and 20 characters' });
+        }
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+        if (!usernameRegex.test(cleanUsername)) {
+            return res.status(400).json({ message: 'Username can only contain letters, numbers, and underscores' });
+        }
+
+        if (!password || typeof password !== 'string' || password.length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        }
+
+        if (age !== undefined && age !== null && age !== '') {
+            const parsedAge = parseInt(age);
+            if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+                return res.status(400).json({ message: 'Age must be a valid number between 1 and 120' });
+            }
+        }
+
+        const validGenders = ['male', 'female', 'other', 'prefer-not-to-say'];
+        if (gender && !validGenders.includes(gender)) {
+            return res.status(400).json({ message: 'Invalid gender value' });
+        }
+
+        // Check if user exists (case-insensitive username check preferred, or match standard unique constraint)
         const existingUser = await prisma.user.findUnique({
-            where: { username },
+            where: { username: cleanUsername },
         });
 
         if (existingUser) {
@@ -23,12 +59,12 @@ const register = async (req, res) => {
         // Create user
         const user = await prisma.user.create({
             data: {
-                fullName,
-                username,
+                fullName: fullName.trim(),
+                username: cleanUsername,
                 password: hashedPassword,
-                gender,
-                age: parseInt(age) || null,
-                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`,
+                gender: gender || 'prefer-not-to-say',
+                age: age ? parseInt(age) : null,
+                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName.trim())}&background=random`,
             },
         });
 

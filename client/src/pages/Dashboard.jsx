@@ -8,9 +8,8 @@ import Messages from '../components/Messages';
 import Profile from '../components/Profile';
 import Search from '../components/Search';
 import Visuals from '../components/Visuals';
-import { Moon, X, Sparkles, Wand2, Zap } from 'lucide-react';
+import { Moon, X, Sparkles, Wand2, Zap, Flame, PlusSquare, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getMockMatches } from '../utils/mockData';
 
 const Dashboard = () => {
     const { user, logout } = useAuth();
@@ -21,6 +20,10 @@ const Dashboard = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [viewingUser, setViewingUser] = useState(null);
     const [messageUser, setMessageUser] = useState(null);
+    const [dbMatches, setDbMatches] = useState([]);
+
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
+    const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
     const fetchDreams = async () => {
         try {
@@ -38,10 +41,39 @@ const Dashboard = () => {
         }
     };
 
+    const fetchMatches = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            const res = await fetch('/api/dreams/matches', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setDbMatches(data.slice(0, 3)); // show top 3 on dashboard sidebar
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard matches:', error);
+        }
+    };
+
     useEffect(() => {
         fetchDreams();
-        const interval = setInterval(fetchDreams, 10000);
-        return () => clearInterval(interval);
+        fetchMatches();
+        const interval = setInterval(() => {
+            fetchDreams();
+            fetchMatches();
+        }, 10000);
+
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 992);
+        };
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
     const handleOpenMessage = (user) => {
@@ -77,65 +109,147 @@ const Dashboard = () => {
     };
 
     return (
-        <div style={{ display: 'flex', height: '100vh', background: 'var(--bg-gradient)', padding: '20px', gap: '20px', overflow: 'hidden' }}>
+        <div style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            height: '100vh',
+            background: 'var(--bg-gradient)',
+            padding: isMobile ? '0' : '20px',
+            gap: isMobile ? '0' : '20px',
+            overflow: 'hidden'
+        }}>
+            {/* Mobile Header */}
+            {isMobile && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', borderBottom: 'var(--glass-border)', zIndex: 100 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button
+                            onClick={() => setShowMobileSidebar(true)}
+                            style={{ background: 'transparent', padding: 0, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', transform: 'none', boxShadow: 'none' }}
+                        >
+                            <img src={user?.avatarUrl} alt="avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid var(--primary)', objectFit: 'cover' }} />
+                        </button>
+                        <span style={{ fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px' }}>DreamMatch</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#ff9f43', background: 'rgba(255, 159, 67, 0.1)', padding: '4px 10px', borderRadius: '100px', fontWeight: 700 }}>
+                            <Flame size={14} fill="#ff9f43" /> {user?.streakCount || 0}
+                        </div>
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            style={{ background: 'var(--primary-gradient)', padding: '8px 12px', fontSize: '13px', borderRadius: '8px' }}
+                        >
+                            <PlusSquare size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
-            <Sidebar
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                setShowCreateModal={setShowCreateModal}
-                user={user}
-                logout={logout}
-            />
+            {/* Desktop Sidebar */}
+            {!isMobile && (
+                <Sidebar
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    setShowCreateModal={setShowCreateModal}
+                    user={user}
+                    logout={logout}
+                />
+            )}
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px', scrollBehavior: 'smooth' }}>
+            {/* Mobile Slide Drawer Sidebar */}
+            {isMobile && showMobileSidebar && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex' }}>
+                    <div
+                        onClick={() => setShowMobileSidebar(false)}
+                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', animation: 'fadeIn 0.2s' }}
+                    />
+                    <div style={{ position: 'relative', width: '280px', height: '100%', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                        <Sidebar
+                            activeTab={activeTab}
+                            setActiveTab={(tab) => {
+                                setActiveTab(tab);
+                                setShowMobileSidebar(false);
+                            }}
+                            setShowCreateModal={(show) => {
+                                setShowCreateModal(show);
+                                setShowMobileSidebar(false);
+                            }}
+                            user={user}
+                            logout={logout}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Main Content Area */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '20px 10px' : '0 10px', scrollBehavior: 'smooth' }}>
                 {renderContent()}
             </div>
 
-            {/* Right Sidebar */}
-            <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <GlassCard style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                        <h3 style={{ fontSize: '18px' }}>Your Dream Streak</h3>
-                        <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '8px', borderRadius: '12px' }}>
-                            <Moon color="var(--primary)" fill="var(--primary)" size={20} />
-                        </div>
-                    </div>
-                    <div style={{ fontSize: '56px', fontWeight: 800, textAlign: 'center', color: 'var(--primary)', letterSpacing: '-2px', textShadow: '0 10px 30px rgba(99, 102, 241, 0.3)' }}>
-                        {user?.streakCount || 0}
-                    </div>
-                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>Days Active</div>
-                </GlassCard>
-
-                <GlassCard style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Sparkles size={18} color="var(--primary)" /> Potential Matches
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {getMockMatches().map(match => (
-                            <div key={match.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '16px', cursor: 'pointer', transition: '0.2s', border: '1px solid transparent' }} className="hover-bg"
-                                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
-                                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
-                            >
-                                <img src={match.avatarUrl} style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'cover' }} />
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 700, fontSize: '14px' }}>{match.username}</div>
-                                    <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 600 }}>98% Dream Match</div>
-                                </div>
-                                <Zap size={14} color="var(--primary)" fill="var(--primary)" />
+            {/* Right Sidebar (Desktop only) */}
+            {!isMobile && (
+                <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <GlassCard style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                            <h3 style={{ fontSize: '18px' }}>Your Dream Streak</h3>
+                            <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '8px', borderRadius: '12px' }}>
+                                <Moon color="var(--primary)" fill="var(--primary)" size={20} />
                             </div>
-                        ))}
-                    </div>
-                    <button style={{ marginTop: 'auto', width: '100%', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontSize: '13px' }}>View All</button>
-                </GlassCard>
-            </div>
+                        </div>
+                        <div style={{ fontSize: '56px', fontWeight: 800, textAlign: 'center', color: 'var(--primary)', letterSpacing: '-2px', textShadow: '0 10px 30px rgba(99, 102, 241, 0.3)' }}>
+                            {user?.streakCount || 0}
+                        </div>
+                        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>Days Active</div>
+                    </GlassCard>
+
+                    <GlassCard style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Sparkles size={18} color="var(--primary)" /> Potential Matches
+                        </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {dbMatches.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                                    No matches found yet. Share more dreams to connect!
+                                </div>
+                            ) : (
+                                dbMatches.map(match => {
+                                    const otherUser = match.senderId === user.id ? match.receiver : match.sender;
+                                    return (
+                                        <div key={match.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '16px', cursor: 'pointer', transition: '0.2s', border: '1px solid transparent' }} className="hover-bg"
+                                            onClick={() => handleOpenMessage(otherUser)}
+                                            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+                                            onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                                        >
+                                            <img src={otherUser.avatarUrl} style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'cover' }} />
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{otherUser.username}</div>
+                                                <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 600 }}>{Math.round(match.score * 100)}% Match</div>
+                                            </div>
+                                            <Zap size={14} color="var(--primary)" fill="var(--primary)" />
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                        <button onClick={() => setActiveTab('matches')} style={{ marginTop: 'auto', width: '100%', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontSize: '13px' }}>View All</button>
+                    </GlassCard>
+                </div>
+            )}
 
             {showCreateModal && (
                 <CreateDreamModal user={user} onClose={() => setShowCreateModal(false)} onPosted={fetchDreams} />
             )}
 
+            <style>{`
+                @keyframes slideIn {
+                    from { transform: translateX(-100%); }
+                    to { transform: translateX(0); }
+                }
+            `}</style>
         </div>
     );
 };
+
+
 
 const CreateDreamModal = ({ user, onClose, onPosted }) => {
     const [step, setStep] = useState(1);

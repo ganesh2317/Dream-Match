@@ -161,12 +161,32 @@ const createDream = async (req, res) => {
             });
         }
 
-        // Increment streak
+        // Increment streak only if user hasn't posted today
+        const currentUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { lastPostedAt: true, streakCount: true }
+        });
+
+        let newStreak = currentUser.streakCount;
+        const now = new Date();
+
+        if (!currentUser.lastPostedAt) {
+            newStreak = 1;
+        } else {
+            const diff = differenceInCalendarDays(currentUser.lastPostedAt, now);
+            if (diff === 1) {
+                newStreak = currentUser.streakCount + 1;
+            } else if (diff >= 2) {
+                newStreak = 1;
+            }
+            // If diff is 0, they already posted today; streak remains unchanged
+        }
+
         const user = await prisma.user.update({
             where: { id: userId },
             data: {
-                streakCount: { increment: 1 },
-                lastPostedAt: new Date()
+                streakCount: newStreak,
+                lastPostedAt: now
             }
         });
 
@@ -245,6 +265,14 @@ const getFeed = async (req, res) => {
                 likes: {
                     where: { userId: req.user ? req.user.id : undefined }, // Check if current user liked
                     select: { userId: true }
+                },
+                comments: {
+                    include: {
+                        user: {
+                            select: { id: true, username: true, avatarUrl: true }
+                        }
+                    },
+                    orderBy: { createdAt: 'asc' }
                 }
             },
             orderBy: { createdAt: 'desc' }
