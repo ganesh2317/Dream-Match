@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../index');
+const { app } = require('../index');
 const prisma = require('../src/utils/prisma');
 
 describe('Dream Social REST API Tests', () => {
