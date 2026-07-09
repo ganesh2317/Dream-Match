@@ -2,7 +2,11 @@ const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
 
-let dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_0gkbtyH4hNYu@ep-lucky-lake-ahhl1z70-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+let dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl || (!dbUrl.startsWith('postgresql://') && !dbUrl.startsWith('postgres://'))) {
+    dbUrl = 'postgresql://neondb_owner:npg_0gkbtyH4hNYu@ep-lucky-lake-ahhl1z70-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+}
 
 if (process.env.VERCEL) {
     const tmpDbPath = '/tmp/dev.db';
