@@ -73,12 +73,65 @@ const extractKeyElements = (description) => {
 };
 
 const fetchImageAsBase64 = async (url) => {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
-    const buffer = await res.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
-    const contentType = res.headers.get('content-type') || 'image/jpeg';
-    return `data:${contentType};base64,${base64}`;
+    const retries = 3;
+    const delays = [2000, 4000, 8000];
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+        try {
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+                const bodyText = await res.text();
+                
+                console.error('Fetch failed detail logging:', {
+                    status: res.status,
+                    headers: Object.fromEntries(res.headers.entries()),
+                    body: bodyText,
+                    url: url
+                });
+
+                const lowercaseBody = bodyText.toLowerCase();
+                const isQueueError = lowercaseBody.includes('queue timed out') || lowercaseBody.includes('queue');
+
+                if (isQueueError && attempt < retries) {
+                    const delay = delays[attempt] || 2000;
+                    console.warn(`Queue issue detected. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${retries})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    continue;
+                }
+
+                throw new Error(`Failed to fetch image: ${res.status}. Body: ${bodyText}`);
+            }
+
+            const buffer = await res.arrayBuffer();
+            const base64 = Buffer.from(buffer).toString('base64');
+            const contentType = res.headers.get('content-type') || 'image/jpeg';
+            return `data:${contentType};base64,${base64}`;
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+
+            const isAbort = error.name === 'AbortError';
+            if (isAbort) {
+                console.error(`Fetch timed out (120000ms) for URL: ${url}`);
+            } else {
+                console.error(`Fetch error on attempt ${attempt}:`, error);
+            }
+
+            if (attempt < retries) {
+                const delay = delays[attempt] || 2000;
+                console.warn(`Fetch exception encountered. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${retries})`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+
+            throw error;
+        }
+    }
 };
 
 const generateImageFromProvider = async (prompt, seed, width, height) => {
@@ -267,10 +320,34 @@ const generateImageFromProvider = async (prompt, seed, width, height) => {
     }
 
     // Fallback: Pollinations.ai
-    console.log('Generating using Pollinations.ai (fallback)...');
+    console.log('Starting Pollinations request');
+    const startTime = Date.now();
+    const promptLength = prompt.length;
     const encodedPrompt = encodeURIComponent(prompt);
     const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${seed}&width=${width}&height=${height}&nologo=true`;
-    return await fetchImageAsBase64(url);
+    
+    try {
+        const base64Image = await fetchImageAsBase64(url);
+        const elapsedTime = Date.now() - startTime;
+        console.log('Finished Pollinations request');
+        console.log(`Pollinations Stats: Elapsed time: ${elapsedTime}ms, Prompt length: ${promptLength}, Seed: ${seed}, HTTP status: 200`);
+        return base64Image;
+    } catch (e) {
+        const elapsedTime = Date.now() - startTime;
+        let status = 'Unknown';
+        const match = e.message.match(/Failed to fetch image: (\d+)/);
+        if (match) {
+            status = match[1];
+        }
+        console.log('Finished Pollinations request');
+        console.log(`Pollinations Stats: Elapsed time: ${elapsedTime}ms, Prompt length: ${promptLength}, Seed: ${seed}, HTTP status: ${status}`);
+        
+        return {
+            success: false,
+            provider: "pollinations",
+            reason: "Pollinations queue timeout"
+        };
+    }
 };
 
 const generateDreamImages = async (req, res) => {
@@ -333,6 +410,15 @@ const generateDreamImages = async (req, res) => {
 
             const images = await Promise.all(imagePromises);
             const videoUrl = await videoPromise;
+            
+            const failedImage = images.find(img => img && typeof img === 'object' && img.success === false);
+            if (failedImage) {
+                return res.status(504).json(failedImage);
+            }
+            if (videoUrl && typeof videoUrl === 'object' && videoUrl.success === false) {
+                return res.status(504).json(videoUrl);
+            }
+            
             return res.json({ images, videoUrl });
         }
 
@@ -363,6 +449,9 @@ const generateSingleImage = async (req, res) => {
         }
         console.log(`Generating single image with seed ${seed}`);
         const imageBase64 = await generateImageFromProvider(prompt, seed, width, height);
+        if (imageBase64 && typeof imageBase64 === 'object' && imageBase64.success === false) {
+            return res.status(504).json(imageBase64);
+        }
         res.json({ image: imageBase64 });
     } catch (error) {
         console.error('Single Image Generation Error:', error);
