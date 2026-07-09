@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.PROD ? 'https://server-nine-mu-70.vercel.app/api' : '/api';
+const API_URL = import.meta.env.PROD
+    ? 'https://dream-match.onrender.com/api'
+    : '/api';
 
 export const api = {
     async get(endpoint) {
