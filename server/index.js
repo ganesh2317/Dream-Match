@@ -96,6 +96,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
     cors: {
         origin: allowedOrigins,
@@ -104,37 +105,79 @@ const io = new Server(server, {
 });
 
 const userSockets = new Map();
+
 app.set('io', io);
 app.set('userSockets', userSockets);
 
 io.on('connection', (socket) => {
+
     socket.on('register', (userId) => {
-        if (userId) {
-            socket.userId = userId;
-            if (!userSockets.has(userId)) {
-                userSockets.set(userId, new Set());
-            }
-            userSockets.get(userId).add(socket.id);
-            console.log(`User ${userId} registered socket ${socket.id}`);
+        if (!userId) return;
+
+        socket.userId = userId;
+
+        if (!userSockets.has(userId)) {
+            userSockets.set(userId, new Set());
         }
+
+        userSockets.get(userId).add(socket.id);
+
+        console.log(`User ${userId} connected (${socket.id})`);
     });
 
     socket.on('disconnect', () => {
-        if (socket.userId && userSockets.has(socket.userId)) {
-            const sockets = userSockets.get(socket.userId);
+
+        if (!socket.userId) return;
+
+        const sockets = userSockets.get(socket.userId);
+
+        if (sockets) {
             sockets.delete(socket.id);
+
             if (sockets.size === 0) {
                 userSockets.delete(socket.userId);
             }
-            console.log(`User ${socket.userId} disconnected socket ${socket.id}`);
         }
+
+        console.log(`User ${socket.userId} disconnected`);
+    });
+
+});
+
+/**
+ * Health Check
+ */
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
     });
 });
 
-if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
-    server.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}
+/**
+ * Start Server
+ */
+server.listen(PORT, "0.0.0.0", () => {
+    console.log("======================================");
+    console.log("🚀 Dream Match Backend Started");
+    console.log(`🌍 Environment : ${process.env.NODE_ENV}`);
+    console.log(`📡 Port        : ${PORT}`);
+    console.log("======================================");
+});
 
-module.exports = app;
+/**
+ * Handle Unexpected Errors
+ */
+process.on("unhandledRejection", (err) => {
+    console.error("Unhandled Promise Rejection:");
+    console.error(err);
+});
+
+process.on("uncaughtException", (err) => {
+    console.error("Uncaught Exception:");
+    console.error(err);
+});
+
+module.exports = { app, server };
