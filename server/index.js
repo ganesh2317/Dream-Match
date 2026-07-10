@@ -156,6 +156,18 @@ app.get("/health", (req, res) => {
     });
 });
 
+// Test email endpoint
+app.get('/api/test-email', async (req, res) => {
+    const { sendTestEmail } = require('./src/services/mailService');
+    try {
+        const toEmail = req.query.email || 'ganeshmahalatkar@gmail.com';
+        const result = await sendTestEmail(toEmail);
+        res.json({ success: true, result });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 /**
  * Start Server
  */

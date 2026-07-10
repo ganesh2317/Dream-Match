@@ -13,6 +13,7 @@ datasource db {
 model User {
   id           String   @id @default(uuid())
   username     String   @unique
+  email        String?  @unique
   password     String
   fullName     String
   gender       String?
@@ -149,4 +150,18 @@ model Message {
   receiver       User         @relation("MessageReceiver", fields: [receiverId], references: [id])
   
   createdAt      DateTime     @default(now())
+}
+
+model PendingVerification {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  username     String
+  password     String
+  fullName     String
+  gender       String?
+  age          Int?
+  otp          String
+  attempts     Int      @default(0)
+  otpExpiresAt DateTime
+  createdAt    DateTime @default(now())
 }

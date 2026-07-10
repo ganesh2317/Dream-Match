@@ -91,6 +91,45 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const sendOtp = async (formData) => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to send verification email');
+            return data;
+        } catch (e) {
+            throw e;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const verifyOtp = async (email, otp) => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Verification failed');
+            
+            localStorage.setItem('token', data.token);
+            setUser(data.user);
+            return data.user;
+        } catch (e) {
+            throw e;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         setUser(null);
@@ -101,7 +140,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading, updateUser }}>
+        <AuthContext.Provider value={{ user, login, register, logout, loading, updateUser, sendOtp, verifyOtp }}>
             {children}
         </AuthContext.Provider>
     );
