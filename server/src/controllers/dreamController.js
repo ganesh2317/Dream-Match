@@ -86,7 +86,7 @@ const fetchImageAsBase64 = async (url) => {
 
             if (!res.ok) {
                 const bodyText = await res.text();
-                
+
                 console.error('Fetch failed detail logging:', {
                     status: res.status,
                     headers: Object.fromEntries(res.headers.entries()),
@@ -325,7 +325,7 @@ const generateImageFromProvider = async (prompt, seed, width, height) => {
     const promptLength = prompt.length;
     const encodedPrompt = encodeURIComponent(prompt);
     const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${seed}&width=${width}&height=${height}&nologo=true`;
-    
+
     try {
         const base64Image = await fetchImageAsBase64(url);
         const elapsedTime = Date.now() - startTime;
@@ -341,7 +341,7 @@ const generateImageFromProvider = async (prompt, seed, width, height) => {
         }
         console.log('Finished Pollinations request');
         console.log(`Pollinations Stats: Elapsed time: ${elapsedTime}ms, Prompt length: ${promptLength}, Seed: ${seed}, HTTP status: ${status}`);
-        
+
         return {
             success: false,
             provider: "pollinations",
@@ -391,11 +391,11 @@ const generateDreamImages = async (req, res) => {
 
         // Check if any API key is defined for fast parallel generation
         const hasApiKey = process.env.TOGETHER_API_KEY ||
-                          process.env.FAL_KEY ||
-                          process.env.OPENAI_API_KEY ||
-                          process.env.REPLICATE_API_TOKEN ||
-                          process.env.HUGGINGFACE_TOKEN ||
-                          process.env.STABILITY_API_KEY;
+            process.env.FAL_KEY ||
+            process.env.OPENAI_API_KEY ||
+            process.env.REPLICATE_API_TOKEN ||
+            process.env.HUGGINGFACE_TOKEN ||
+            process.env.STABILITY_API_KEY;
 
         if (hasApiKey) {
             console.log('API key detected. Generating all images in parallel on backend...');
@@ -410,7 +410,7 @@ const generateDreamImages = async (req, res) => {
 
             const images = await Promise.all(imagePromises);
             const videoUrl = await videoPromise;
-            
+
             const failedImage = images.find(img => img && typeof img === 'object' && img.success === false);
             if (failedImage) {
                 return res.status(504).json(failedImage);
@@ -418,7 +418,7 @@ const generateDreamImages = async (req, res) => {
             if (videoUrl && typeof videoUrl === 'object' && videoUrl.success === false) {
                 return res.status(504).json(videoUrl);
             }
-            
+
             return res.json({ images, videoUrl });
         }
 

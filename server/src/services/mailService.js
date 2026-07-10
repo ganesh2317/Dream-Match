@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 // Lazily instantiate Resend to prevent module loading crashes when key is missing
 let resendInstance = null;
@@ -15,10 +16,50 @@ const getResendInstance = () => {
  * @param {string} email 
  */
 const sendTestEmail = async (email) => {
-    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
     const subject = 'Dream Match Email Test';
     const html = `<p>This is a test email.</p><p>If you received this, Dream Match email delivery is working.</p>`;
     
+    // Check if we should use Nodemailer + Gmail SMTP
+    if (smtpUser && smtpPass) {
+        console.log('--- Nodemailer Send Test Email Initiated ---');
+        console.log('Recipient:', email);
+        console.log('Sender (SMTP_USER):', smtpUser);
+        console.log('Subject:', subject);
+        
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: smtpUser,
+                pass: smtpPass
+            }
+        });
+
+        const mailOptions = {
+            from: `"Dream Match" <${smtpUser}>`,
+            to: email,
+            subject: subject,
+            html: html
+        };
+
+        try {
+            const info = await transporter.sendMail(mailOptions);
+            console.log('Nodemailer SMTP Call Succeeded');
+            console.log('Response:', JSON.stringify(info, null, 2));
+            console.log('----------------------------------------');
+            return info;
+        } catch (error) {
+            console.error('Nodemailer SMTP Call Failed');
+            console.error('Complete Error Object:', error);
+            console.error('Error Stack:', error.stack);
+            console.log('----------------------------------------');
+            throw error;
+        }
+    }
+
+    // Fallback to Resend
+    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
     console.log('--- Resend Send Test Email Initiated ---');
     console.log('Recipient:', email);
     console.log('Sender:', fromEmail);
@@ -56,7 +97,8 @@ const sendTestEmail = async (email) => {
  * @param {string} otp 
  */
 const sendVerificationOtpEmail = async (email, fullName, otp) => {
-    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
     const subject = 'Verify your Dream Match account';
     
     const html = `
@@ -148,6 +190,45 @@ const sendVerificationOtpEmail = async (email, fullName, otp) => {
     </html>
     `;
 
+    // Check if we should use Nodemailer + Gmail SMTP
+    if (smtpUser && smtpPass) {
+        console.log('--- Nodemailer Send OTP Email Initiated ---');
+        console.log('Recipient:', email);
+        console.log('Sender (SMTP_USER):', smtpUser);
+        console.log('Subject:', subject);
+        
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: smtpUser,
+                pass: smtpPass
+            }
+        });
+
+        const mailOptions = {
+            from: `"Dream Match" <${smtpUser}>`,
+            to: email,
+            subject: subject,
+            html: html
+        };
+
+        try {
+            const info = await transporter.sendMail(mailOptions);
+            console.log('Nodemailer SMTP Call Succeeded');
+            console.log('Response:', JSON.stringify(info, null, 2));
+            console.log('----------------------------------------');
+            return info;
+        } catch (error) {
+            console.error('Nodemailer SMTP Call Failed');
+            console.error('Complete Error Object:', error);
+            console.error('Error Stack:', error.stack);
+            console.log('----------------------------------------');
+            throw error;
+        }
+    }
+
+    // Fallback to Resend
+    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
     console.log('--- Resend Send OTP Email Initiated ---');
     console.log('Recipient:', email);
     console.log('Sender:', fromEmail);
