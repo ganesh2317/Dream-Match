@@ -20,11 +20,14 @@ const sendTestEmail = async (email) => {
     }
 
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
         auth: {
             user: smtpUser,
             pass: smtpPass
-        }
+        },
+        family: 4 // Force IPv4 to bypass Render IPv6 connect ENETUNREACH issue
     });
 
     // Verify transporter configuration
@@ -174,11 +177,14 @@ const sendVerificationOtpEmail = async (email, fullName, otp) => {
     }
 
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
         auth: {
             user: smtpUser,
             pass: smtpPass
-        }
+        },
+        family: 4 // Force IPv4 to bypass Render IPv6 connect ENETUNREACH issue
     });
 
     // Verify transporter configuration
