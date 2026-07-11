@@ -164,7 +164,26 @@ app.get('/api/test-email', async (req, res) => {
         const result = await sendTestEmail(toEmail);
         res.json({ success: true, result });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        // Return FULL error details for remote debugging
+        console.error('[TEST-EMAIL] Full SMTP error:', {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            response: error.response,
+            responseCode: error.responseCode,
+            stack: error.stack
+        });
+        res.status(500).json({
+            success: false,
+            error: {
+                message: error.message,
+                code: error.code || null,
+                command: error.command || null,
+                response: error.response || null,
+                responseCode: error.responseCode || null,
+                stack: error.stack || null
+            }
+        });
     }
 });
 
