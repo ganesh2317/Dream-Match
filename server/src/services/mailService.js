@@ -1,4 +1,22 @@
+const dns = require('dns').promises;
 const nodemailer = require('nodemailer');
+
+/**
+ * Helper to resolve smtp.gmail.com to an IPv4 address to bypass Render's IPv6 ENETUNREACH issues
+ */
+const getSmtpHost = async () => {
+    try {
+        console.log('Resolving smtp.gmail.com to IPv4...');
+        const ips = await dns.resolve4('smtp.gmail.com');
+        if (ips && ips.length > 0) {
+            console.log('Successfully resolved smtp.gmail.com to IPv4:', ips[0]);
+            return ips[0];
+        }
+    } catch (err) {
+        console.warn('DNS lookup for smtp.gmail.com failed, falling back to hostname:', err.message);
+    }
+    return 'smtp.gmail.com';
+};
 
 /**
  * Sends a test email directly using Nodemailer
@@ -19,15 +37,18 @@ const sendTestEmail = async (email) => {
         throw new Error('SMTP_USER and SMTP_PASS environment variables are not defined');
     }
 
+    const smtpHost = await getSmtpHost();
     const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
+        host: smtpHost,
         port: 465,
         secure: true,
         auth: {
             user: smtpUser,
             pass: smtpPass
         },
-        family: 4 // Force IPv4 to bypass Render IPv6 connect ENETUNREACH issue
+        tls: {
+            servername: 'smtp.gmail.com' // Match the certificate name when connecting via IP address
+        }
     });
 
     // Verify transporter configuration
@@ -176,15 +197,18 @@ const sendVerificationOtpEmail = async (email, fullName, otp) => {
         throw new Error('SMTP_USER and SMTP_PASS environment variables are not defined');
     }
 
+    const smtpHost = await getSmtpHost();
     const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
+        host: smtpHost,
         port: 465,
         secure: true,
         auth: {
             user: smtpUser,
             pass: smtpPass
         },
-        family: 4 // Force IPv4 to bypass Render IPv6 connect ENETUNREACH issue
+        tls: {
+            servername: 'smtp.gmail.com' // Match the certificate name when connecting via IP address
+        }
     });
 
     // Verify transporter configuration
