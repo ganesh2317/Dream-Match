@@ -27,6 +27,18 @@ const sendTestEmail = async (email) => {
         }
     });
 
+    // Verify transporter configuration
+    try {
+        console.log('Verifying SMTP transporter configuration...');
+        await transporter.verify();
+        console.log('SMTP Transporter configuration is verified and ready.');
+    } catch (verifyError) {
+        console.error('SMTP Transporter verification failed:');
+        console.error('Complete Verification Error Object:', verifyError);
+        console.error('Verification Error Stack:', verifyError.stack);
+        throw verifyError;
+    }
+
     const mailOptions = {
         from: `"Dream Match" <${smtpUser}>`,
         to: email,
@@ -168,6 +180,18 @@ const sendVerificationOtpEmail = async (email, fullName, otp) => {
             pass: smtpPass
         }
     });
+
+    // Verify transporter configuration
+    try {
+        console.log('Verifying SMTP transporter configuration...');
+        await transporter.verify();
+        console.log('SMTP Transporter configuration is verified and ready.');
+    } catch (verifyError) {
+        console.error('SMTP Transporter verification failed:');
+        console.error('Complete Verification Error Object:', verifyError);
+        console.error('Verification Error Stack:', verifyError.stack);
+        throw verifyError;
+    }
 
     const mailOptions = {
         from: `"Dream Match" <${smtpUser}>`,
