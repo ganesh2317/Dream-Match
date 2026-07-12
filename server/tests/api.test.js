@@ -2,6 +2,8 @@ const request = require('supertest');
 const { app } = require('../index');
 const prisma = require('../src/utils/prisma');
 
+jest.setTimeout(30000);
+
 describe('Dream Social REST API Tests', () => {
     let testUsername = `user_${Date.now()}`;
     let testPassword = 'password123';
@@ -47,7 +49,9 @@ describe('Dream Social REST API Tests', () => {
                 password: testPassword
             });
         expect(res.statusCode).toBe(201);
-        expect(res.body.message).toBe('User created successfully');
+        expect(res.body.token).toBeDefined();
+        expect(res.body.user).toBeDefined();
+        expect(res.body.user.username).toBe(testUsername);
     });
 
     test('POST /api/auth/login should fail with wrong password', async () => {
