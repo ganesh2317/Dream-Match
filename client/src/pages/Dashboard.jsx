@@ -8,8 +8,10 @@ import Messages from '../components/Messages';
 import Profile from '../components/Profile';
 import Search from '../components/Search';
 import Visuals from '../components/Visuals';
-import { Moon, X, Sparkles, Wand2, Zap, Flame, PlusSquare, Menu } from 'lucide-react';
+import BottomNavigation from '../components/BottomNavigation';
+import { Moon, X, Sparkles, Wand2, Zap, Flame, PlusSquare, Bell, LogOut, MessageCircle, Navigation } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Dashboard = () => {
     const { user, logout } = useAuth();
@@ -23,7 +25,6 @@ const Dashboard = () => {
     const [dbMatches, setDbMatches] = useState([]);
 
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
-    const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
     const fetchDreams = async () => {
         try {
@@ -124,31 +125,87 @@ const Dashboard = () => {
             flexDirection: isMobile ? 'column' : 'row',
             height: '100vh',
             background: 'var(--bg-gradient)',
-            padding: isMobile ? '0' : '20px',
-            gap: isMobile ? '0' : '20px',
-            overflow: 'hidden'
+            padding: isMobile ? '0' : '24px',
+            gap: isMobile ? '0' : '24px',
+            overflow: 'hidden',
+            position: 'relative'
         }}>
             {/* Mobile Header */}
             {isMobile && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', borderBottom: 'var(--glass-border)', zIndex: 100 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <button
-                            onClick={() => setShowMobileSidebar(true)}
-                            style={{ background: 'transparent', padding: 0, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', transform: 'none', boxShadow: 'none' }}
-                        >
-                            <img src={user?.avatarUrl} alt="avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid var(--primary)', objectFit: 'cover' }} />
-                        </button>
-                        <span style={{ fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px' }}>DreamMatch</span>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', 
+                    padding: '16px 20px', 
+                    background: 'rgba(10, 10, 15, 0.7)', 
+                    backdropFilter: 'var(--glass-blur)', 
+                    WebkitBackdropFilter: 'var(--glass-blur)', 
+                    borderBottom: 'var(--glass-border)', 
+                    zIndex: 100 
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ 
+                            fontWeight: 800, 
+                            fontSize: '20px', 
+                            letterSpacing: '-0.03em',
+                            background: 'linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                        }}>DreamMatch</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#ff9f43', background: 'rgba(255, 159, 67, 0.1)', padding: '4px 10px', borderRadius: '100px', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#ff9f43', background: 'rgba(255, 159, 67, 0.1)', padding: '5px 10px', borderRadius: '100px', fontWeight: 700 }}>
                             <Flame size={14} fill="#ff9f43" /> {user?.streakCount || 0}
                         </div>
                         <button
+                            onClick={() => setActiveTab('notifications')}
+                            style={{ 
+                                background: activeTab === 'notifications' ? 'rgba(255,255,255,0.1)' : 'transparent', 
+                                color: 'white',
+                                padding: '8px', 
+                                borderRadius: '10px',
+                                boxShadow: 'none',
+                                transform: 'none'
+                            }}
+                        >
+                            <Bell size={18} />
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('matches')}
+                            style={{ 
+                                background: activeTab === 'matches' ? 'rgba(255,255,255,0.1)' : 'transparent', 
+                                color: 'white',
+                                padding: '8px', 
+                                borderRadius: '10px',
+                                boxShadow: 'none',
+                                transform: 'none'
+                            }}
+                        >
+                            <Zap size={18} />
+                        </button>
+                        <button
                             onClick={() => setShowCreateModal(true)}
-                            style={{ background: 'var(--primary-gradient)', padding: '8px 12px', fontSize: '13px', borderRadius: '8px' }}
+                            style={{ 
+                                background: 'var(--primary-gradient)', 
+                                padding: '8px 12px', 
+                                borderRadius: '10px',
+                                boxShadow: '0 4px 10px var(--primary-glow)'
+                            }}
                         >
                             <PlusSquare size={16} />
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                background: 'transparent',
+                                color: 'var(--text-muted)',
+                                padding: '8px',
+                                borderRadius: '10px',
+                                boxShadow: 'none',
+                                transform: 'none'
+                            }}
+                        >
+                            <LogOut size={18} />
                         </button>
                     </div>
                 </div>
@@ -165,74 +222,54 @@ const Dashboard = () => {
                 />
             )}
 
-            {/* Mobile Slide Drawer Sidebar */}
-            {isMobile && showMobileSidebar && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex' }}>
-                    <div
-                        onClick={() => setShowMobileSidebar(false)}
-                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', animation: 'fadeIn 0.2s' }}
-                    />
-                    <div style={{ position: 'relative', width: '280px', height: '100%', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-                        <Sidebar
-                            activeTab={activeTab}
-                            setActiveTab={(tab) => {
-                                setActiveTab(tab);
-                                setShowMobileSidebar(false);
-                            }}
-                            setShowCreateModal={(show) => {
-                                setShowCreateModal(show);
-                                setShowMobileSidebar(false);
-                            }}
-                            user={user}
-                            logout={handleLogout}
-                        />
-                    </div>
-                </div>
-            )}
-
             {/* Main Content Area */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '20px 10px' : '0 10px', scrollBehavior: 'smooth' }}>
+            <div style={{ 
+                flex: 1, 
+                overflowY: 'auto', 
+                padding: isMobile ? '16px 16px 96px 16px' : '0 8px', 
+                scrollBehavior: 'smooth' 
+            }} className="hide-scrollbar">
                 {renderContent()}
             </div>
 
             {/* Right Sidebar (Desktop only) */}
             {!isMobile && (
-                <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <GlassCard style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
+                <div style={{ width: '310px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <GlassCard style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.03)', border: '1px solid rgba(99, 102, 241, 0.08)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: '18px' }}>Your Dream Streak</h3>
-                            <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '8px', borderRadius: '12px' }}>
-                                <Moon color="var(--primary)" fill="var(--primary)" size={20} />
+                            <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Your Streak</h3>
+                            <div style={{ background: 'rgba(99, 102, 241, 0.12)', padding: '8px', borderRadius: '10px' }}>
+                                <Flame color="var(--primary)" fill="var(--primary)" size={18} />
                             </div>
                         </div>
-                        <div style={{ fontSize: '56px', fontWeight: 800, textAlign: 'center', color: 'var(--primary)', letterSpacing: '-2px', textShadow: '0 10px 30px rgba(99, 102, 241, 0.3)' }}>
+                        <div style={{ fontSize: '50px', fontWeight: 800, textAlign: 'center', color: 'white', letterSpacing: '-2px', textShadow: '0 8px 24px rgba(99, 102, 241, 0.25)' }}>
                             {user?.streakCount || 0}
                         </div>
-                        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>Days Active</div>
+                        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '6px' }}>Days Active</div>
                     </GlassCard>
 
-                    <GlassCard style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <GlassCard style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px' }}>
+                        <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Sparkles size={18} color="var(--primary)" /> Potential Matches
                         </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {dbMatches.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                                <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1.5 }}>
                                     No matches found yet. Share more dreams to connect!
                                 </div>
                             ) : (
                                 dbMatches.map(match => {
                                     const otherUser = match.senderId === user.id ? match.receiver : match.sender;
                                     return (
-                                        <div key={match.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '16px', cursor: 'pointer', transition: '0.2s', border: '1px solid transparent' }} className="hover-bg"
+                                        <div key={match.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', borderRadius: '12px', cursor: 'pointer', transition: '0.2s', border: '1px solid transparent' }} className="hover-bg"
                                             onClick={() => handleOpenMessage(otherUser)}
-                                            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+                                            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'}
                                             onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
                                         >
-                                            <img src={otherUser.avatarUrl} style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'cover' }} />
+                                            <img src={otherUser.avatarUrl} style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'cover' }} />
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{otherUser.username}</div>
-                                                <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 600 }}>{Math.round(match.score * 100)}% Match</div>
+                                                <div style={{ fontWeight: 700, fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'white' }}>{otherUser.username}</div>
+                                                <div style={{ fontSize: '11px', color: 'var(--success)', fontWeight: 700 }}>{Math.round(match.score * 100)}% Match</div>
                                             </div>
                                             <Zap size={14} color="var(--primary)" fill="var(--primary)" />
                                         </div>
@@ -240,26 +277,25 @@ const Dashboard = () => {
                                 })
                             )}
                         </div>
-                        <button onClick={() => setActiveTab('matches')} style={{ marginTop: 'auto', width: '100%', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontSize: '13px' }}>View All</button>
+                        <button onClick={() => setActiveTab('matches')} style={{ marginTop: 'auto', width: '100%', background: 'rgba(255,255,255,0.04)', color: 'white', border: '1px solid rgba(255,255,255,0.06)', fontSize: '12px', padding: '12px' }}>View All</button>
                     </GlassCard>
                 </div>
             )}
 
-            {showCreateModal && (
-                <CreateDreamModal user={user} onClose={() => setShowCreateModal(false)} onPosted={fetchDreams} />
+            {/* Mobile Bottom Navigation */}
+            {isMobile && (
+                <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
             )}
 
-            <style>{`
-                @keyframes slideIn {
-                    from { transform: translateX(-100%); }
-                    to { transform: translateX(0); }
-                }
-            `}</style>
+            {/* Create Dream Modal */}
+            <AnimatePresence>
+                {showCreateModal && (
+                    <CreateDreamModal user={user} onClose={() => setShowCreateModal(false)} onPosted={fetchDreams} />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
-
-
 
 const CreateDreamModal = ({ user, onClose, onPosted }) => {
     const [step, setStep] = useState(1);
@@ -270,7 +306,6 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [generating, setGenerating] = useState(false);
 
-    // Dynamic state management for sequential generations
     const [loadingStates, setLoadingStates] = useState([false, false, false, false]);
     const [videoLoading, setVideoLoading] = useState(false);
     const [failedStates, setFailedStates] = useState([false, false, false, false]);
@@ -399,7 +434,7 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
                     setLoadingStates([true, true, true, true]);
                     setFailedStates([false, false, false, false]);
 
-                    // Sequentially fetch all 4 variations to bypass concurrency caps safely
+                    // Sequentially fetch all 4 variations
                     for (let i = 0; i < data.variations.length; i++) {
                         await fetchVariation(i, data.variations[i], token);
                     }
@@ -469,168 +504,207 @@ const CreateDreamModal = ({ user, onClose, onPosted }) => {
     };
 
     return (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(15px)', zIndex: 1000, padding: '20px' }} className="fade-in">
-            <GlassCard style={{ width: '100%', maxWidth: '700px', background: 'var(--bg-dark)', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', overflowY: 'auto', padding: '40px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                    <h2 style={{ fontSize: '28px', fontWeight: 800 }}>{step === 1 ? 'Visualize Your Dream' : 'Choose Your Vision'}</h2>
-                    <div onClick={onClose} style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '50%' }}><X size={20} /></div>
-                </div>
-
-                {step === 1 ? (
-                    <div className="fade-in">
-                        <div style={{ marginBottom: '24px' }}>
-                            <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '12px' }}>Describe what you saw</label>
-                            <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="A crystal castle floating above a sea of neon clouds..."
-                                style={{
-                                    width: '100%',
-                                    height: '160px',
-                                    padding: '20px',
-                                    borderRadius: '20px',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    background: 'rgba(255,255,255,0.03)',
-                                    color: 'white',
-                                    fontSize: '17px',
-                                    fontFamily: 'inherit',
-                                    resize: 'none',
-                                    outline: 'none',
-                                    transition: 'border 0.2s'
-                                }}
-                                onFocus={e => e.target.style.borderColor = 'var(--primary)'}
-                                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                            />
-                        </div>
-
-                        <div style={{ marginBottom: '32px' }}>
-                            <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '12px' }}>Dream Style</label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-                                {STYLES.map(s => (
-                                    <div
-                                        key={s.id}
-                                        onClick={() => setStyle(s.id)}
-                                        style={{
-                                            padding: '16px 8px',
-                                            borderRadius: '16px',
-                                            border: style === s.id ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)',
-                                            background: style === s.id ? 'rgba(99, 102, 241, 0.1)' : 'rgba(255,255,255,0.03)',
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            transition: '0.2s'
-                                        }}
-                                    >
-                                        <div style={{ fontSize: '24px', marginBottom: '4px' }}>{s.emoji}</div>
-                                        <div style={{ fontSize: '11px', fontWeight: 700 }}>{s.label}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleGenerate}
-                            disabled={generating || !description}
-                            style={{ width: '100%', padding: '18px', fontSize: '16px', borderRadius: '16px' }}
-                        >
-                            {generating ? 'Tapping into the subconscious...' : (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Wand2 size={20} /> Generate Visions</span>
-                            )}
-                        </button>
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ 
+                position: 'fixed', 
+                inset: 0, 
+                background: 'rgba(5, 5, 8, 0.85)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                backdropFilter: 'blur(16px)', 
+                zIndex: 1000, 
+                padding: '20px' 
+            }}
+        >
+            <motion.div
+                initial={{ scale: 0.95, y: 15 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 15 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+                style={{ width: '100%', maxWidth: '640px', zIndex: 1001 }}
+            >
+                <GlassCard style={{ background: 'var(--glass-bg)', border: 'var(--glass-border)', maxHeight: '90vh', overflowY: 'auto', padding: '32px' }} className="hide-scrollbar">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <h2 style={{ fontSize: '22px', fontWeight: 800 }}>{step === 1 ? 'Visualize Your Dream' : 'Choose Your Vision'}</h2>
+                        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', color: 'white', padding: '8px', borderRadius: '50%', boxShadow: 'none' }}><X size={16} /></button>
                     </div>
-                ) : (
-                    <div className="fade-in">
-                        <div style={{ marginBottom: '20px', fontSize: '13px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span>Status: </span>
-                            {images.filter(Boolean).length === 4 ? (
-                                <span style={{ color: 'var(--success)', fontWeight: 600 }}>All visions generated successfully!</span>
-                            ) : (
-                                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
-                                    Generating visions sequentially ({images.filter(Boolean).length}/4 loaded)...
-                                </span>
-                            )}
-                        </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
-                            {[0, 1, 2, 3].map((index) => {
-                                const img = images[index];
-                                const isLoading = loadingStates[index];
-                                const isFailed = failedStates[index];
+                    {step === 1 ? (
+                        <div>
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Describe what you saw</label>
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    placeholder="A crystal castle floating above a sea of neon clouds..."
+                                    style={{
+                                        width: '100%',
+                                        height: '130px',
+                                        padding: '16px',
+                                        borderRadius: 'var(--radius-md)',
+                                        border: '1px solid rgba(255,255,255,0.08)',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        color: 'white',
+                                        fontSize: '15px',
+                                        fontFamily: 'inherit',
+                                        resize: 'none',
+                                        outline: 'none',
+                                        transition: 'all var(--transition-fast)'
+                                    }}
+                                    onFocus={e => {
+                                        e.target.style.borderColor = 'var(--primary)';
+                                        e.target.style.boxShadow = 'var(--focus-ring)';
+                                    }}
+                                    onBlur={e => {
+                                        e.target.style.borderColor = 'rgba(255,255,255,0.08)';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                />
+                            </div>
 
-                                return (
-                                    <div
-                                        key={index}
-                                        onClick={() => img && setSelectedImage(img)}
-                                        style={{
-                                            position: 'relative',
-                                            aspectRatio: '1',
-                                            borderRadius: '20px',
-                                            overflow: 'hidden',
-                                            cursor: img ? 'pointer' : 'default',
-                                            border: selectedImage === img && img ? '4px solid var(--primary)' : '2px solid rgba(255,255,255,0.05)',
-                                            background: 'rgba(255,255,255,0.02)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: '0.2s',
-                                            transform: selectedImage === img && img ? 'scale(0.96)' : 'scale(1)'
-                                        }}
-                                    >
-                                        {isLoading ? (
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                                                <div className="loading-spinner" style={{ width: '30px', height: '30px' }}></div>
-                                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Visualizing...</span>
-                                            </div>
-                                        ) : isFailed ? (
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '10px', textAlign: 'center' }}>
-                                                <span style={{ fontSize: '12px', color: '#ff7675', fontWeight: 600 }}>Queue timed out</span>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleRetryVariation(index); }}
-                                                    style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                                                >
-                                                    Retry
-                                                </button>
-                                            </div>
-                                        ) : img ? (
-                                            <>
-                                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`variation ${index + 1}`} />
-                                                {selectedImage === img && (
-                                                    <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--primary)', borderRadius: '50%', padding: '4px' }}>
-                                                        <Zap size={16} color="white" fill="white" />
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                                                <div className="loading-spinner" style={{ width: '30px', height: '30px' }}></div>
-                                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Waiting...</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div style={{ display: 'flex', gap: '16px', flexDirection: 'column' }}>
-                            {videoFailed && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', background: 'rgba(255, 118, 117, 0.1)', border: '1px solid rgba(255, 118, 117, 0.2)', borderRadius: '12px', fontSize: '13px', color: '#ff7675' }}>
-                                    <span>Video/Reel generation failed.</span>
-                                    <button onClick={handleRetryVideo} style={{ padding: '4px 10px', fontSize: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>Retry Video</button>
+                            <div style={{ marginBottom: '28px' }}>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Dream Style</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                                    {STYLES.map(s => (
+                                        <motion.div
+                                            whileHover={{ y: -2 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            key={s.id}
+                                            onClick={() => setStyle(s.id)}
+                                            style={{
+                                                padding: '14px 6px',
+                                                borderRadius: 'var(--radius-md)',
+                                                border: style === s.id ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
+                                                background: style === s.id ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255,255,255,0.02)',
+                                                boxShadow: style === s.id ? 'var(--focus-ring)' : 'none',
+                                                textAlign: 'center',
+                                                cursor: 'pointer',
+                                                transition: 'all var(--transition-fast)'
+                                            }}
+                                        >
+                                            <div style={{ fontSize: '20px', marginBottom: '4px' }}>{s.emoji}</div>
+                                            <div style={{ fontSize: '11px', fontWeight: 700 }}>{s.label}</div>
+                                        </motion.div>
+                                    ))}
                                 </div>
-                            )}
-                            <div style={{ display: 'flex', gap: '16px' }}>
-                                <button onClick={() => setStep(1)} style={{ flex: 1, padding: '16px', background: 'rgba(255,255,255,0.05)', color: 'white' }}>Try Different Prompt</button>
-                                <button
-                                    onClick={handlePost}
-                                    disabled={!selectedImage || videoLoading}
-                                    style={{ flex: 1, padding: '16px' }}
-                                >
-                                    {videoLoading ? 'Generating Reel...' : 'Share with the World'}
-                                </button>
+                            </div>
+
+                            <motion.button
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                onClick={handleGenerate}
+                                disabled={generating || !description}
+                                style={{ width: '100%', padding: '16px', fontSize: '15px', borderRadius: 'var(--radius-md)', background: 'var(--primary-gradient)' }}
+                            >
+                                {generating ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div className="loading-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
+                                        <span>Subconscious visualizing...</span>
+                                    </div>
+                                ) : (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Wand2 size={18} /> Generate Visions</span>
+                                )}
+                            </motion.button>
+                        </div>
+                    ) : (
+                        <div>
+                            <div style={{ marginBottom: '16px', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span>Status: </span>
+                                {images.filter(Boolean).length === 4 ? (
+                                    <span style={{ color: 'var(--success)', fontWeight: 700 }}>Visions complete! Select one to share.</span>
+                                ) : (
+                                    <span style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                                        Synthesizing dreams sequentially ({images.filter(Boolean).length}/4 loaded)...
+                                    </span>
+                                )}
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                                {[0, 1, 2, 3].map((index) => {
+                                    const img = images[index];
+                                    const isLoading = loadingStates[index];
+                                    const isFailed = failedStates[index];
+
+                                    return (
+                                        <div
+                                            key={index}
+                                            onClick={() => img && setSelectedImage(img)}
+                                            style={{
+                                                position: 'relative',
+                                                aspectRatio: '1',
+                                                borderRadius: 'var(--radius-lg)',
+                                                overflow: 'hidden',
+                                                cursor: img ? 'pointer' : 'default',
+                                                border: selectedImage === img && img ? '3px solid var(--primary)' : '1px solid rgba(255,255,255,0.06)',
+                                                background: 'rgba(255,255,255,0.01)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                transition: 'all 0.2s',
+                                                boxShadow: selectedImage === img && img ? '0 0 16px var(--primary-glow)' : 'none'
+                                            }}
+                                            className={isLoading ? "shimmer" : ""}
+                                        >
+                                            {isLoading ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontWeight: 600 }}>Visualizing...</span>
+                                                </div>
+                                            ) : isFailed ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px', textAlign: 'center' }}>
+                                                    <span style={{ fontSize: '11px', color: '#ff7675', fontWeight: 700 }}>Timed out</span>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleRetryVariation(index); }}
+                                                        style={{ padding: '6px 12px', fontSize: '11px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}
+                                                    >
+                                                        Retry
+                                                    </button>
+                                                </div>
+                                            ) : img ? (
+                                                <>
+                                                    <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`variation ${index + 1}`} />
+                                                    {selectedImage === img && (
+                                                        <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--primary)', borderRadius: '50%', padding: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                                                            <Zap size={14} color="white" fill="white" />
+                                                        </div>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Waiting...</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+                                {videoFailed && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '10px', fontSize: '12px', color: '#ff7675' }}>
+                                        <span>Video/Reel generation failed.</span>
+                                        <button onClick={handleRetryVideo} style={{ padding: '6px 12px', fontSize: '11px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>Retry Video</button>
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <button onClick={() => setStep(1)} style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', fontSize: '14px' }}>Back</button>
+                                    <button
+                                        onClick={handlePost}
+                                        disabled={!selectedImage || videoLoading}
+                                        style={{ flex: 1, padding: '14px', fontSize: '14px' }}
+                                    >
+                                        {videoLoading ? 'Generating Reel...' : 'Share Vision'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </GlassCard>
-        </div>
+                    )}
+                </GlassCard>
+            </motion.div>
+        </motion.div>
     );
 };
 

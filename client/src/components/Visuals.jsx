@@ -1,18 +1,17 @@
 import React, { useRef, useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
 import { Heart, MessageCircle, Share2, User, Music2, Sparkles, Video } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Visuals = ({ dreams, onRefresh, initialDreamId }) => {
     const containerRef = useRef(null);
 
-    // Filter dreams that have a videoUrl and sort them (active first or by date)
     const visuals = [...dreams].filter(d => d.videoUrl).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     useEffect(() => {
         if (initialDreamId && containerRef.current && visuals.length > 0) {
             const index = visuals.findIndex(v => v.id === initialDreamId);
             if (index !== -1) {
-                // Wait a bit for layout
                 setTimeout(() => {
                     if (containerRef.current) {
                         const height = containerRef.current.offsetHeight;
@@ -28,15 +27,15 @@ const Visuals = ({ dreams, onRefresh, initialDreamId }) => {
 
     if (visuals.length === 0) {
         return (
-            <div style={{ height: 'calc(100vh - 40px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '24px', background: 'rgba(0,0,0,0.4)', borderRadius: '24px' }}>
-                <div style={{ padding: '30px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }}>
-                    <Video size={48} color="var(--primary)" opacity={0.5} />
+            <GlassCard style={{ height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px', border: 'var(--glass-border)' }}>
+                <div style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '50%' }}>
+                    <Video size={40} color="var(--primary)" style={{ opacity: 0.6 }} />
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                    <h3 style={{ marginBottom: '8px' }}>No visuals yet</h3>
-                    <p style={{ color: 'var(--text-muted)' }}>Share a dream to see its animation here!</p>
+                    <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>No visuals yet</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Share a dream to see its animation here!</p>
                 </div>
-            </div>
+            </GlassCard>
         );
     }
 
@@ -44,11 +43,12 @@ const Visuals = ({ dreams, onRefresh, initialDreamId }) => {
         <div
             ref={containerRef}
             style={{
-                height: 'calc(100vh - 40px)',
+                height: 'calc(100vh - 120px)',
                 overflowY: 'scroll',
                 scrollSnapType: 'y mandatory',
-                borderRadius: '24px',
-                background: '#000'
+                borderRadius: 'var(--radius-lg)',
+                background: '#050508',
+                border: 'var(--glass-border)'
             }}
             className="hide-scrollbar"
         >
@@ -73,7 +73,6 @@ const VisualItem = ({ dream, onRefresh }) => {
             const token = localStorage.getItem('token');
             if (!token) return;
             
-            // Optimistic update
             const nextLiked = !liked;
             setLiked(nextLiked);
             setLikeCount(prev => nextLiked ? prev + 1 : Math.max(0, prev - 1));
@@ -89,7 +88,6 @@ const VisualItem = ({ dream, onRefresh }) => {
             }
         } catch (e) {
             console.error(e);
-            // Revert on error
             setLiked(dream.isLiked || false);
             setLikeCount(dream._count?.likes || 0);
         }
@@ -104,9 +102,10 @@ const VisualItem = ({ dream, onRefresh }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#000'
+            background: '#050508',
+            overflow: 'hidden'
         }}>
-            {/* Main Visual (Video Simulation) */}
+            {/* Main Visual */}
             <div style={{
                 width: '100%',
                 height: '100%',
@@ -121,51 +120,59 @@ const VisualItem = ({ dream, onRefresh }) => {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        opacity: 0.8
+                        opacity: 0.75
                     }}
                     alt="Dream Visual"
                 />
                 <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8))'
+                    background: 'linear-gradient(to bottom, rgba(5,5,8,0.2) 0%, rgba(5,5,8,0.85) 100%)'
                 }}></div>
             </div>
 
-            {/* Right Side Actions */}
+            {/* Right Side Actions Column */}
             <div style={{
                 position: 'absolute',
                 right: '20px',
-                bottom: '100px',
+                bottom: '40px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '24px',
+                gap: '20px',
                 alignItems: 'center',
                 zIndex: 10
             }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                    <div
+                    <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={handleLike}
-                        style={{ padding: '12px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: '50%', cursor: 'pointer' }}
+                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                        <Heart size={28} color={liked ? "#ff4757" : "white"} fill={liked ? "#ff4757" : "none"} />
-                    </div>
-                    <span style={{ fontSize: '12px', fontWeight: 600 }}>{likeCount}</span>
+                        <Heart size={20} color={liked ? "#ff4757" : "white"} fill={liked ? "#ff4757" : "none"} />
+                    </motion.div>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'white' }}>{likeCount}</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ padding: '12px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: '50%', cursor: 'pointer' }}>
-                        <MessageCircle size={28} color="white" />
-                    </div>
-                    <span style={{ fontSize: '12px', fontWeight: 600 }}>{dream._count?.comments || 0}</span>
+                    <motion.div 
+                        whileHover={{ scale: 1.1 }}
+                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <MessageCircle size={20} color="white" />
+                    </motion.div>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'white' }}>{dream._count?.comments || 0}</span>
                 </div>
 
-                <div style={{ padding: '12px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: '50%', cursor: 'pointer' }}>
-                    <Share2 size={24} color="white" />
-                </div>
+                <motion.div 
+                    whileHover={{ scale: 1.1 }}
+                    style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                    <Share2 size={18} color="white" />
+                </motion.div>
             </div>
 
-            {/* Bottom Info */}
+            {/* Bottom Info Overlay */}
             <div style={{
                 position: 'absolute',
                 bottom: '30px',
@@ -173,19 +180,19 @@ const VisualItem = ({ dream, onRefresh }) => {
                 right: '80px',
                 zIndex: 10
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <img src={dream.user?.avatarUrl} style={{ width: '40px', height: '40px', borderRadius: '50%', border: '2px solid white' }} />
-                    <div style={{ fontWeight: 700, fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>@{dream.user?.username}</div>
-                    <button style={{ padding: '6px 16px', fontSize: '12px', background: 'transparent', border: '1px solid white', borderRadius: '8px', color: 'white' }}>Follow</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                    <img src={dream.user?.avatarUrl} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.4)', objectFit: 'cover' }} alt="avatar" />
+                    <div style={{ fontWeight: 700, fontSize: '14px', textShadow: '0 2px 4px rgba(0,0,0,0.6)', color: 'white' }}>@{dream.user?.username}</div>
+                    <button style={{ padding: '5px 12px', fontSize: '11px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'white', fontWeight: 700 }}>Follow</button>
                 </div>
 
-                <div style={{ fontSize: '15px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)', marginBottom: '16px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
+                <div style={{ fontSize: '14px', lineHeight: '1.5', color: 'rgba(255,255,255,0.95)', marginBottom: '14px', textShadow: '0 1px 3px rgba(0,0,0,0.6)', fontWeight: 400 }}>
                     {dream.description}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white', opacity: 0.8 }}>
-                    <Music2 size={16} />
-                    <marquee style={{ width: '150px', fontSize: '13px' }}>Original Visual Sound - {dream.user?.username}</marquee>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white', opacity: 0.85 }}>
+                    <Music2 size={14} />
+                    <span className="marquee-text" style={{ fontSize: '12px', fontWeight: 600 }}>Original Visual Sound - {dream.user?.username}</span>
                 </div>
             </div>
         </div>

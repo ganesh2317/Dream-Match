@@ -1,22 +1,36 @@
 :root {
   /* Core Colors - Gorgeous Cosmic Dark Mode */
-  --bg-dark: #0a0a0f;
-  --bg-gradient: radial-gradient(circle at top right, #0d0e1b 0%, #050508 100%);
+  --bg-dark: #07070a;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #0f1026 0%, #050508 100%);
 
   /* Brand Colors - Sophisticated Neon/Dreamy Indigo/Violet */
   --primary: #6366f1;
   --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --primary-glow: rgba(99, 102, 241, 0.25);
+  
   --accent: #0ea5e9;
+  --accent-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+  --accent-glow: rgba(14, 165, 233, 0.25);
+  
   --success: #10b981;
+  --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --success-glow: rgba(16, 185, 129, 0.2);
+  
   --error: #ef4444;
+  --error-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  --error-glow: rgba(239, 68, 68, 0.2);
+  
   --warning: #f59e0b;
+  --warning-glow: rgba(245, 158, 11, 0.2);
 
   /* Glassmorphism Refined for Premium Dark Mode */
-  --glass-bg: rgba(15, 17, 30, 0.7);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  --glass-blur: blur(20px);
-  --glass-hover: rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(13, 14, 24, 0.65);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.07);
+  --glass-border-light: 1px solid rgba(255, 255, 255, 0.04);
+  --glass-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  --glass-blur: blur(24px);
+  --glass-hover: rgba(255, 255, 255, 0.06);
+  --glass-hover-border: 1px solid rgba(255, 255, 255, 0.12);
 
   /* Typography */
   --text-primary: #f8fafc;
@@ -25,13 +39,18 @@
   --text-dim: #64748b;
 
   /* Radius */
-  --radius-xl: 24px;
+  --radius-2xl: 24px;
+  --radius-xl: 20px;
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 8px;
 
   /* Transitions */
   --transition-fast: 0.15s ease;
-  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* Focus Rings */
+  --focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.35);
 }

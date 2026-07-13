@@ -1,16 +1,17 @@
 import React from 'react';
-import { Home, MessageCircle, PlusSquare, Bell, Settings, User as UserIcon, LogOut, Search, Video, Users } from 'lucide-react';
+import { Home, MessageCircle, PlusSquare, Bell, User as UserIcon, LogOut, Search, Video, Users } from 'lucide-react';
 import GlassCard from './GlassCard';
+import { motion } from 'framer-motion';
 
 const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) => {
     return (
-        <GlassCard className="sidebar" style={{ width: '280px', display: 'flex', flexDirection: 'column', height: '100%', padding: '24px' }}>
-            <h1 style={{
+        <GlassCard className="sidebar" style={{ width: '280px', display: 'flex', flexDirection: 'column', height: '100%', padding: '24px', background: 'var(--glass-bg)', border: 'var(--glass-border)' }}>
+            <div style={{
                 fontSize: '22px',
                 marginBottom: '42px',
                 color: 'var(--text-primary)',
                 fontWeight: 800,
-                letterSpacing: '-0.5px',
+                letterSpacing: '-0.03em',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px'
@@ -23,14 +24,14 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+                    boxShadow: '0 4px 12px var(--primary-glow)'
                 }}>
-                    <div style={{ width: '12px', height: '12px', background: 'white', borderRadius: '50%' }}></div>
+                    <div style={{ width: '10px', height: '10px', background: 'white', borderRadius: '50%' }}></div>
                 </div>
-                DreamMatch
-            </h1>
+                <span>DreamMatch</span>
+            </div>
 
-            <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', position: 'relative' }}>
                 <NavItem icon={Home} label="Timeline" active={activeTab === 'feed'} onClick={() => setActiveTab('feed')} />
                 <NavItem icon={Search} label="Search" active={activeTab === 'search'} onClick={() => setActiveTab('search')} />
                 <NavItem icon={MessageCircle} label="Messages" active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} />
@@ -41,35 +42,28 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
             </nav>
 
             <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div
+                <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setActiveTab('profile')}
                     style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '12px',
                         padding: '12px',
-                        background: activeTab === 'profile' ? 'var(--glass-hover)' : 'transparent',
+                        background: activeTab === 'profile' ? 'rgba(255,255,255,0.06)' : 'transparent',
                         borderRadius: 'var(--radius-md)',
                         cursor: 'pointer',
-                        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        border: activeTab === 'profile' ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
-                        transform: 'scale(1) translateY(0)'
-                    }}
-                    onMouseEnter={e => {
-                        e.currentTarget.style.transform = 'scale(1.02) translateY(-5px)';
-                        e.currentTarget.style.background = 'var(--glass-hover)';
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                        if (activeTab !== 'profile') e.currentTarget.style.background = 'transparent';
+                        transition: 'background var(--transition-fast)',
+                        border: activeTab === 'profile' ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent'
                     }}
                 >
-                    <img src={user?.avatarUrl} alt="avatar" style={{ width: '42px', height: '42px', borderRadius: '50%', border: '2px solid var(--primary)', padding: '2px' }} />
+                    <img src={user?.avatarUrl} alt="avatar" style={{ width: '42px', height: '42px', borderRadius: '50%', border: '2px solid var(--primary)', padding: '2px', objectFit: 'cover' }} />
                     <div style={{ overflow: 'hidden' }}>
-                        <div style={{ fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.fullName || 'User'}</div>
+                        <div style={{ fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'white' }}>{user?.fullName || 'User'}</div>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>@{user?.username || 'user'}</div>
                     </div>
-                </div>
+                </motion.div>
 
                 <NavItem icon={LogOut} label="Sign Out" onClick={logout} />
             </div>
@@ -81,7 +75,9 @@ const NavItem = ({ icon: Icon, label, active, onClick, type = 'nav' }) => {
     const isAction = type === 'action';
 
     return (
-        <div
+        <motion.div
+            whileHover={{ x: 4 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onClick}
             style={{
                 display: 'flex',
@@ -90,27 +86,33 @@ const NavItem = ({ icon: Icon, label, active, onClick, type = 'nav' }) => {
                 padding: '14px 16px',
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
-                background: active ? 'var(--primary-gradient)' : isAction ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                 fontWeight: active || isAction ? 600 : 500,
                 color: active ? 'white' : isAction ? 'var(--primary)' : 'var(--text-secondary)',
-                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                boxShadow: active ? '0 8px 20px rgba(99, 102, 241, 0.3)' : 'none',
+                position: 'relative',
+                transition: 'color var(--transition-fast)',
                 marginBottom: isAction ? '12px' : '0',
                 marginTop: isAction ? '12px' : '0',
-                transform: 'scale(1) translateY(0)'
-            }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.02) translateY(-5px)';
-                if (!active) e.currentTarget.style.background = isAction ? 'rgba(99, 102, 241, 0.15)' : 'var(--glass-hover)';
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                if (!active) e.currentTarget.style.background = isAction ? 'rgba(99, 102, 241, 0.1)' : 'transparent';
+                background: isAction ? 'rgba(99, 102, 241, 0.08)' : 'transparent'
             }}
         >
+            {active && !isAction && (
+                <motion.div
+                    layoutId="sidebarActiveBackground"
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'var(--primary-gradient)',
+                        borderRadius: 'var(--radius-md)',
+                        zIndex: -1,
+                        boxShadow: '0 8px 20px var(--primary-glow)'
+                    }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+            )}
+            
             <Icon size={20} />
-            <span style={{ fontSize: '15px' }}>{label}</span>
-        </div>
+            <span style={{ fontSize: '14px', letterSpacing: '0.1px' }}>{label}</span>
+        </motion.div>
     );
 };
 

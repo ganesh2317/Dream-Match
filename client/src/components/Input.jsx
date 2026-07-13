@@ -1,28 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const Input = ({ label, type = 'text', placeholder, value, onChange, name, icon: Icon, style = {} }) => {
+const Input = ({ label, type = 'text', placeholder, value, onChange, name, icon: Icon, style = {}, ...props }) => {
+    const [focused, setFocused] = useState(false);
+
     return (
-        <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {label && (
                 <label style={{
-                    fontSize: '14px',
+                    fontSize: '13px',
                     fontWeight: 600,
-                    color: 'var(--text-secondary)',
-                    marginLeft: '4px'
+                    color: focused ? 'var(--primary)' : 'var(--text-secondary)',
+                    marginLeft: '4px',
+                    transition: 'color var(--transition-fast)',
+                    letterSpacing: '0.5px'
                 }}>
                     {label}
                 </label>
             )}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', width: '100%' }}>
                 {Icon && (
                     <div style={{
                         position: 'absolute',
-                        left: '12px',
+                        left: '16px',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        color: 'rgba(255,255,255,0.5)',
+                        color: focused ? 'var(--primary)' : 'var(--text-dim)',
                         display: 'flex',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        transition: 'color var(--transition-fast)',
+                        zIndex: 2,
+                        pointerEvents: 'none'
                     }}>
                         <Icon size={18} />
                     </div>
@@ -33,27 +40,27 @@ const Input = ({ label, type = 'text', placeholder, value, onChange, name, icon:
                     placeholder={placeholder}
                     value={value}
                     onChange={onChange}
-                    style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        paddingLeft: Icon ? '40px' : '16px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        background: 'rgba(0, 0, 0, 0.2)', // Default dark mode friendly background
-                        fontSize: '16px',
-                        color: 'white',
-                        transition: 'all 0.2s',
-                        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
-                        ...style
-                    }}
                     onFocus={(e) => {
-                        e.target.style.background = 'rgba(0, 0, 0, 0.4)';
-                        e.target.style.boxShadow = '0 0 0 2px var(--primary)';
+                        setFocused(true);
                     }}
                     onBlur={(e) => {
-                        e.target.style.background = style.background || 'rgba(0, 0, 0, 0.2)';
-                        e.target.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.1)';
+                        setFocused(false);
                     }}
+                    style={{
+                        width: '100%',
+                        padding: '14px 16px',
+                        paddingLeft: Icon ? '46px' : '16px',
+                        borderRadius: 'var(--radius-md)',
+                        border: focused ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        background: focused ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.03)',
+                        fontSize: '15px',
+                        color: 'white',
+                        transition: 'all var(--transition-fast)',
+                        boxShadow: focused ? 'var(--focus-ring)' : 'none',
+                        outline: 'none',
+                        ...style
+                    }}
+                    {...props}
                 />
             </div>
         </div>

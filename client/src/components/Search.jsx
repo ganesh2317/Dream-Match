@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
 import { Search as SearchIcon, UserPlus, UserMinus, User, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Search = ({ onViewProfile }) => {
     const [query, setQuery] = useState('');
@@ -36,11 +37,11 @@ const Search = ({ onViewProfile }) => {
     }, [query]);
 
     return (
-        <div style={{ maxWidth: '700px', margin: '0 auto' }} className="fade-in">
-            <h2 style={{ fontSize: '32px', marginBottom: '32px', fontWeight: 800 }}>Explore Souls</h2>
+        <div style={{ maxWidth: '640px', margin: '0 auto' }} className="fade-in">
+            <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '24px', background: 'linear-gradient(135deg, #ffffff 0%, #a78bfa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Explore Souls</h2>
 
-            <div style={{ position: 'relative', marginBottom: '40px' }}>
-                <SearchIcon style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={20} />
+            <div style={{ position: 'relative', marginBottom: '32px' }}>
+                <SearchIcon style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
                 <input
                     type="text"
                     value={query}
@@ -48,37 +49,55 @@ const Search = ({ onViewProfile }) => {
                     placeholder="Search by username or name..."
                     style={{
                         width: '100%',
-                        padding: '20px 20px 20px 56px',
-                        background: 'var(--glass-bg)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '20px',
+                        padding: '16px 16px 16px 48px',
+                        background: 'rgba(255,255,255,0.01)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 'var(--radius-md)',
                         color: 'white',
-                        fontSize: '17px',
+                        fontSize: '15px',
                         outline: 'none',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                        transition: 'all var(--transition-fast)'
+                    }}
+                    onFocus={e => {
+                        e.target.style.borderColor = 'var(--primary)';
+                        e.target.style.boxShadow = 'var(--focus-ring)';
+                    }}
+                    onBlur={e => {
+                        e.target.style.borderColor = 'rgba(255,255,255,0.08)';
+                        e.target.style.boxShadow = 'none';
                     }}
                 />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
                         <div className="loading-spinner"></div>
                     </div>
                 ) : users.length > 0 ? (
-                    users.map(user => (
-                        <UserCard key={user.id} user={user} onViewProfile={onViewProfile} />
-                    ))
+                    <AnimatePresence>
+                        {users.map((user, idx) => (
+                            <motion.div
+                                key={user.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.25, delay: idx * 0.05 }}
+                            >
+                                <UserCard user={user} onViewProfile={onViewProfile} />
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
                 ) : query && !loading ? (
-                    <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
-                        <User size={48} style={{ opacity: 0.1, marginBottom: '16px' }} />
-                        <p>No spirits found with that name.</p>
-                    </div>
+                    <GlassCard style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)', border: 'var(--glass-border)' }}>
+                        <User size={36} style={{ opacity: 0.2, marginBottom: '12px', marginLeft: 'auto', marginRight: 'auto' }} />
+                        <p style={{ fontSize: '14px' }}>No spirits found with that name.</p>
+                    </GlassCard>
                 ) : (
-                    <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
-                        <Zap size={48} style={{ opacity: 0.1, marginBottom: '16px' }} />
-                        <p>Type to search for companions in the dreamscape.</p>
-                    </div>
+                    <GlassCard style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)', border: 'var(--glass-border)' }}>
+                        <Zap size={36} style={{ opacity: 0.2, marginBottom: '12px', marginLeft: 'auto', marginRight: 'auto' }} />
+                        <p style={{ fontSize: '14px' }}>Type to search for companions in the dreamscape.</p>
+                    </GlassCard>
                 )}
             </div>
         </div>
@@ -108,30 +127,32 @@ const UserCard = ({ user, onViewProfile }) => {
     return (
         <GlassCard
             onClick={() => onViewProfile && onViewProfile(user)}
-            style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
-            className="hover-bg"
+            style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', border: 'var(--glass-border)' }}
+            className="hover-scale-subtle"
         >
-            <img src={user.avatarUrl} alt={user.username} style={{ width: '60px', height: '60px', borderRadius: '18px', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} />
+            <img src={user.avatarUrl} alt={user.username} style={{ width: '48px', height: '48px', borderRadius: '14px', objectFit: 'cover', border: '1.5px solid rgba(255,255,255,0.06)' }} />
             <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: '16px' }}>{user.fullName}</div>
-                <div style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: 600 }}>@{user.username}</div>
-                {user.bio && <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px', display: '-webkit-box', WebkitLineClamp: '1', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{user.bio}</div>}
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'white' }}>{user.fullName}</div>
+                <div style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 700 }}>@{user.username}</div>
+                {user.bio && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: '-webkit-box', WebkitLineClamp: '1', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{user.bio}</div>}
             </div>
-            <button
+            <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={toggleFollow}
                 style={{
-                    padding: '10px 20px',
-                    borderRadius: '12px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    background: isFollowing ? 'rgba(255,255,255,0.05)' : 'var(--primary)',
-                    border: isFollowing ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    background: isFollowing ? 'rgba(255,255,255,0.04)' : 'var(--primary)',
+                    border: isFollowing ? '1px solid rgba(255,255,255,0.08)' : 'none',
                     color: 'white',
-                    transition: 'all 0.2s'
+                    boxShadow: isFollowing ? 'none' : '0 4px 10px var(--primary-glow)',
+                    transform: 'none'
                 }}
             >
                 {isFollowing ? 'Following' : 'Follow'}
-            </button>
+            </motion.button>
         </GlassCard>
     );
 };
