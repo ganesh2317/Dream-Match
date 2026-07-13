@@ -148,7 +148,8 @@ const Register = () => {
                             <div style={{ flex: 1 }}>
                                 <Input
                                     type="number"
-                                    placeholder="Age"
+                                    placeholder="Your age"
+                                    aria-label="Your age"
                                     value={formData.age}
                                     onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                                     required
@@ -158,6 +159,7 @@ const Register = () => {
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <select
                                     value={formData.gender}
+                                    aria-label="Gender"
                                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                                     disabled={loading}
                                     style={{
