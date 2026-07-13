@@ -16,18 +16,7 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
                 alignItems: 'center',
                 gap: '12px'
             }}>
-                <div style={{
-                    width: '32px',
-                    height: '32px',
-                    background: 'var(--primary-gradient)',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 12px var(--primary-glow)'
-                }}>
-                    <div style={{ width: '10px', height: '10px', background: 'white', borderRadius: '50%' }}></div>
-                </div>
+                <img src="/logo-mark.svg" style={{ width: '32px', height: '32px', display: 'block' }} alt="DreamMatch Logo" />
                 <span>DreamMatch</span>
             </div>
 

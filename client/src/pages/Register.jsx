@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import GlassCard from '../components/GlassCard';
 import Input from '../components/Input';
-import { User, Lock, ArrowRight, Smile, AlertCircle, Sparkles } from 'lucide-react';
+import { User, Lock, ArrowRight, Smile, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -82,7 +82,7 @@ const Register = () => {
                                 border: '1px solid rgba(139, 92, 246, 0.2)'
                             }}
                         >
-                            <Sparkles size={24} fill="currentColor" />
+                            <img src="/logo-mark.svg" style={{ width: '32px', height: '32px', display: 'block' }} alt="DreamMatch Logo" />
                         </motion.div>
                         <h1 style={{
                             fontSize: '28px',

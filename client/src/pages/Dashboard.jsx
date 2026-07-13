@@ -144,6 +144,7 @@ const Dashboard = () => {
                     zIndex: 100 
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <img src="/logo-mark.svg" style={{ width: '28px', height: '28px', display: 'block' }} alt="DreamMatch Logo" />
                         <span style={{ 
                             fontWeight: 800, 
                             fontSize: '20px', 

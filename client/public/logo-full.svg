@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" width="100%" height="100%">
+  <defs>
+    <!-- Fonts import -->
+    <style type="text/css">
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&amp;family=Inter:wght@600&amp;display=swap');
+      .brand-text {
+        font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+        font-weight: 800;
+        font-size: 56px;
+        letter-spacing: -0.03em;
+      }
+      .tagline-text {
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        font-weight: 600;
+        font-size: 13px;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        fill: #9a9ab0;
+      }
+    </style>
+
+    <!-- Sparkle Gradient (Pink to Purple) -->
+    <linearGradient id="sparkleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F89BCF" />
+      <stop offset="100%" stop-color="#8C7BFF" />
+    </linearGradient>
+
+    <!-- Text Gradient for "Match" -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F89BCF" />
+      <stop offset="100%" stop-color="#9B5CFB" />
+    </linearGradient>
+  </defs>
+
+  <!-- Centered Logo Mark Group -->
+  <g transform="translate(172, 16) scale(0.5)">
+    <!-- Sparkle Character -->
+    <path d="M 244,75 Q 256,60 268,75 C 280,140 310,185 367,198 Q 382,210 367,222 C 310,235 280,280 268,345 Q 256,360 244,345 C 232,280 202,235 145,222 Q 130,210 145,198 C 202,185 232,140 244,75 Z" fill="url(#sparkleGrad)" />
+
+    <!-- Face details -->
+    <!-- Left Eye -->
+    <path d="M 218,218 Q 225,212 232,218" fill="none" stroke="#120c3e" stroke-width="4.5" stroke-linecap="round" />
+    <!-- Right Eye -->
+    <path d="M 280,218 Q 287,212 294,218" fill="none" stroke="#120c3e" stroke-width="4.5" stroke-linecap="round" />
+    <!-- Smile -->
+    <path d="M 249,228 Q 256,234 263,228" fill="none" stroke="#120c3e" stroke-width="4.5" stroke-linecap="round" />
+
+    <!-- Left Cloud (Purple) -->
+    <g fill="#8C7BFF">
+      <rect x="120" y="275" width="105" height="40" rx="20" />
+      <circle cx="145" cy="275" r="26" />
+      <circle cx="178" cy="255" r="34" />
+      <circle cx="208" cy="280" r="20" />
+    </g>
+
+    <!-- Right Cloud (Pink) -->
+    <g fill="#F89BCF">
+      <rect x="280" y="285" width="95" height="36" rx="18" />
+      <circle cx="300" cy="295" r="18" />
+      <circle cx="328" cy="275" r="28" />
+      <circle cx="355" cy="295" r="16" />
+    </g>
+
+    <!-- Small Stars -->
+    <!-- Top-Left Purple Star -->
+    <path d="M 170,85 C 170,95 175,100 185,100 C 175,100 170,105 170,115 C 170,105 165,100 155,100 C 165,100 170,95 170,85 Z" fill="#8C7BFF" />
+    <!-- Middle-Right Pink Star -->
+    <path d="M 390,125 C 390,133 394,137 402,137 C 394,137 390,141 390,149 C 390,141 386,137 378,137 C 386,137 390,133 390,125 Z" fill="#F89BCF" />
+    <!-- Top-Right Tiny Pink Star -->
+    <path d="M 330,72 C 330,77 332.5,80 338,80 C 332.5,80 330,83 330,88 C 330,83 327.5,80 322,80 C 327.5,80 330,77 330,72 Z" fill="#F89BCF" />
+  </g>
+
+  <!-- Brand Typography -->
+  <text x="300" y="315" text-anchor="middle" class="brand-text">
+    <tspan fill="#FFFFFF">Dream</tspan><tspan fill="url(#textGrad)">Match</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="305" y="365" text-anchor="middle" class="tagline-text">Dream it. Share it. Match it.</text>
+</svg>
