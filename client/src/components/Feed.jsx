@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
 import { Flame, Heart, MessageCircle, Eye, Share2, Sparkles, Send, Inbox } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -91,6 +91,30 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
     const [commentText, setCommentText] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [showHeartOverlay, setShowHeartOverlay] = useState(false);
+
+    // Auto-polling for active video generation jobs in the background queue
+    useEffect(() => {
+        if (dream.videoStatus === 'PENDING' || dream.videoStatus === 'PROCESSING') {
+            const interval = setInterval(async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const res = await fetch(`/api/dreams/${dream.id}/video-status`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.videoStatus === 'COMPLETED' || data.videoStatus === 'FAILED') {
+                            clearInterval(interval);
+                            if (onRefresh) onRefresh();
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error polling video status:', e);
+                }
+            }, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [dream.videoStatus, dream.id, onRefresh]);
 
     const user = dream.user || {};
     const avatar = user.avatarUrl || `https://ui-avatars.com/api/?name=${user.username}&background=random`;
@@ -197,7 +221,15 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                     </AnimatePresence>
 
                     <div style={{ position: 'absolute', bottom: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 3 }}>
-                        {dream.videoUrl && (
+                        {dream.videoStatus && dream.videoStatus !== 'COMPLETED' && dream.videoStatus !== 'FAILED' && (
+                            <div
+                                style={{ background: 'rgba(5, 5, 8, 0.65)', border: '1px solid rgba(139, 92, 246, 0.3)', backdropFilter: 'blur(10px)', padding: '5px 12px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#c084fc', fontWeight: 700 }}
+                            >
+                                <div className="loading-spinner" style={{ width: '8px', height: '8px', borderWidth: '1.2px', borderTopColor: '#c084fc', animationDuration: '0.6s' }} />
+                                Processing Visuals...
+                            </div>
+                        )}
+                        {dream.videoStatus === 'COMPLETED' && dream.videoUrl && (
                             <div
                                 onClick={(e) => {
                                     e.stopPropagation();

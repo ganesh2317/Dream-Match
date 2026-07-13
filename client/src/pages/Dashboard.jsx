@@ -115,7 +115,10 @@ const Dashboard = () => {
                 setInitialVisualId(id);
                 setActiveTab('visuals');
             }} />;
-            default: return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} />;
+            default: return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
+                setInitialVisualId(id);
+                setActiveTab('visuals');
+            }} />;
         }
     };
 

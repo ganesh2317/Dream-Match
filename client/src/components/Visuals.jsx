@@ -1,13 +1,48 @@
 import React, { useRef, useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { Heart, MessageCircle, Share2, User, Music2, Sparkles, Video } from 'lucide-react';
+import { 
+    Heart, 
+    MessageCircle, 
+    Share2, 
+    Music2, 
+    Sparkles, 
+    Video, 
+    VolumeX, 
+    Volume2, 
+    Play, 
+    Bookmark, 
+    AlertCircle 
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const Visuals = ({ dreams, onRefresh, initialDreamId }) => {
+const Visuals = ({ dreams: propDreams, onRefresh, initialDreamId }) => {
     const containerRef = useRef(null);
+    const [visuals, setVisuals] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [activeIndex, setActiveIndex] = useState(0);
 
-    const visuals = [...dreams].filter(d => d.videoUrl).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const fetchVisuals = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/dreams/visuals', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setVisuals(data);
+            }
+        } catch (e) {
+            console.error('Error fetching visuals:', e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
+        fetchVisuals();
+    }, []);
+
+    // Set scroll position to initialDreamId if provided
     useEffect(() => {
         if (initialDreamId && containerRef.current && visuals.length > 0) {
             const index = visuals.findIndex(v => v.id === initialDreamId);
@@ -19,11 +54,31 @@ const Visuals = ({ dreams, onRefresh, initialDreamId }) => {
                             top: index * height,
                             behavior: 'smooth'
                         });
+                        setActiveIndex(index);
                     }
-                }, 100);
+                }, 150);
             }
         }
     }, [initialDreamId, visuals.length]);
+
+    const handleScroll = (e) => {
+        const scrollTop = e.currentTarget.scrollTop;
+        const height = e.currentTarget.clientHeight;
+        if (height > 0) {
+            const index = Math.round(scrollTop / height);
+            if (index !== activeIndex && index >= 0 && index < visuals.length) {
+                setActiveIndex(index);
+            }
+        }
+    };
+
+    if (loading) {
+        return (
+            <GlassCard style={{ height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'var(--glass-border)' }}>
+                <div className="loading-spinner" />
+            </GlassCard>
+        );
+    }
 
     if (visuals.length === 0) {
         return (
@@ -42,6 +97,7 @@ const Visuals = ({ dreams, onRefresh, initialDreamId }) => {
     return (
         <div
             ref={containerRef}
+            onScroll={handleScroll}
             style={{
                 height: 'calc(100vh - 120px)',
                 overflowY: 'scroll',
@@ -52,23 +108,74 @@ const Visuals = ({ dreams, onRefresh, initialDreamId }) => {
             }}
             className="hide-scrollbar"
         >
-            {visuals.map((dream) => (
-                <VisualItem key={dream.id} dream={dream} onRefresh={onRefresh} />
+            {visuals.map((dream, index) => (
+                <VisualItem 
+                    key={dream.id} 
+                    dream={dream} 
+                    isActive={index === activeIndex}
+                    shouldLoad={Math.abs(index - activeIndex) <= 1}
+                    onRefresh={fetchVisuals} 
+                />
             ))}
         </div>
     );
 };
 
-const VisualItem = ({ dream, onRefresh }) => {
+const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
+    const videoRef = useRef(null);
     const [liked, setLiked] = useState(dream.isLiked || false);
     const [likeCount, setLikeCount] = useState(dream._count?.likes || 0);
+    const [isMuted, setIsMuted] = useState(true);
+    const [isSaved, setIsSaved] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isError, setIsError] = useState(false);
+
+    // Prevent duplicate view triggers on rapid toggles
+    const viewTriggered = useRef(false);
 
     useEffect(() => {
         setLiked(dream.isLiked || false);
         setLikeCount(dream._count?.likes || 0);
     }, [dream.isLiked, dream._count?.likes]);
 
-    const handleLike = async () => {
+    // Handle play / pause based on intersection state
+    useEffect(() => {
+        if (!videoRef.current || !shouldLoad) return;
+
+        if (isActive) {
+            videoRef.current.play()
+                .then(() => setIsPlaying(true))
+                .catch((err) => {
+                    console.warn('Autoplay prevented:', err);
+                    setIsPlaying(false);
+                });
+
+            if (!viewTriggered.current) {
+                viewTriggered.current = true;
+                incrementView();
+            }
+        } else {
+            videoRef.current.pause();
+            setIsPlaying(false);
+        }
+    }, [isActive, shouldLoad]);
+
+    const incrementView = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`/api/dreams/${dream.id}/view`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (onRefresh) onRefresh();
+        } catch (e) {
+            console.error('Error logging view:', e);
+        }
+    };
+
+    const handleLike = async (e) => {
+        e.stopPropagation();
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
@@ -93,6 +200,31 @@ const VisualItem = ({ dream, onRefresh }) => {
         }
     };
 
+    const handleVideoClick = () => {
+        if (!videoRef.current) return;
+        if (isPlaying) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            videoRef.current.play()
+                .then(() => setIsPlaying(true))
+                .catch(() => {});
+        }
+    };
+
+    const toggleMute = (e) => {
+        e.stopPropagation();
+        if (!videoRef.current) return;
+        const nextMuted = !isMuted;
+        videoRef.current.muted = nextMuted;
+        setIsMuted(nextMuted);
+    };
+
+    const handleSave = (e) => {
+        e.stopPropagation();
+        setIsSaved(!isSaved);
+    };
+
     return (
         <div style={{
             height: '100%',
@@ -105,31 +237,133 @@ const VisualItem = ({ dream, onRefresh }) => {
             background: '#050508',
             overflow: 'hidden'
         }}>
-            {/* Main Visual */}
-            <div style={{
-                width: '100%',
-                height: '100%',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
+            {/* Media Area */}
+            {shouldLoad ? (
+                <div 
+                    onClick={handleVideoClick} 
+                    style={{ width: '100%', height: '100%', cursor: 'pointer', position: 'relative' }}
+                >
+                    <video
+                        ref={videoRef}
+                        src={dream.videoUrl}
+                        loop
+                        muted={isMuted}
+                        playsInline
+                        onLoadStart={() => setIsLoading(true)}
+                        onCanPlay={() => setIsLoading(false)}
+                        onError={() => {
+                            setIsError(true);
+                            setIsLoading(false);
+                        }}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                        }}
+                    />
+                    
+                    {/* Shadow overlay gradient */}
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(to bottom, rgba(5,5,8,0.3) 0%, transparent 40%, rgba(5,5,8,0.85) 100%)',
+                        pointerEvents: 'none'
+                    }} />
+
+                    {/* Mute Overlay Icon */}
+                    <button 
+                        onClick={toggleMute}
+                        style={{
+                            position: 'absolute',
+                            top: '20px',
+                            right: '20px',
+                            padding: '10px',
+                            background: 'rgba(5, 5, 8, 0.5)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '50%',
+                            backdropFilter: 'blur(8px)',
+                            WebkitBackdropFilter: 'blur(8px)',
+                            color: 'white',
+                            cursor: 'pointer',
+                            zIndex: 11,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                    </button>
+
+                    {/* Play Button overlay if paused manually */}
+                    {!isPlaying && !isLoading && !isError && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            padding: '20px',
+                            background: 'rgba(5, 5, 8, 0.6)',
+                            borderRadius: '50%',
+                            backdropFilter: 'blur(8px)',
+                            pointerEvents: 'none',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <Play size={28} fill="white" style={{ marginLeft: '3px' }} />
+                        </div>
+                    )}
+                </div>
+            ) : (
                 <img
-                    src={dream.videoUrl}
+                    src={dream.imageUrl}
                     style={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        opacity: 0.75
+                        opacity: 0.5
                     }}
-                    alt="Dream Visual"
+                    alt="Dream Preview"
                 />
+            )}
+
+            {/* Skeleton Loading Spinner */}
+            {isLoading && (
                 <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(to bottom, rgba(5,5,8,0.2) 0%, rgba(5,5,8,0.85) 100%)'
-                }}></div>
-            </div>
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'rgba(5, 5, 8, 0.7)',
+                    zIndex: 9
+                }}>
+                    <div className="loading-spinner" />
+                </div>
+            )}
+
+            {/* Error Fallback */}
+            {isError && (
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    background: '#050508',
+                    zIndex: 9,
+                    color: 'white',
+                    padding: '24px',
+                    textAlign: 'center'
+                }}>
+                    <AlertCircle size={40} color="#ff4757" />
+                    <div style={{ fontWeight: 600 }}>Failed to load video</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>The video source could not be played.</div>
+                </div>
+            )}
 
             {/* Right Side Actions Column */}
             <div style={{
@@ -142,6 +376,7 @@ const VisualItem = ({ dream, onRefresh }) => {
                 alignItems: 'center',
                 zIndex: 10
             }}>
+                {/* Like */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                     <motion.div
                         whileHover={{ scale: 1.1 }}
@@ -151,9 +386,10 @@ const VisualItem = ({ dream, onRefresh }) => {
                     >
                         <Heart size={20} color={liked ? "#ff4757" : "white"} fill={liked ? "#ff4757" : "none"} />
                     </motion.div>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'white' }}>{likeCount}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{likeCount}</span>
                 </div>
 
+                {/* Comment */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                     <motion.div 
                         whileHover={{ scale: 1.1 }}
@@ -161,9 +397,23 @@ const VisualItem = ({ dream, onRefresh }) => {
                     >
                         <MessageCircle size={20} color="white" />
                     </motion.div>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'white' }}>{dream._count?.comments || 0}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{dream._count?.comments || 0}</span>
                 </div>
 
+                {/* Save */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                    <motion.div 
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={handleSave}
+                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <Bookmark size={20} color={isSaved ? "#fbbf24" : "white"} fill={isSaved ? "#fbbf24" : "none"} />
+                    </motion.div>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>Save</span>
+                </div>
+
+                {/* Share */}
                 <motion.div 
                     whileHover={{ scale: 1.1 }}
                     style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -183,16 +433,50 @@ const VisualItem = ({ dream, onRefresh }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                     <img src={dream.user?.avatarUrl} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.4)', objectFit: 'cover' }} alt="avatar" />
                     <div style={{ fontWeight: 700, fontSize: '14px', textShadow: '0 2px 4px rgba(0,0,0,0.6)', color: 'white' }}>@{dream.user?.username}</div>
-                    <button style={{ padding: '5px 12px', fontSize: '11px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'white', fontWeight: 700 }}>Follow</button>
+                    
+                    {/* Generated label */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(99, 102, 241, 0.3) 100%)',
+                        border: '1px solid rgba(139, 92, 246, 0.4)',
+                        fontSize: '9px',
+                        fontWeight: 800,
+                        color: '#c084fc',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                    }}>
+                        <Sparkles size={10} />
+                        {dream.videoProvider || 'AI Generated'}
+                    </div>
+                </div>
+
+                {/* Dream Title */}
+                <div style={{ 
+                    fontSize: '18px', 
+                    fontWeight: 800, 
+                    color: 'white', 
+                    marginBottom: '6px', 
+                    textShadow: '0 2px 4px rgba(0,0,0,0.8)' 
+                }}>
+                    {dream.theme ? `${dream.theme.charAt(0).toUpperCase() + dream.theme.slice(1)} Dream` : 'Dream Vision'}
                 </div>
 
                 <div style={{ fontSize: '14px', lineHeight: '1.5', color: 'rgba(255,255,255,0.95)', marginBottom: '14px', textShadow: '0 1px 3px rgba(0,0,0,0.6)', fontWeight: 400 }}>
                     {dream.description}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white', opacity: 0.85 }}>
-                    <Music2 size={14} />
-                    <span className="marquee-text" style={{ fontSize: '12px', fontWeight: 600 }}>Original Visual Sound - {dream.user?.username}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: 'white', opacity: 0.85 }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                        {dream.views || 0} views
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Music2 size={14} />
+                        <span className="marquee-text" style={{ fontSize: '12px', fontWeight: 600, textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>Original Visual Sound - {dream.user?.username}</span>
+                    </div>
                 </div>
             </div>
         </div>

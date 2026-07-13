@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma');
 const { differenceInCalendarDays } = require('../utils/streak');
+const { videoQueue } = require('../services/videoService');
 
 // AI Image & Visual Generation using Pollinations.ai (Enhanced for Accuracy & Realism)
 // Uses intelligent keyword extraction and real-world photographic references
@@ -516,6 +517,12 @@ const createDream = async (req, res) => {
             }
         });
 
+        // Start video generation in the background automatically
+        const videoProvider = process.env.VIDEO_PROVIDER || 'luma';
+        videoQueue.enqueue(dream.id, description, videoProvider).catch(err => {
+            console.error('Failed to auto-enqueue video generation:', err);
+        });
+
         // --- DREAM MATCHING LOGIC (Refined) ---
         const keywords = description.toLowerCase()
             .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
@@ -709,4 +716,115 @@ const getMatches = async (req, res) => {
     }
 };
 
-module.exports = { generateDreamImages, generateSingleImage, createDream, getFeed, likeDream, commentDream, viewDream, getMatches };
+const triggerVideoGeneration = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const dream = await prisma.dream.findUnique({ where: { id } });
+        if (!dream) {
+            return res.status(404).json({ message: 'Dream not found' });
+        }
+        const provider = process.env.VIDEO_PROVIDER || 'luma';
+        await videoQueue.enqueue(dream.id, dream.description, provider);
+        res.json({ success: true, status: 'PENDING' });
+    } catch (error) {
+        console.error('Trigger Video Generation Error:', error);
+        res.status(500).json({ message: 'Error triggering video generation' });
+    }
+};
+
+const getVideoStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const dream = await prisma.dream.findUnique({
+            where: { id },
+            select: { id: true, videoStatus: true, videoUrl: true }
+        });
+        if (!dream) {
+            return res.status(404).json({ message: 'Dream not found' });
+        }
+        res.json(dream);
+    } catch (error) {
+        console.error('Get Video Status Error:', error);
+        res.status(500).json({ message: 'Error checking video status' });
+    }
+};
+
+const getVisualsFeed = async (req, res) => {
+    try {
+        const dreams = await prisma.dream.findMany({
+            where: {
+                videoStatus: 'COMPLETED',
+                videoUrl: { not: null }
+            },
+            include: {
+                user: {
+                    select: { id: true, username: true, avatarUrl: true, streakCount: true }
+                },
+                _count: {
+                    select: { likes: true, comments: true }
+                },
+                likes: {
+                    where: { userId: req.user ? req.user.id : undefined },
+                    select: { userId: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const finalDreams = dreams.map(d => ({
+            ...d,
+            isLiked: d.likes.length > 0
+        }));
+
+        res.json(finalDreams);
+    } catch (error) {
+        console.error('Fetch Visuals Feed Error:', error);
+        res.status(500).json({ message: 'Error fetching visuals feed' });
+    }
+};
+
+const getIndividualVideo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const dream = await prisma.dream.findUnique({
+            where: { id },
+            include: {
+                user: {
+                    select: { id: true, username: true, avatarUrl: true, streakCount: true }
+                },
+                _count: {
+                    select: { likes: true, comments: true }
+                },
+                likes: {
+                    where: { userId: req.user ? req.user.id : undefined },
+                    select: { userId: true }
+                }
+            }
+        });
+        if (!dream) {
+            return res.status(404).json({ message: 'Dream not found' });
+        }
+        res.json({
+            ...dream,
+            isLiked: dream.likes.length > 0
+        });
+    } catch (error) {
+        console.error('Get Individual Video Error:', error);
+        res.status(500).json({ message: 'Error fetching video' });
+    }
+};
+
+module.exports = { 
+    generateDreamImages, 
+    generateSingleImage, 
+    createDream, 
+    getFeed, 
+    likeDream, 
+    commentDream, 
+    viewDream, 
+    getMatches,
+    triggerVideoGeneration,
+    getVideoStatus,
+    getVisualsFeed,
+    getIndividualVideo
+};
