@@ -124,7 +124,7 @@ const Dashboard = () => {
             display: 'flex',
             flexDirection: isMobile ? 'column' : 'row',
             height: '100vh',
-            background: 'var(--bg-gradient)',
+            background: isMobile ? 'transparent' : 'var(--bg-gradient)',
             padding: isMobile ? '0' : '24px',
             gap: isMobile ? '0' : '24px',
             overflow: 'hidden',
