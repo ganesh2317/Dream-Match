@@ -3,6 +3,8 @@ import { Home, Search, MessageCircle, Video, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const BottomNavigation = ({ activeTab, setActiveTab }) => {
+    // Navigation items representing the main user-experience hubs of the platform.
+    // Each matches an activeTab state key in Dashboard.jsx.
     const navItems = [
         { id: 'feed', icon: Home, label: 'Feed' },
         { id: 'search', icon: Search, label: 'Search' },
