@@ -16,6 +16,8 @@ class VideoProvider {
 }
 
 // Concrete Mock Provider supporting all switchable features
+// This class simulates the asynchronous generation behavior of real external APIs
+// (e.g., Runway, Kling, or Luma) by keeping local state and mocking delay states.
 class SimulatedProvider extends VideoProvider {
     constructor(name) {
         super(name);
