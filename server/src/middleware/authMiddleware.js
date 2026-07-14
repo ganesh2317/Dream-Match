@@ -1,5 +1,14 @@
 const jwt = require('jsonwebtoken');
 
+/**
+ * Authentication middleware that verifies JWT token sent in Authorization header.
+ * Attaches decoded user payload (with user ID) to the request object.
+ * Returns 401 Unauthorized status if token is missing or invalid.
+ * 
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
+ */
 const protect = (req, res, next) => {
     let token;
 
