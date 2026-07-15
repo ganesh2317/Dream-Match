@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { User as UserIcon, Edit2, Save, X, Camera, Flame, Image as ImageIcon, Sparkles, Users, MessageCircle, Video, ArrowLeft } from 'lucide-react';
+import { 
+    User as UserIcon, 
+    Edit2, 
+    Save, 
+    X, 
+    Camera, 
+    Flame, 
+    Image as ImageIcon, 
+    Sparkles, 
+    Users, 
+    MessageCircle, 
+    Video, 
+    ArrowLeft,
+    Settings as SettingsIcon
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
+const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings }) => {
     const { user: contextUser, updateUser } = useAuth();
     const [user, setUser] = useState(propUser || contextUser);
     const [userDreams, setUserDreams] = useState([]);
@@ -140,8 +154,8 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                 <button
                     onClick={onBack}
                     style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        background: 'var(--glass-bg)',
+                        border: 'var(--glass-border)',
                         borderRadius: '12px',
                         padding: '10px 18px',
                         marginBottom: '20px',
@@ -151,14 +165,16 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                         gap: '8px',
                         fontSize: '13px',
                         boxShadow: 'none',
-                        transform: 'none'
+                        transform: 'none',
+                        color: 'var(--text-primary)'
                     }}
                 >
                     <ArrowLeft size={16} /> Back to Search
                 </button>
             )}
 
-            <GlassCard style={{ padding: '0', marginBottom: '32px', overflow: 'hidden', border: 'var(--glass-border)' }}>
+            <GlassCard style={{ padding: '0', marginBottom: '32px', overflow: 'hidden', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
+                {/* Banner */}
                 <div style={{
                     height: '160px',
                     width: '100%',
@@ -189,7 +205,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                                         height: '110px',
                                         borderRadius: '28px',
                                         objectFit: 'cover',
-                                        border: '2px solid rgba(255,255,255,0.1)'
+                                        border: '2px solid var(--primary)'
                                     }}
                                     alt="profile-avatar"
                                 />
@@ -221,22 +237,43 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
 
                         <div style={{ flex: 1, minWidth: '240px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
                             <div>
-                                <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'white', marginBottom: '4px' }}>{user.fullName}</h2>
+                                <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>{user.fullName}</h2>
                                 <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>@{user.username}</span>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px' }}>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                 {!propUser ? (
                                     !isEditing ? (
-                                        <button onClick={() => { setIsEditing(true); setBio(user.bio || ''); }} style={{ padding: '8px 16px', fontSize: '13px', borderRadius: '10px' }}>
-                                            <Edit2 size={14} /> Edit Profile
-                                        </button>
+                                        <>
+                                            <button onClick={() => { setIsEditing(true); setBio(user.bio || ''); }} style={{ padding: '8px 16px', fontSize: '13px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Edit2 size={14} /> Edit Profile
+                                            </button>
+                                            {onSettings && (
+                                                <button 
+                                                    onClick={onSettings}
+                                                    style={{ 
+                                                        padding: '8px', 
+                                                        borderRadius: '10px', 
+                                                        background: 'rgba(255,255,255,0.05)', 
+                                                        border: '1px solid rgba(255,255,255,0.08)',
+                                                        color: 'var(--text-primary)',
+                                                        boxShadow: 'none', 
+                                                        transform: 'none',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    <SettingsIcon size={16} />
+                                                </button>
+                                            )}
+                                        </>
                                     ) : (
                                         <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button onClick={handleSave} disabled={saving} style={{ padding: '8px 16px', background: 'var(--primary)', color: 'white', fontSize: '13px', borderRadius: '10px' }}>
+                                            <button onClick={handleSave} disabled={saving} style={{ padding: '8px 16px', background: 'var(--primary)', color: 'white', fontSize: '13px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 <Save size={14} /> {saving ? 'Saving...' : 'Save'}
                                             </button>
-                                            <button onClick={() => { setIsEditing(false); setPreview(''); }} style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: 'white', boxShadow: 'none', transform: 'none' }}>
+                                            <button onClick={() => { setIsEditing(false); setPreview(''); }} style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: 'var(--text-primary)', boxShadow: 'none', transform: 'none' }}>
                                                 <X size={14} />
                                             </button>
                                         </div>
@@ -257,7 +294,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                                         >
                                             {isFollowingState ? 'Following' : 'Follow'}
                                         </button>
-                                        <button onClick={() => onMessage(user)} style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '13px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.08)', boxShadow: 'none', transform: 'none' }}>
+                                        <button onClick={() => onMessage(user)} style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '13px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: 'none', transform: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <MessageCircle size={14} /> Message
                                         </button>
                                     </>
@@ -290,7 +327,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                                 onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
                             />
                         ) : (
-                            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: '14px', maxWidth: '600px' }}>
+                            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: '14.5px', maxWidth: '600px' }}>
                                 {user.bio || 'This wanderer has yet to record their path in the dreamscape.'}
                             </p>
                         )}
@@ -387,7 +424,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                         ))}
                     </div>
                 ) : (
-                    <GlassCard style={{ textAlign: 'center', padding: '64px 32px', color: 'var(--text-muted)', border: 'var(--glass-border)' }}>
+                    <GlassCard style={{ textAlign: 'center', padding: '64px 32px', color: 'var(--text-muted)', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
                         <ImageIcon size={36} style={{ marginBottom: '16px', opacity: 0.2 }} />
                         <p style={{ fontSize: '14px' }}>No dreams cataloged yet.</p>
                     </GlassCard>
@@ -409,6 +446,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                                     cursor: 'pointer',
                                     background: '#050508'
                                 }}
+                                className="dream-thumb"
                             >
                                 <img
                                     src={dream.videoUrl}
@@ -451,7 +489,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual }) => {
                         ))}
                     </div>
                 ) : (
-                    <GlassCard style={{ textAlign: 'center', padding: '64px 32px', color: 'var(--text-muted)', border: 'var(--glass-border)' }}>
+                    <GlassCard style={{ textAlign: 'center', padding: '64px 32px', color: 'var(--text-muted)', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
                         <Video size={36} style={{ marginBottom: '16px', opacity: 0.2 }} />
                         <p style={{ fontSize: '14px' }}>No visuals generated yet.</p>
                     </GlassCard>
@@ -480,15 +518,15 @@ const StatBox = ({ icon: Icon, value, label, color }) => (
             textAlign: 'center', 
             padding: '14px 20px', 
             borderRadius: '16px', 
-            background: 'rgba(255,255,255,0.02)', 
+            background: 'var(--glass-bg)', 
             minWidth: '95px',
             flex: '1',
-            border: '1px solid rgba(255,255,255,0.04)',
+            border: 'var(--glass-border)',
             transition: 'border var(--transition-fast)'
         }}
     >
         <Icon size={16} color={color} style={{ marginBottom: '6px' }} />
-        <div style={{ fontSize: '20px', fontWeight: 800, color: 'white', letterSpacing: '-0.5px' }}>{value}</div>
+        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>{value}</div>
         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{label}</div>
     </motion.div>
 );

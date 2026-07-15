@@ -8,8 +8,9 @@ import Messages from '../components/Messages';
 import Profile from '../components/Profile';
 import Search from '../components/Search';
 import Visuals from '../components/Visuals';
+import Settings from '../components/Settings';
 import BottomNavigation from '../components/BottomNavigation';
-import { Moon, X, Sparkles, Wand2, Zap, Flame, PlusSquare, Bell, LogOut, MessageCircle, Navigation } from 'lucide-react';
+import { Moon, X, Sparkles, Wand2, Zap, Flame, PlusSquare, Bell, LogOut, MessageCircle, Heart, Download, Share2, Compass, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -102,23 +103,33 @@ const Dashboard = () => {
         }
 
         switch (activeTab) {
-            case 'feed': return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
-                setInitialVisualId(id);
-                setActiveTab('visuals');
-            }} />;
-            case 'search': return <Search onViewProfile={setViewingUser} />;
-            case 'messages': return <Messages currentUser={user} initialUser={messageUser} onClearInitial={() => setMessageUser(null)} />;
-            case 'matches': return <Matches onMessage={handleOpenMessage} />;
-            case 'notifications': return <Notifications />;
-            case 'visuals': return <Visuals dreams={dreams} onRefresh={fetchDreams} initialDreamId={initialVisualId} />;
-            case 'profile': return <Profile user={user} onViewVisual={(id) => {
-                setInitialVisualId(id);
-                setActiveTab('visuals');
-            }} />;
-            default: return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
-                setInitialVisualId(id);
-                setActiveTab('visuals');
-            }} />;
+            case 'feed': 
+                return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
+                    setInitialVisualId(id);
+                    setActiveTab('visuals');
+                }} />;
+            case 'search': 
+                return <Search onViewProfile={setViewingUser} />;
+            case 'messages': 
+                return <Messages currentUser={user} initialUser={messageUser} onClearInitial={() => setMessageUser(null)} />;
+            case 'matches': 
+                return <Matches onMessage={handleOpenMessage} />;
+            case 'notifications': 
+                return <Notifications />;
+            case 'visuals': 
+                return <Visuals dreams={dreams} onRefresh={fetchDreams} initialDreamId={initialVisualId} />;
+            case 'profile': 
+                return <Profile user={user} onViewVisual={(id) => {
+                    setInitialVisualId(id);
+                    setActiveTab('visuals');
+                }} onSettings={() => setActiveTab('settings')} />;
+            case 'settings':
+                return <Settings onBack={() => setActiveTab('profile')} />;
+            default: 
+                return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
+                    setInitialVisualId(id);
+                    setActiveTab('visuals');
+                }} />;
         }
     };
 
@@ -146,13 +157,13 @@ const Dashboard = () => {
                     borderBottom: 'var(--glass-border)', 
                     zIndex: 100 
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => setActiveTab('feed')}>
                         <img src="/logo-mark.svg" style={{ width: '28px', height: '28px', display: 'block' }} alt="DreamMatch Logo" />
                         <span style={{ 
                             fontWeight: 800, 
                             fontSize: '20px', 
                             letterSpacing: '-0.03em',
-                            background: 'linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%)',
+                            background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent'
                         }}>DreamMatch</span>
@@ -165,7 +176,7 @@ const Dashboard = () => {
                             onClick={() => setActiveTab('notifications')}
                             style={{ 
                                 background: activeTab === 'notifications' ? 'rgba(255,255,255,0.1)' : 'transparent', 
-                                color: 'white',
+                                color: 'var(--text-primary)',
                                 padding: '8px', 
                                 borderRadius: '10px',
                                 boxShadow: 'none',
@@ -178,7 +189,7 @@ const Dashboard = () => {
                             onClick={() => setActiveTab('matches')}
                             style={{ 
                                 background: activeTab === 'matches' ? 'rgba(255,255,255,0.1)' : 'transparent', 
-                                color: 'white',
+                                color: 'var(--text-primary)',
                                 padding: '8px', 
                                 borderRadius: '10px',
                                 boxShadow: 'none',
@@ -197,19 +208,6 @@ const Dashboard = () => {
                             }}
                         >
                             <PlusSquare size={16} />
-                        </button>
-                        <button
-                            onClick={handleLogout}
-                            style={{
-                                background: 'transparent',
-                                color: 'var(--text-muted)',
-                                padding: '8px',
-                                borderRadius: '10px',
-                                boxShadow: 'none',
-                                transform: 'none'
-                            }}
-                        >
-                            <LogOut size={18} />
                         </button>
                     </div>
                 </div>
@@ -237,22 +235,22 @@ const Dashboard = () => {
             </div>
 
             {/* Right Sidebar (Desktop only) */}
-            {!isMobile && (
+            {!isMobile && activeTab !== 'settings' && activeTab !== 'messages' && (
                 <div style={{ width: '310px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <GlassCard style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.03)', border: '1px solid rgba(99, 102, 241, 0.08)' }}>
+                    <GlassCard style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.03)', border: '1px solid rgba(99, 102, 241, 0.08)', borderRadius: 'var(--radius-xl)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                             <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Your Streak</h3>
                             <div style={{ background: 'rgba(99, 102, 241, 0.12)', padding: '8px', borderRadius: '10px' }}>
                                 <Flame color="var(--primary)" fill="var(--primary)" size={18} />
                             </div>
                         </div>
-                        <div style={{ fontSize: '50px', fontWeight: 800, textAlign: 'center', color: 'white', letterSpacing: '-2px', textShadow: '0 8px 24px rgba(99, 102, 241, 0.25)' }}>
+                        <div style={{ fontSize: '50px', fontWeight: 800, textAlign: 'center', color: 'var(--text-primary)', letterSpacing: '-2px', textShadow: '0 8px 24px var(--primary-glow)' }}>
                             {user?.streakCount || 0}
                         </div>
                         <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '6px' }}>Days Active</div>
                     </GlassCard>
 
-                    <GlassCard style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px' }}>
+                    <GlassCard style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: 'var(--radius-xl)' }}>
                         <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Sparkles size={18} color="var(--primary)" /> Potential Matches
                         </h3>
@@ -265,14 +263,12 @@ const Dashboard = () => {
                                 dbMatches.map(match => {
                                     const otherUser = match.senderId === user.id ? match.receiver : match.sender;
                                     return (
-                                        <div key={match.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', borderRadius: '12px', cursor: 'pointer', transition: '0.2s', border: '1px solid transparent' }} className="hover-bg"
+                                        <div key={match.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', borderRadius: '12px', cursor: 'pointer', transition: '0.2s', border: '1px solid transparent' }} className="hover-bg-simple"
                                             onClick={() => handleOpenMessage(otherUser)}
-                                            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'}
-                                            onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
                                         >
                                             <img src={otherUser.avatarUrl} style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'cover' }} />
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontWeight: 700, fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'white' }}>{otherUser.username}</div>
+                                                <div style={{ fontWeight: 700, fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>{otherUser.username}</div>
                                                 <div style={{ fontSize: '11px', color: 'var(--success)', fontWeight: 700 }}>{Math.round(match.score * 100)}% Match</div>
                                             </div>
                                             <Zap size={14} color="var(--primary)" fill="var(--primary)" />
@@ -281,14 +277,14 @@ const Dashboard = () => {
                                 })
                             )}
                         </div>
-                        <button onClick={() => setActiveTab('matches')} style={{ marginTop: 'auto', width: '100%', background: 'rgba(255,255,255,0.04)', color: 'white', border: '1px solid rgba(255,255,255,0.06)', fontSize: '12px', padding: '12px' }}>View All</button>
+                        <button onClick={() => setActiveTab('matches')} style={{ marginTop: 'auto', width: '100%', background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '12px', padding: '12px' }} className="hover-scale">View All</button>
                     </GlassCard>
                 </div>
             )}
 
             {/* Mobile Bottom Navigation */}
             {isMobile && (
-                <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+                <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} onAddClick={() => setShowCreateModal(true)} />
             )}
 
             {/* Create Dream Modal */}
@@ -304,7 +300,8 @@ const Dashboard = () => {
 const CreateDreamModal = ({ onClose, onPosted }) => {
     const [step, setStep] = useState(1);
     const [description, setDescription] = useState('');
-    const [style, setStyle] = useState('surreal');
+    const [mood, setMood] = useState('peaceful');
+    const [visibility, setVisibility] = useState('Everyone');
     const [images, setImages] = useState([]);
     const [videoUrl, setVideoUrl] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
@@ -317,11 +314,10 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
     const [variationsMeta, setVariationsMeta] = useState([]);
     const [videoMeta, setVideoMeta] = useState(null);
 
-    const STYLES = [
-        { id: 'surreal', label: 'Surrealism', emoji: '🌌' },
-        { id: 'ethereal', label: 'Ethereal', emoji: '✨' },
-        { id: 'cyberpunk', label: 'Cyberpunk', emoji: '🌆' },
-        { id: 'oil', label: 'Oil Painting', emoji: '🎨' },
+    const MOODS = [
+        { id: 'happy', label: 'Happy', emoji: '😃' },
+        { id: 'peaceful', label: 'Peaceful', emoji: '🧘' },
+        { id: 'scary', label: 'Scary', emoji: '💀' },
     ];
 
     const fetchVariation = async (index, meta, token) => {
@@ -356,6 +352,10 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                 setImages(prev => {
                     const next = [...prev];
                     next[index] = data.image;
+                    // Auto-select the first loaded variation
+                    if (!selectedImage && index === 0) {
+                        setSelectedImage(data.image);
+                    }
                     return next;
                 });
             } else {
@@ -426,7 +426,7 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ description: `${description} (${style} style)` })
+                body: JSON.stringify({ description: `${description} (${mood} mood)` })
             });
 
             if (res.ok) {
@@ -435,6 +435,7 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                     setVariationsMeta(data.variations);
                     setVideoMeta(data.video);
                     setImages([null, null, null, null]);
+                    setSelectedImage(null);
                     setLoadingStates([true, true, true, true]);
                     setFailedStates([false, false, false, false]);
 
@@ -445,6 +446,7 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                     await fetchVideo(data.video, token);
                 } else {
                     setImages(data.images);
+                    setSelectedImage(data.images[0]);
                     setVideoUrl(data.videoUrl);
                     setLoadingStates([false, false, false, false]);
                     setVideoLoading(false);
@@ -477,6 +479,29 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
         }
     };
 
+    const handleDownloadImage = () => {
+        if (!selectedImage) return;
+        const a = document.createElement('a');
+        a.href = selectedImage;
+        a.download = `dream-vision-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
+    const handleShareImage = () => {
+        if (navigator.share) {
+            navigator.share({
+                title: 'My Dream Vision - DreamMatch',
+                text: description,
+                url: selectedImage
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(selectedImage);
+            alert('Link copied to clipboard!');
+        }
+    };
+
     const handlePost = async () => {
         if (!selectedImage) return;
 
@@ -491,7 +516,8 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                 body: JSON.stringify({
                     description,
                     imageUrl: selectedImage,
-                    videoUrl: videoUrl
+                    videoUrl: videoUrl,
+                    theme: mood
                 })
             });
 
@@ -529,27 +555,51 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 15 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-                style={{ width: '100%', maxWidth: '640px', zIndex: 1001 }}
+                style={{ width: '100%', maxWidth: '580px', zIndex: 1001 }}
             >
-                <GlassCard style={{ background: 'var(--glass-bg)', border: 'var(--glass-border)', maxHeight: '90vh', overflowY: 'auto', padding: '32px' }} className="hide-scrollbar">
+                <GlassCard style={{ background: 'var(--glass-bg)', border: 'var(--glass-border)', maxHeight: '90vh', overflowY: 'auto', padding: '28px', borderRadius: 'var(--radius-2xl)' }} className="hide-scrollbar">
+                    {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2 style={{ fontSize: '22px', fontWeight: 800 }}>{step === 1 ? 'Visualize Your Dream' : 'Choose Your Vision'}</h2>
-                        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', color: 'white', padding: '8px', borderRadius: '50%', boxShadow: 'none' }}><X size={16} /></button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {step === 2 && (
+                                <button 
+                                    onClick={() => setStep(1)} 
+                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', padding: '6px 12px', fontSize: '13px', borderRadius: '8px', boxShadow: 'none' }}
+                                >
+                                    ← Edit
+                                </button>
+                            )}
+                            <h2 style={{ fontSize: '20px', fontWeight: 800 }}>
+                                {step === 1 ? 'Create Dream' : 'AI Generated'}
+                            </h2>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {step === 1 && (
+                                <button 
+                                    onClick={() => alert('History tab coming soon!')}
+                                    style={{ background: 'transparent', border: 'var(--glass-border)', color: 'var(--text-primary)', padding: '6px 12px', fontSize: '12px', borderRadius: '10px', boxShadow: 'none' }}
+                                >
+                                    History
+                                </button>
+                            )}
+                            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', padding: '8px', borderRadius: '50%', boxShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px' }}><X size={16} /></button>
+                        </div>
                     </div>
 
                     {step === 1 ? (
+                        /* Step 1: Write and Configure Dream */
                         <div>
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Describe what you saw</label>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, marginBottom: '10px' }}>What did you dream about?</label>
                                 <textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="A crystal castle floating above a sea of neon clouds..."
+                                    placeholder="I was flying over a futuristic city during sunset. The sky was glowing orange and everything felt so real."
                                     style={{
                                         width: '100%',
-                                        height: '130px',
+                                        height: '140px',
                                         padding: '16px',
-                                        borderRadius: 'var(--radius-md)',
+                                        borderRadius: 'var(--radius-lg)',
                                         border: '1px solid rgba(255,255,255,0.08)',
                                         background: 'rgba(0,0,0,0.3)',
                                         color: 'white',
@@ -557,6 +607,7 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                                         fontFamily: 'inherit',
                                         resize: 'none',
                                         outline: 'none',
+                                        lineHeight: 1.5,
                                         transition: 'all var(--transition-fast)'
                                     }}
                                     onFocus={e => {
@@ -570,30 +621,77 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                                 />
                             </div>
 
-                            <div style={{ marginBottom: '28px' }}>
-                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Dream Style</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                                    {STYLES.map(s => (
-                                        <motion.div
-                                            whileHover={{ y: -2 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            key={s.id}
-                                            onClick={() => setStyle(s.id)}
-                                            style={{
-                                                padding: '14px 6px',
-                                                borderRadius: 'var(--radius-md)',
-                                                border: style === s.id ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
-                                                background: style === s.id ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255,255,255,0.02)',
-                                                boxShadow: style === s.id ? 'var(--focus-ring)' : 'none',
-                                                textAlign: 'center',
-                                                cursor: 'pointer',
-                                                transition: 'all var(--transition-fast)'
-                                            }}
-                                        >
-                                            <div style={{ fontSize: '20px', marginBottom: '4px' }}>{s.emoji}</div>
-                                            <div style={{ fontSize: '11px', fontWeight: 700 }}>{s.label}</div>
-                                        </motion.div>
-                                    ))}
+                            {/* Choose Mood section styled as chips */}
+                            <div style={{ marginBottom: '24px' }}>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, marginBottom: '10px' }}>Choose Mood</label>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    {MOODS.map(m => {
+                                        const isSelected = mood === m.id;
+                                        return (
+                                            <motion.div
+                                                whileHover={{ y: -1 }}
+                                                whileTap={{ scale: 0.96 }}
+                                                key={m.id}
+                                                onClick={() => setMood(m.id)}
+                                                style={{
+                                                    padding: '10px 20px',
+                                                    borderRadius: '100px',
+                                                    border: isSelected ? '1.5px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
+                                                    background: isSelected ? 'var(--primary-glow)' : 'rgba(255,255,255,0.02)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all var(--transition-fast)',
+                                                    color: isSelected ? 'white' : 'var(--text-secondary)',
+                                                    fontWeight: isSelected ? 700 : 500,
+                                                    fontSize: '13px'
+                                                }}
+                                            >
+                                                <span>{m.emoji}</span>
+                                                <span>{m.label}</span>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Visibility selector */}
+                            <div style={{ marginBottom: '32px' }}>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, marginBottom: '10px' }}>Visibility</label>
+                                <div style={{ position: 'relative' }}>
+                                    <select
+                                        value={visibility}
+                                        onChange={(e) => setVisibility(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '14px 16px',
+                                            borderRadius: 'var(--radius-md)',
+                                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                                            background: 'rgba(255, 255, 255, 0.03)',
+                                            fontSize: '14px',
+                                            height: '50px',
+                                            outline: 'none',
+                                            color: 'var(--text-primary)',
+                                            cursor: 'pointer',
+                                            transition: 'all var(--transition-fast)',
+                                            appearance: 'none',
+                                            WebkitAppearance: 'none'
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.border = '1px solid var(--primary)';
+                                            e.target.style.boxShadow = 'var(--focus-ring)';
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                                            e.target.style.boxShadow = 'none';
+                                        }}
+                                    >
+                                        <option value="Everyone" style={{ background: '#0a0a0f', color: 'white' }}>Everyone</option>
+                                        <option value="Friends" style={{ background: '#0a0a0f', color: 'white' }}>Friends</option>
+                                        <option value="Private" style={{ background: '#0a0a0f', color: 'white' }}>Private</option>
+                                    </select>
+                                    <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-dim)' }}>▼</div>
                                 </div>
                             </div>
 
@@ -602,36 +700,84 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                                 whileTap={{ scale: 0.99 }}
                                 onClick={handleGenerate}
                                 disabled={generating || !description}
-                                style={{ width: '100%', padding: '16px', fontSize: '15px', borderRadius: 'var(--radius-md)', background: 'var(--primary-gradient)' }}
+                                style={{ width: '100%', padding: '16px', fontSize: '15px', borderRadius: 'var(--radius-md)', background: 'var(--primary-gradient)', boxShadow: '0 8px 20px var(--primary-glow)' }}
                             >
                                 {generating ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div className="loading-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                                        <div className="loading-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', borderTopColor: 'white' }} />
                                         <span>Subconscious visualizing...</span>
                                     </div>
                                 ) : (
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Wand2 size={18} /> Generate Visions</span>
+                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Wand2 size={18} /> Generate Visual</span>
                                 )}
                             </motion.button>
                         </div>
                     ) : (
+                        /* Step 2: AI Generated Preview and Options */
                         <div>
-                            <div style={{ marginBottom: '16px', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span>Status: </span>
+                            {/* Status indicator */}
+                            <div style={{ marginBottom: '14px', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyItems: 'center', gap: '10px' }}>
+                                <span>Status:</span>
                                 {images.filter(Boolean).length === 4 ? (
                                     <span style={{ color: 'var(--success)', fontWeight: 700 }}>Visions complete! Select one to share.</span>
                                 ) : (
                                     <span style={{ color: 'var(--primary)', fontWeight: 700 }}>
-                                        Synthesizing dreams sequentially ({images.filter(Boolean).length}/4 loaded)...
+                                        Synthesizing dreams ({images.filter(Boolean).length}/4 loaded)...
                                     </span>
                                 )}
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                            {/* Large Image Preview with micro action buttons */}
+                            <div style={{ 
+                                position: 'relative', 
+                                width: '100%', 
+                                aspectRatio: '1.1/1', 
+                                borderRadius: 'var(--radius-xl)', 
+                                overflow: 'hidden', 
+                                background: '#050508', 
+                                border: '1px solid rgba(255,255,255,0.06)',
+                                marginBottom: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                {selectedImage ? (
+                                    <>
+                                        <img src={selectedImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Active vision preview" />
+                                        {/* Bottom Action Overlays */}
+                                        <div style={{ 
+                                            position: 'absolute', 
+                                            bottom: '16px', 
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            background: 'rgba(10, 10, 15, 0.75)',
+                                            backdropFilter: 'blur(10px)',
+                                            padding: '8px 16px',
+                                            borderRadius: '100px',
+                                            display: 'flex',
+                                            gap: '20px',
+                                            border: '1px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            <button onClick={() => alert('Liked!')} style={{ background: 'transparent', border: 'none', padding: '4px', color: '#ff4757', display: 'flex', alignItems: 'center', boxShadow: 'none', transform: 'none' }} className="hover-scale"><Heart size={18} fill="#ff4757" /></button>
+                                            <button onClick={handleDownloadImage} style={{ background: 'transparent', border: 'none', padding: '4px', color: 'white', display: 'flex', alignItems: 'center', boxShadow: 'none', transform: 'none' }} className="hover-scale"><Download size={18} /></button>
+                                            <button onClick={handleShareImage} style={{ background: 'transparent', border: 'none', padding: '4px', color: 'white', display: 'flex', alignItems: 'center', boxShadow: 'none', transform: 'none' }} className="hover-scale"><Share2 size={18} /></button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                        <div className="loading-spinner" />
+                                        <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Synthesizing preview...</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 4 Image Variations Selector Grid */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
                                 {[0, 1, 2, 3].map((index) => {
                                     const img = images[index];
                                     const isLoading = loadingStates[index];
                                     const isFailed = failedStates[index];
+                                    const isSelected = selectedImage === img && img;
 
                                     return (
                                         <div
@@ -640,67 +786,85 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                                             style={{
                                                 position: 'relative',
                                                 aspectRatio: '1',
-                                                borderRadius: 'var(--radius-lg)',
+                                                borderRadius: 'var(--radius-md)',
                                                 overflow: 'hidden',
                                                 cursor: img ? 'pointer' : 'default',
-                                                border: selectedImage === img && img ? '3px solid var(--primary)' : '1px solid rgba(255,255,255,0.06)',
+                                                border: isSelected ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.06)',
                                                 background: 'rgba(255,255,255,0.01)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                transition: 'all 0.2s',
-                                                boxShadow: selectedImage === img && img ? '0 0 16px var(--primary-glow)' : 'none'
+                                                transition: 'all var(--transition-fast)',
+                                                boxShadow: isSelected ? '0 0 10px var(--primary-glow)' : 'none'
                                             }}
                                             className={isLoading ? "shimmer" : ""}
                                         >
                                             {isLoading ? (
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontWeight: 600 }}>Visualizing...</span>
-                                                </div>
+                                                <div className="loading-spinner" style={{ width: '12px', height: '12px', borderWidth: '1.5px', borderTopColor: 'var(--primary)' }} />
                                             ) : isFailed ? (
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px', textAlign: 'center' }}>
-                                                    <span style={{ fontSize: '11px', color: '#ff7675', fontWeight: 700 }}>Timed out</span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '4px' }}>
+                                                    <span style={{ fontSize: '8px', color: 'var(--error)', fontWeight: 700 }}>Failed</span>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleRetryVariation(index); }}
-                                                        style={{ padding: '6px 12px', fontSize: '11px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}
+                                                        style={{ padding: '2px 6px', fontSize: '9px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px' }}
                                                     >
                                                         Retry
                                                     </button>
                                                 </div>
                                             ) : img ? (
-                                                <>
-                                                    <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`variation ${index + 1}`} />
-                                                    {selectedImage === img && (
-                                                        <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--primary)', borderRadius: '50%', padding: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-                                                            <Zap size={14} color="white" fill="white" />
-                                                        </div>
-                                                    )}
-                                                </>
+                                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`var-${index}`} />
                                             ) : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Waiting...</span>
-                                                </div>
+                                                <span style={{ fontSize: '9px', color: 'var(--text-dim)' }}>Wait...</span>
                                             )}
                                         </div>
                                     );
                                 })}
                             </div>
 
+                            {/* Actions and Regenerate buttons */}
                             <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
                                 {videoFailed && (
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '10px', fontSize: '12px', color: '#ff7675' }}>
-                                        <span>Video/Reel generation failed.</span>
+                                        <span>Video generation timed out.</span>
                                         <button onClick={handleRetryVideo} style={{ padding: '6px 12px', fontSize: '11px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>Retry Video</button>
                                     </div>
                                 )}
-                                <div style={{ display: 'flex', gap: '12px' }}>
-                                    <button onClick={() => setStep(1)} style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', fontSize: '14px' }}>Back</button>
-                                    <button
+                                
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                                    <motion.button
+                                        whileHover={{ scale: 1.01 }}
+                                        whileTap={{ scale: 0.99 }}
                                         onClick={handlePost}
                                         disabled={!selectedImage || videoLoading}
-                                        style={{ flex: 1, padding: '14px', fontSize: '14px' }}
+                                        style={{ width: '100%', padding: '16px', fontSize: '15px', borderRadius: 'var(--radius-md)', background: 'var(--primary-gradient)', boxShadow: '0 8px 20px var(--primary-glow)' }}
                                     >
-                                        {videoLoading ? 'Generating Reel...' : 'Share Vision'}
+                                        {videoLoading ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                                <div className="loading-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', borderTopColor: 'white' }} />
+                                                <span>Synthesizing Reel...</span>
+                                            </div>
+                                        ) : (
+                                            <span>Post Dream</span>
+                                        )}
+                                    </motion.button>
+                                    
+                                    <button 
+                                        onClick={() => setStep(1)} 
+                                        style={{ 
+                                            background: 'transparent', 
+                                            color: 'var(--text-muted)', 
+                                            fontSize: '13px', 
+                                            fontWeight: 600, 
+                                            padding: '8px', 
+                                            border: 'none',
+                                            boxShadow: 'none',
+                                            textAlign: 'center',
+                                            cursor: 'pointer'
+                                        }}
+                                        onMouseEnter={e => e.target.style.color = 'var(--primary)'}
+                                        onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
+                                    >
+                                        Regenerate
                                     </button>
                                 </div>
                             </div>

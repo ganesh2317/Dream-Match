@@ -1,45 +1,78 @@
 import React from 'react';
-import { Home, Search, MessageCircle, Video, User } from 'lucide-react';
+import { Home, Video, Heart, User, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const BottomNavigation = ({ activeTab, setActiveTab }) => {
+const BottomNavigation = ({ activeTab, setActiveTab, onAddClick }) => {
     // Navigation items representing the main user-experience hubs of the platform.
-    // Each matches an activeTab state key in Dashboard.jsx.
+    // Styled exactly to replicate screens 4, 5, 6, 7, 8, 9, 10
     const navItems = [
-        { id: 'feed', icon: Home, label: 'Feed' },
-        { id: 'search', icon: Search, label: 'Search' },
-        { id: 'messages', icon: MessageCircle, label: 'Messages' },
+        { id: 'feed', icon: Home, label: 'Home' },
         { id: 'visuals', icon: Video, label: 'Visuals' },
+        { id: 'add', icon: Plus, label: 'Create', isSpecial: true },
+        { id: 'matches', icon: Heart, label: 'Match' },
         { id: 'profile', icon: User, label: 'Profile' },
     ];
 
     return (
         <div style={{
             position: 'fixed',
-            bottom: '16px',
-            left: '16px',
-            right: '16px',
-            height: '64px',
-            background: 'rgba(10, 10, 15, 0.7)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '24px',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'calc(100% - 40px)',
+            maxWidth: '480px',
+            height: '70px',
+            background: 'var(--glass-bg)',
+            backdropFilter: 'var(--glass-blur)',
+            WebkitBackdropFilter: 'var(--glass-blur)',
+            border: 'var(--glass-border)',
+            borderRadius: 'var(--radius-2xl)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-around',
-            padding: '0 8px',
-            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
+            padding: '0 10px',
+            boxShadow: 'var(--glass-shadow)',
             zIndex: 999
-        }} className="mobile-only-nav">
+        }}>
             {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
 
+                if (item.isSpecial) {
+                    return (
+                        <motion.button
+                            key={item.id}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.92 }}
+                            onClick={onAddClick}
+                            style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '50%',
+                                background: 'var(--primary-gradient)',
+                                border: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                cursor: 'pointer',
+                                boxShadow: '0 6px 16px var(--primary-glow)',
+                                position: 'relative',
+                                top: '-4px'
+                            }}
+                        >
+                            <Icon size={24} strokeWidth={2.5} />
+                        </motion.button>
+                    );
+                }
+
                 return (
                     <button
                         key={item.id}
-                        onClick={() => setActiveTab(item.id)}
+                        onClick={() => {
+                            // If user goes to profile or matches, clear settings subview
+                            setActiveTab(item.id);
+                        }}
                         style={{
                             background: 'transparent',
                             border: 'none',
@@ -64,8 +97,8 @@ const BottomNavigation = ({ activeTab, setActiveTab }) => {
                                 style={{
                                     position: 'absolute',
                                     inset: 0,
-                                    background: 'rgba(99, 102, 241, 0.08)',
-                                    borderRadius: '16px',
+                                    background: 'var(--primary-glow)',
+                                    borderRadius: 'var(--radius-md)',
                                     zIndex: -1
                                 }}
                                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}
@@ -73,17 +106,18 @@ const BottomNavigation = ({ activeTab, setActiveTab }) => {
                         )}
                         
                         <motion.div
-                            animate={{ scale: isActive ? 1.1 : 1 }}
+                            animate={{ scale: isActive ? 1.08 : 1 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                             style={{ display: 'flex', alignItems: 'center' }}
                         >
-                            <Icon size={20} />
+                            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                         </motion.div>
                         
                         <span style={{ 
-                            fontSize: '10px', 
+                            fontSize: '9px', 
                             fontWeight: isActive ? 700 : 500,
-                            letterSpacing: '0.2px'
+                            letterSpacing: '0.2px',
+                            color: isActive ? 'var(--text-primary)' : 'var(--text-dim)'
                         }}>
                             {item.label}
                         </span>
@@ -93,7 +127,7 @@ const BottomNavigation = ({ activeTab, setActiveTab }) => {
                                 layoutId="bottomDot"
                                 style={{
                                     position: 'absolute',
-                                    bottom: '2px',
+                                    bottom: '1px',
                                     width: '4px',
                                     height: '4px',
                                     borderRadius: '50%',

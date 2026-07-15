@@ -5,7 +5,16 @@ import { motion } from 'framer-motion';
 
 const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) => {
     return (
-        <GlassCard className="sidebar" style={{ width: '280px', display: 'flex', flexDirection: 'column', height: '100%', padding: '24px', background: 'var(--glass-bg)', border: 'var(--glass-border)' }}>
+        <GlassCard className="sidebar" style={{ 
+            width: '280px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%', 
+            padding: '24px', 
+            background: 'var(--glass-bg)', 
+            border: 'var(--glass-border)',
+            borderRadius: 'var(--radius-2xl)'
+        }}>
             <div style={{
                 fontSize: '22px',
                 marginBottom: '42px',
@@ -14,8 +23,9 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
                 letterSpacing: '-0.03em',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px'
-            }}>
+                gap: '12px',
+                cursor: 'pointer'
+            }} onClick={() => setActiveTab('feed')}>
                 <img src="/logo-mark.svg" style={{ width: '32px', height: '32px', display: 'block' }} alt="DreamMatch Logo" />
                 <span>DreamMatch</span>
             </div>
@@ -40,16 +50,16 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
                         alignItems: 'center',
                         gap: '12px',
                         padding: '12px',
-                        background: activeTab === 'profile' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                        background: activeTab === 'profile' || activeTab === 'settings' ? 'rgba(139, 92, 246, 0.08)' : 'transparent',
                         borderRadius: 'var(--radius-md)',
                         cursor: 'pointer',
                         transition: 'background var(--transition-fast)',
-                        border: activeTab === 'profile' ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent'
+                        border: activeTab === 'profile' || activeTab === 'settings' ? '1px solid var(--primary)' : '1px solid transparent'
                     }}
                 >
                     <img src={user?.avatarUrl} alt="avatar" style={{ width: '42px', height: '42px', borderRadius: '50%', border: '2px solid var(--primary)', padding: '2px', objectFit: 'cover' }} />
                     <div style={{ overflow: 'hidden' }}>
-                        <div style={{ fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'white' }}>{user?.fullName || 'User'}</div>
+                        <div style={{ fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>{user?.fullName || 'User'}</div>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>@{user?.username || 'user'}</div>
                     </div>
                 </motion.div>
@@ -81,7 +91,7 @@ const NavItem = ({ icon: Icon, label, active, onClick, type = 'nav' }) => {
                 transition: 'color var(--transition-fast)',
                 marginBottom: isAction ? '12px' : '0',
                 marginTop: isAction ? '12px' : '0',
-                background: isAction ? 'rgba(99, 102, 241, 0.08)' : 'transparent'
+                background: isAction ? 'rgba(139, 92, 246, 0.08)' : 'transparent'
             }}
         >
             {active && !isAction && (

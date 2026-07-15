@@ -1,77 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
 import GlassCard from './GlassCard';
-import { Send, MessageCircle, ArrowLeft, Check, CheckCheck, Inbox } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { 
+    Send, 
+    ArrowLeft, 
+    Inbox, 
+    MessageCircle, 
+    Check, 
+    CheckCheck 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Messages = ({ initialUser, onClearInitial }) => {
+const Messages = ({ currentUser, initialUser, onClearInitial }) => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(() => {
-        const stored = localStorage.getItem('selectedChatUser');
-        try {
-            return stored ? JSON.parse(stored) : null;
-        } catch (e) {
-            return null;
-        }
-    });
+    const [selectedUser, setSelectedUser] = useState(null);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const chatEndRef = useRef(null);
     const pollingRef = useRef(null);
-    const socketRef = useRef(null);
-
-    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
-
-    useEffect(() => {
-        if (!user?.id) return;
-
-        const socket = io(socketUrl, {
-            transports: ['websocket', 'polling']
-        });
-        socketRef.current = socket;
-
-        socket.emit('register', user.id);
-
-        socket.on('message_received', (newMessage) => {
-            setSelectedUser((currentSelectedUser) => {
-                if (currentSelectedUser && 
-                    (newMessage.senderId === currentSelectedUser.id || 
-                     newMessage.receiverId === currentSelectedUser.id)) {
-                    
-                    setMessages((prevMessages) => {
-                        if (prevMessages.some(m => m.id === newMessage.id)) {
-                            return prevMessages;
-                        }
-                        const pendingIndex = prevMessages.findIndex(m => m.pending && m.content === newMessage.content && m.senderId === newMessage.senderId);
-                        if (pendingIndex > -1) {
-                            const next = [...prevMessages];
-                            next[pendingIndex] = { ...newMessage, pending: false };
-                            return next;
-                        }
-                        return [...prevMessages, newMessage];
-                    });
-                }
-                return currentSelectedUser;
-            });
-            fetchConversations();
-        });
-
-        return () => {
-            socket.disconnect();
-        };
-    }, [user?.id]);
-
-    useEffect(() => {
-        if (selectedUser) {
-            localStorage.setItem('selectedChatUser', JSON.stringify(selectedUser));
-        } else {
-            localStorage.removeItem('selectedChatUser');
-        }
-    }, [selectedUser]);
 
     const fetchConversations = async () => {
         try {
@@ -90,14 +39,15 @@ const Messages = ({ initialUser, onClearInitial }) => {
         }
     };
 
-    const fetchMessages = async (userId, silent = false) => {
+    const fetchMessages = async (otherUserId, silent = false) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`/api/messages/${userId}`, {
+            const res = await fetch(`/api/messages/${otherUserId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 const data = await res.json();
+                // Avoid state update if no new messages received (prevents visual flickering)
                 if (!silent || JSON.stringify(data) !== JSON.stringify(messages)) {
                     setMessages(data);
                 }
@@ -210,9 +160,9 @@ const Messages = ({ initialUser, onClearInitial }) => {
                     gap: '14px',
                     marginBottom: '16px',
                     padding: '12px 18px',
-                    background: 'rgba(255,255,255,0.02)',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255,255,255,0.04)'
+                    background: 'var(--glass-bg)',
+                    borderRadius: 'var(--radius-xl)',
+                    border: 'var(--glass-border)'
                 }}>
                     <button
                         onClick={() => { setSelectedUser(null); setMessages([]); }}
@@ -228,7 +178,7 @@ const Messages = ({ initialUser, onClearInitial }) => {
                             transition: 'all 0.2s',
                             boxShadow: 'none',
                             transform: 'none',
-                            color: 'white'
+                            color: 'var(--text-primary)'
                         }}
                     >
                         <ArrowLeft size={16} />
@@ -236,10 +186,10 @@ const Messages = ({ initialUser, onClearInitial }) => {
                     <img
                         src={selectedUser.avatarUrl}
                         alt={selectedUser.username}
-                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid rgba(255,255,255,0.06)' }}
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--primary)', padding: '1px' }}
                     />
                     <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: '15px', color: 'white' }}>{selectedUser.fullName}</div>
+                        <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>{selectedUser.fullName}</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{selectedUser.username}</div>
                     </div>
                     <div style={{
@@ -257,12 +207,12 @@ const Messages = ({ initialUser, onClearInitial }) => {
                     overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
+                    gap: '12px',
                     padding: '16px',
                     background: 'rgba(0,0,0,0.15)',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--radius-xl)',
                     marginBottom: '16px',
-                    border: '1px solid rgba(255,255,255,0.03)'
+                    border: 'var(--glass-border)'
                 }} className="hide-scrollbar">
                     {messages.length === 0 && (
                         <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px' }}>
@@ -295,15 +245,15 @@ const Messages = ({ initialUser, onClearInitial }) => {
                                 )}
                                 <div style={{
                                     background: isMe
-                                        ? 'linear-gradient(135deg, var(--primary), #8b5cf6)'
-                                        : 'rgba(255,255,255,0.04)',
-                                    color: 'white',
+                                        ? 'var(--primary-gradient)'
+                                        : 'var(--glass-bg)',
+                                    color: 'var(--text-primary)',
                                     padding: '10px 14px',
                                     borderRadius: '16px',
                                     borderBottomRightRadius: isMe ? '4px' : '16px',
                                     borderBottomLeftRadius: isMe ? '16px' : '4px',
                                     maxWidth: '70%',
-                                    border: isMe ? 'none' : '1px solid rgba(255,255,255,0.04)',
+                                    border: isMe ? 'none' : 'var(--glass-border)',
                                     boxShadow: isMe ? '0 4px 12px var(--primary-glow)' : 'none'
                                 }}>
                                     <div style={{ lineHeight: '1.4', wordBreak: 'break-word', fontSize: '13px' }}>{msg.content}</div>
@@ -335,9 +285,9 @@ const Messages = ({ initialUser, onClearInitial }) => {
                     display: 'flex',
                     gap: '10px',
                     padding: '8px 12px',
-                    background: 'rgba(255,255,255,0.02)',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    background: 'var(--glass-bg)',
+                    borderRadius: 'var(--radius-xl)',
+                    border: 'var(--glass-border)',
                     alignItems: 'center'
                 }}>
                     <input
@@ -352,7 +302,7 @@ const Messages = ({ initialUser, onClearInitial }) => {
                             outline: 'none',
                             fontSize: '14px',
                             padding: '6px 10px',
-                            color: 'white'
+                            color: 'var(--text-primary)'
                         }}
                     />
                     <motion.button
@@ -384,10 +334,10 @@ const Messages = ({ initialUser, onClearInitial }) => {
 
     return (
         <div style={{ maxWidth: '640px', margin: '0 auto' }} className="fade-in">
-            <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '24px', background: 'linear-gradient(135deg, #ffffff 0%, #a78bfa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Messages</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '24px', textAlign: 'center' }}>Messages</h2>
 
             {conversations.length === 0 ? (
-                <GlassCard style={{ textAlign: 'center', padding: '64px 32px', border: 'var(--glass-border)' }}>
+                <GlassCard style={{ textAlign: 'center', padding: '64px 32px', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
                     <div style={{
                         width: '64px',
                         height: '64px',
@@ -421,9 +371,10 @@ const Messages = ({ initialUser, onClearInitial }) => {
                                     style={{
                                         padding: '16px 20px',
                                         cursor: 'pointer',
-                                        border: 'var(--glass-border)'
+                                        border: 'var(--glass-border)',
+                                        borderRadius: 'var(--radius-xl)'
                                     }}
-                                    className="hover-scale-subtle"
+                                    className="hover-scale-subtle animate-theme"
                                 >
                                     <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                                         <img
@@ -434,16 +385,17 @@ const Messages = ({ initialUser, onClearInitial }) => {
                                                 height: '48px',
                                                 borderRadius: '50%',
                                                 objectFit: 'cover',
-                                                border: '1.5px solid rgba(255,255,255,0.06)'
+                                                border: '1.5px solid var(--primary)',
+                                                padding: '1px'
                                             }}
                                         />
                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '2px', color: 'white' }}>
+                                            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '2px', color: 'var(--text-primary)' }}>
                                                 {conv.otherUser.fullName}
                                             </div>
                                             <div style={{
                                                 fontSize: '12px',
-                                                color: conv.unreadCount > 0 ? 'white' : 'var(--text-muted)',
+                                                color: conv.unreadCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
                                                 fontWeight: conv.unreadCount > 0 ? 700 : 400,
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',

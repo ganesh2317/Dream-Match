@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { Flame, Heart, MessageCircle, Eye, Share2, Sparkles, Send, Inbox } from 'lucide-react';
+import { Flame, Heart, MessageCircle, Eye, Share2, Sparkles, Send, Inbox, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Feed = ({ dreams, loading, onRefresh, onViewVisual }) => {
+    const [feedTab, setFeedTab] = useState('foryou'); // 'following' or 'foryou'
+
     const handleLike = async (dreamId) => {
         try {
             const token = localStorage.getItem('token');
@@ -19,20 +21,70 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual }) => {
     };
 
     return (
-        <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '24px', fontWeight: 800, background: 'linear-gradient(135deg, #ffffff 0%, #a78bfa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Explore Dreams</h2>
+        <div style={{ maxWidth: '640px', margin: '0 auto', paddingBottom: '80px' }} className="fade-in">
+            {/* Mockup Header: Dream Feed with tabs */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>Dream Feed</h2>
+                <div style={{ display: 'flex', gap: '24px', position: 'relative' }}>
+                    <button 
+                        onClick={() => setFeedTab('following')}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: feedTab === 'following' ? 'var(--text-primary)' : 'var(--text-muted)',
+                            fontWeight: 700,
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            padding: '6px 4px',
+                            boxShadow: 'none',
+                            transform: 'none'
+                        }}
+                    >
+                        Following
+                    </button>
+                    <button 
+                        onClick={() => setFeedTab('foryou')}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: feedTab === 'foryou' ? 'var(--text-primary)' : 'var(--text-muted)',
+                            fontWeight: 700,
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            padding: '6px 4px',
+                            boxShadow: 'none',
+                            transform: 'none'
+                        }}
+                    >
+                        For You
+                    </button>
+                    {/* Active tab slide indicator line */}
+                    <motion.div 
+                        animate={{ x: feedTab === 'following' ? -38 : 38 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                        style={{
+                            position: 'absolute',
+                            bottom: '0',
+                            left: '50%',
+                            marginLeft: '-15px',
+                            width: '30px',
+                            height: '3px',
+                            background: 'var(--primary)',
+                            borderRadius: '10px'
+                        }}
+                    />
+                </div>
             </div>
 
             {loading ? (
                 <FeedSkeleton />
             ) : dreams.length === 0 ? (
-                <GlassCard style={{ textAlign: 'center', padding: '64px 32px', border: 'var(--glass-border)' }}>
+                <GlassCard style={{ textAlign: 'center', padding: '64px 32px', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
                     <div style={{
                         width: '64px',
                         height: '64px',
                         borderRadius: '50%',
-                        background: 'rgba(99, 102, 241, 0.1)',
+                        background: 'rgba(139, 92, 246, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -46,7 +98,7 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual }) => {
                     </p>
                 </GlassCard>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '60px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {dreams.map((dream) => (
                         <FeedItem
                             key={dream.id}
@@ -65,7 +117,7 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual }) => {
 const FeedSkeleton = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {[1, 2].map((i) => (
-            <GlassCard key={i} style={{ padding: '0', overflow: 'hidden', border: 'var(--glass-border)' }}>
+            <GlassCard key={i} style={{ padding: '0', overflow: 'hidden', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
                     <div className="shimmer" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
@@ -91,6 +143,7 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
     const [commentText, setCommentText] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [showHeartOverlay, setShowHeartOverlay] = useState(false);
+    const [isBookmarked, setIsBookmarked] = useState(false);
 
     // Auto-polling for active video generation jobs in the background queue
     useEffect(() => {
@@ -127,7 +180,9 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
 
     const handleImageDoubleClick = (e) => {
         e.preventDefault();
-        onLike();
+        if (!dream.isLiked) {
+            onLike();
+        }
         setShowHeartOverlay(true);
         setTimeout(() => setShowHeartOverlay(false), 800);
     };
@@ -167,13 +222,14 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
+            style={{ width: '100%' }}
         >
-            <GlassCard style={{ padding: '0', overflow: 'hidden', border: 'var(--glass-border)' }} className="hover-scale-subtle">
+            <GlassCard style={{ padding: '0', overflow: 'hidden', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }} className="hover-scale-subtle">
                 {/* Card Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px' }}>
-                    <img src={avatar} style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.06)', objectFit: 'cover' }} alt="avatar" />
+                    <img src={avatar} style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--primary)', objectFit: 'cover', padding: '2px' }} alt="avatar" />
                     <div>
-                        <div style={{ fontWeight: 700, fontSize: '14px', color: 'white' }}>{username}</div>
+                        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>{username}</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                             {new Date(dream.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </div>
@@ -186,14 +242,14 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                     )}
                 </div>
 
-                {/* Dream Image & Overlay */}
+                {/* Dream Image & Double Tap Overlay */}
                 <div 
                     onDoubleClick={handleImageDoubleClick}
                     style={{ position: 'relative', width: '100%', aspectRatio: '1.3/1', background: '#050508', overflow: 'hidden', cursor: 'pointer' }}
                 >
                     <img
                         src={dream.imageUrl}
-                        alt="dream"
+                        alt="dream vision"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     
@@ -201,8 +257,8 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                         {showHeartOverlay && (
                             <motion.div 
                                 initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: [0, 1.2, 1], opacity: [0, 1, 0.9] }}
-                                exit={{ scale: 1.5, opacity: 0 }}
+                                animate={{ scale: [0, 1.3, 1], opacity: [0, 1, 0.9] }}
+                                exit={{ scale: 1.6, opacity: 0 }}
                                 transition={{ duration: 0.4 }}
                                 style={{ 
                                     position: 'absolute', 
@@ -215,7 +271,7 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                                     pointerEvents: 'none'
                                 }}
                             >
-                                <Heart size={80} fill="#ff4757" style={{ filter: 'drop-shadow(0 0 12px rgba(255,71,87,0.5))' }} />
+                                <Heart size={80} fill="#ff4757" style={{ filter: 'drop-shadow(0 0 12px rgba(255,71,87,0.6))' }} />
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -248,12 +304,12 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
 
                 {/* Content Section */}
                 <div style={{ padding: '20px' }}>
-                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '20px', fontWeight: 400 }}>
+                    <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-primary)', marginBottom: '20px', fontWeight: 400 }}>
                         {dream.description}
                     </p>
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', paddingTop: '14px', borderTop: '1px solid var(--glass-border-light)' }}>
                         <motion.button
                             whileTap={{ scale: 0.9 }}
                             onClick={onLike}
@@ -279,7 +335,24 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                             <span>{commentsCount}</span>
                         </button>
 
-                        <button style={{ marginLeft: 'auto', background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none' }}>
+                        <button 
+                            onClick={() => setIsBookmarked(!isBookmarked)}
+                            style={{ 
+                                background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '6px', 
+                                color: isBookmarked ? 'var(--primary)' : 'var(--text-secondary)', 
+                                fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none' 
+                            }}
+                        >
+                            <Bookmark size={18} fill={isBookmarked ? 'var(--primary)' : 'none'} />
+                        </button>
+
+                        <button 
+                            onClick={() => alert('Post link shared!')}
+                            style={{ 
+                                marginLeft: 'auto', background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '6px', 
+                                color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none' 
+                            }}
+                        >
                             <Share2 size={18} />
                         </button>
                     </div>
@@ -291,27 +364,28 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.25 }}
                                 style={{ overflow: 'hidden' }}
                             >
-                                <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Comments</h4>
+                                <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--glass-border-light)' }}>
+                                    <h4 style={{ fontSize: '12px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Comments</h4>
                                     
                                     {comments.length === 0 ? (
                                         <p style={{ color: 'var(--text-dim)', fontSize: '13px', margin: '12px 0', fontStyle: 'italic' }}>
                                             No comments yet. Share your thoughts!
                                         </p>
                                     ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', maxHeight: '200px', overflowY: 'auto', paddingRight: '4px' }} className="hide-scrollbar">
                                             {comments.map((comment) => {
                                                 const commentUser = comment.user || {};
                                                 const commentAvatar = commentUser.avatarUrl || `https://ui-avatars.com/api/?name=${commentUser.username}&background=random`;
                                                 return (
                                                     <div key={comment.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                                                         <img src={commentAvatar} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} alt="comment-avatar" />
-                                                        <div style={{ flex: 1, background: 'rgba(255, 255, 255, 0.02)', padding: '8px 12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                                        <div style={{ flex: 1, background: 'rgba(255, 255, 255, 0.02)', padding: '8px 12px', borderRadius: '12px', border: '1px solid var(--glass-border-light)' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                                                                <span style={{ fontWeight: 700, fontSize: '12px', color: 'white' }}>{commentUser.username || 'dreamer'}</span>
-                                                                <span style={{ fontSize: '9px', color: 'var(--text-dim)' }}>
+                                                                <span style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary)' }}>{commentUser.username || 'dreamer'}</span>
+                                                                <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
                                                                     {new Date(comment.createdAt).toLocaleDateString()}
                                                                 </span>
                                                             </div>
@@ -335,8 +409,8 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                                                 padding: '10px 14px',
                                                 borderRadius: 'var(--radius-md)',
                                                 border: '1px solid rgba(255,255,255,0.08)',
-                                                background: 'rgba(0,0,0,0.2)',
-                                                color: 'white',
+                                                background: 'rgba(0,0,0,0.15)',
+                                                color: 'var(--text-primary)',
                                                 fontSize: '13px',
                                                 outline: 'none',
                                                 transition: 'all var(--transition-fast)'

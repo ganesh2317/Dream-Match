@@ -13,9 +13,9 @@ import {
     Bookmark, 
     AlertCircle 
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const Visuals = ({ dreams: propDreams, onRefresh, initialDreamId }) => {
+const Visuals = ({ initialDreamId }) => {
     const containerRef = useRef(null);
     const [visuals, setVisuals] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -74,7 +74,7 @@ const Visuals = ({ dreams: propDreams, onRefresh, initialDreamId }) => {
 
     if (loading) {
         return (
-            <GlassCard style={{ height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'var(--glass-border)' }}>
+            <GlassCard style={{ height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
                 <div className="loading-spinner" />
             </GlassCard>
         );
@@ -82,8 +82,8 @@ const Visuals = ({ dreams: propDreams, onRefresh, initialDreamId }) => {
 
     if (visuals.length === 0) {
         return (
-            <GlassCard style={{ height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px', border: 'var(--glass-border)' }}>
-                <div style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '50%' }}>
+            <GlassCard style={{ height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
+                <div style={{ padding: '24px', background: 'var(--primary-glow)', borderRadius: '50%' }}>
                     <Video size={40} color="var(--primary)" style={{ opacity: 0.6 }} />
                 </div>
                 <div style={{ textAlign: 'center' }}>
@@ -102,7 +102,7 @@ const Visuals = ({ dreams: propDreams, onRefresh, initialDreamId }) => {
                 height: 'calc(100vh - 120px)',
                 overflowY: 'scroll',
                 scrollSnapType: 'y mandatory',
-                borderRadius: 'var(--radius-lg)',
+                borderRadius: 'var(--radius-xl)',
                 background: '#050508',
                 border: 'var(--glass-border)'
             }}
@@ -130,9 +130,24 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isError, setIsError] = useState(false);
+    const [showHeartOverlay, setShowHeartOverlay] = useState(false);
 
     // Prevent duplicate view triggers on rapid toggles
     const viewTriggered = useRef(false);
+
+    // Hoisted helper method for logging views to avoid linter warnings
+    async function incrementView() {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`/api/dreams/${dream.id}/view`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (onRefresh) onRefresh();
+        } catch (e) {
+            console.error('Error logging view:', e);
+        }
+    }
 
     useEffect(() => {
         setLiked(dream.isLiked || false);
@@ -161,21 +176,8 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
         }
     }, [isActive, shouldLoad]);
 
-    const incrementView = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            await fetch(`/api/dreams/${dream.id}/view`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (onRefresh) onRefresh();
-        } catch (e) {
-            console.error('Error logging view:', e);
-        }
-    };
-
     const handleLike = async (e) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
@@ -198,6 +200,15 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
             setLiked(dream.isLiked || false);
             setLikeCount(dream._count?.likes || 0);
         }
+    };
+
+    const handleImageDoubleClick = (e) => {
+        e.preventDefault();
+        if (!liked) {
+            handleLike();
+        }
+        setShowHeartOverlay(true);
+        setTimeout(() => setShowHeartOverlay(false), 800);
     };
 
     const handleVideoClick = () => {
@@ -241,6 +252,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
             {shouldLoad ? (
                 <div 
                     onClick={handleVideoClick} 
+                    onDoubleClick={handleImageDoubleClick}
                     style={{ width: '100%', height: '100%', cursor: 'pointer', position: 'relative' }}
                 >
                     <video
@@ -266,7 +278,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                     <div style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'linear-gradient(to bottom, rgba(5,5,8,0.3) 0%, transparent 40%, rgba(5,5,8,0.85) 100%)',
+                        background: 'linear-gradient(to bottom, rgba(5,5,8,0.2) 0%, transparent 40%, rgba(5,5,8,0.85) 100%)',
                         pointerEvents: 'none'
                     }} />
 
@@ -328,6 +340,30 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                 />
             )}
 
+            {/* Starry Like Double-Tap Heart overlay */}
+            <AnimatePresence>
+                {showHeartOverlay && (
+                    <motion.div 
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 0.95] }}
+                        exit={{ scale: 1.8, opacity: 0 }}
+                        transition={{ duration: 0.4 }}
+                        style={{ 
+                            position: 'absolute', 
+                            inset: 0, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: '#ff4757',
+                            zIndex: 15,
+                            pointerEvents: 'none'
+                        }}
+                    >
+                        <Heart size={90} fill="#ff4757" style={{ filter: 'drop-shadow(0 0 16px rgba(255,71,87,0.7))' }} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Skeleton Loading Spinner */}
             {isLoading && (
                 <div style={{
@@ -382,7 +418,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={handleLike}
-                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center' }}
                     >
                         <Heart size={20} color={liked ? "#ff4757" : "white"} fill={liked ? "#ff4757" : "none"} />
                     </motion.div>
@@ -393,7 +429,8 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                     <motion.div 
                         whileHover={{ scale: 1.1 }}
-                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => alert('Comments drawer toggles')}
+                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center' }}
                     >
                         <MessageCircle size={20} color="white" />
                     </motion.div>
@@ -406,7 +443,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={handleSave}
-                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center' }}
                     >
                         <Bookmark size={20} color={isSaved ? "#fbbf24" : "white"} fill={isSaved ? "#fbbf24" : "none"} />
                     </motion.div>
@@ -416,7 +453,8 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                 {/* Share */}
                 <motion.div 
                     whileHover={{ scale: 1.1 }}
-                    style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => alert('Dream visual shared!')}
+                    style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center' }}
                 >
                     <Share2 size={18} color="white" />
                 </motion.div>
@@ -431,7 +469,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                 zIndex: 10
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <img src={dream.user?.avatarUrl} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.4)', objectFit: 'cover' }} alt="avatar" />
+                    <img src={dream.user?.avatarUrl} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid var(--primary)', objectFit: 'cover', padding: '1px' }} alt="avatar" />
                     <div style={{ fontWeight: 700, fontSize: '14px', textShadow: '0 2px 4px rgba(0,0,0,0.6)', color: 'white' }}>@{dream.user?.username}</div>
                     
                     {/* Generated label */}

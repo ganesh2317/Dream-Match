@@ -43,80 +43,110 @@ const Register = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '24px',
+            padding: '20px',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            background: 'var(--bg-dark)'
         }}>
-            {/* Ambient Cosmic Background Glows */}
+            {/* Ambient Cosmic Background */}
             <div style={{
                 position: 'absolute',
-                top: '30%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '600px',
-                height: '600px',
-                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
+                inset: 0,
+                backgroundImage: 'radial-gradient(circle at 30% 70%, var(--primary-glow) 0%, transparent 60%), radial-gradient(circle at 70% 30%, rgba(217, 70, 239, 0.1) 0%, transparent 60%)',
                 zIndex: 0,
                 pointerEvents: 'none'
             }} />
+
+            {/* Glowing floating particle animation backdrops */}
+            <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden', opacity: 0.4 }}>
+                {[...Array(12)].map((_, i) => (
+                    <motion.div
+                        key={i}
+                        animate={{
+                            y: [Math.random() * 800, Math.random() * -200],
+                            x: [Math.random() * 1000, Math.random() * 1000 + 50],
+                            opacity: [0, 0.8, 0]
+                        }}
+                        transition={{
+                            duration: 15 + Math.random() * 15,
+                            repeat: Infinity,
+                            ease: 'linear'
+                        }}
+                        style={{
+                            position: 'absolute',
+                            width: `${2 + Math.random() * 4}px`,
+                            height: `${2 + Math.random() * 4}px`,
+                            borderRadius: '50%',
+                            background: 'white',
+                            boxShadow: '0 0 10px white'
+                        }}
+                    />
+                ))}
+            </div>
 
             <motion.div
                 initial={{ opacity: 0, y: 24, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                style={{ width: '100%', maxWidth: '460px', zIndex: 1 }}
+                style={{ width: '100%', maxWidth: '420px', zIndex: 1 }}
             >
-                <GlassCard style={{ padding: '48px 40px', background: 'var(--glass-bg)', border: 'var(--glass-border)' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                        <motion.div 
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.1, type: 'spring' }}
-                            style={{ 
-                                display: 'inline-flex', 
-                                padding: '12px', 
-                                borderRadius: '16px', 
-                                background: 'rgba(139, 92, 246, 0.15)', 
-                                color: '#a78bfa',
-                                marginBottom: '20px',
-                                border: '1px solid rgba(139, 92, 246, 0.2)'
+                <GlassCard style={{ padding: '40px 32px', background: 'var(--glass-bg)', border: 'var(--glass-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                        <Link
+                            to="/login"
+                            style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                color: 'var(--text-primary)',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                padding: '0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: 'none',
+                                textDecoration: 'none',
+                                fontWeight: 'bold'
                             }}
                         >
-                            <img src="/logo-mark.svg" style={{ width: '32px', height: '32px', display: 'block' }} alt="DreamMatch Logo" />
-                        </motion.div>
-                        <h1 style={{
+                            ←
+                        </Link>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>Create Account</span>
+                    </div>
+
+                    <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                        <h2 style={{
                             fontSize: '28px',
-                            background: 'linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
                             fontWeight: 800,
+                            color: 'var(--text-primary)',
                             letterSpacing: '-0.03em',
-                            marginBottom: '10px'
-                        }}>Create an Account</h1>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', letterSpacing: '0.2px' }}>
+                            marginBottom: '8px'
+                        }}>Get Started</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
                             Begin capturing and connecting your dreams.
                         </p>
                     </div>
 
                     <AnimatePresence mode="wait">
                         {error && (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, y: -10, height: 0 }}
                                 animate={{ opacity: 1, y: 0, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
                                 style={{ overflow: 'hidden' }}
                             >
-                                <div style={{ 
-                                    padding: '14px 16px', 
-                                    background: 'rgba(239, 68, 68, 0.1)', 
-                                    color: '#fc8181', 
-                                    borderRadius: 'var(--radius-md)', 
-                                    marginBottom: '20px', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '10px', 
-                                    fontSize: '13px', 
-                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                <div style={{
+                                    padding: '14px 16px',
+                                    background: 'rgba(220, 38, 38, 0.1)',
+                                    color: '#fc8181',
+                                    borderRadius: 'var(--radius-md)',
+                                    marginBottom: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    fontSize: '13px',
+                                    border: '1px solid rgba(220, 38, 38, 0.2)',
                                     fontWeight: 500
                                 }}>
                                     <AlertCircle size={16} style={{ flexShrink: 0 }} /> <span>{error}</span>
@@ -143,13 +173,13 @@ const Register = () => {
                             disabled={loading}
                             style={{ marginTop: '16px' }}
                         />
-                        
+
                         <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
                             <div style={{ flex: 1 }}>
                                 <Input
                                     type="number"
-                                    placeholder="Your age"
-                                    aria-label="Your age"
+                                    placeholder="Age"
+                                    aria-label="Age"
                                     value={formData.age}
                                     onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                                     required
@@ -224,13 +254,14 @@ const Register = () => {
                                 transition: 'all var(--transition-fast)',
                                 opacity: loading ? 0.8 : 1,
                                 cursor: loading ? 'not-allowed' : 'pointer',
-                                background: 'var(--primary-gradient)'
+                                background: 'var(--primary-gradient)',
+                                boxShadow: '0 8px 20px var(--primary-glow)'
                             }}
                         >
                             {loading ? (
-                                <div className="loading-spinner" style={{ width: '18px', height: '18px', borderWidth: '2px' }} />
+                                <div className="loading-spinner" style={{ width: '18px', height: '18px', borderWidth: '2px', borderTopColor: 'white' }} />
                             ) : (
-                                <>Create Account <ArrowRight size={16} /></>
+                                <>Sign Up <ArrowRight size={16} /></>
                             )}
                         </motion.button>
                     </form>
@@ -238,16 +269,13 @@ const Register = () => {
                     <div style={{ marginTop: '32px', textAlign: 'center' }}>
                         <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
                             Already have an account?{' '}
-                            <Link to="/login" style={{ 
-                                color: 'var(--primary)', 
-                                textDecoration: 'none', 
+                            <Link to="/login" style={{
+                                color: 'var(--primary)',
+                                textDecoration: 'none',
                                 fontWeight: 600,
                                 marginLeft: '4px',
                                 transition: 'color var(--transition-fast)'
-                            }}
-                            onMouseEnter={e => e.target.style.color = '#8b5cf6'}
-                            onMouseLeave={e => e.target.style.color = 'var(--primary)'}
-                            >
+                            }}>
                                 Sign In
                             </Link>
                         </span>
