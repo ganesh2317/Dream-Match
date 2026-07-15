@@ -472,8 +472,11 @@ const createDream = async (req, res) => {
                 data: {
                     description,
                     imageUrl,
-                    videoUrl,
                     userId,
+                    videoUrl: videoUrl || '',
+                    videoStatus: videoUrl ? 'COMPLETED' : 'PENDING',
+                    videoProvider: videoUrl ? 'AI Generated' : 'Luma Dream Machine',
+                    videoDuration: videoUrl ? 5.0 : 0.0
                 },
             });
         } catch (dbError) {

@@ -115,13 +115,14 @@ const Visuals = ({ initialDreamId, onViewProfile }) => {
                     isActive={index === activeIndex}
                     shouldLoad={Math.abs(index - activeIndex) <= 1}
                     onRefresh={fetchVisuals} 
+                    onViewProfile={onViewProfile}
                 />
             ))}
         </div>
     );
 };
 
-const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
+const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) => {
     const videoRef = useRef(null);
     const [liked, setLiked] = useState(dream.isLiked || false);
     const [likeCount, setLikeCount] = useState(dream._count?.likes || 0);
@@ -131,6 +132,17 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isError, setIsError] = useState(false);
     const [showHeartOverlay, setShowHeartOverlay] = useState(false);
+
+    useEffect(() => {
+        if (shouldLoad) {
+            console.log(`[Visuals] Video player diagnostic:`, {
+                videoUrl: dream.videoUrl,
+                videoStatus: dream.videoStatus,
+                provider: dream.videoProvider,
+                dreamId: dream.id
+            });
+        }
+    }, [shouldLoad, dream]);
 
     // Prevent duplicate view triggers on rapid toggles
     const viewTriggered = useRef(false);
@@ -380,7 +392,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
             )}
 
             {/* Error Fallback */}
-            {isError && (
+            {(isError || dream.videoStatus === 'FAILED') && (
                 <div style={{
                     position: 'absolute',
                     inset: 0,
@@ -397,7 +409,9 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                 }}>
                     <AlertCircle size={40} color="#ff4757" />
                     <div style={{ fontWeight: 600 }}>Failed to load video</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>The video source could not be played.</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {dream.videoStatus === 'FAILED' ? 'The AI generation queue has failed.' : 'The video source could not be played.'}
+                    </div>
                 </div>
             )}
 

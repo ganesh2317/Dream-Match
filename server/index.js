@@ -78,6 +78,15 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const videoStorageDir = path.join(os.tmpdir(), 'dreammatch-videos');
+if (!fs.existsSync(videoStorageDir)) {
+    fs.mkdirSync(videoStorageDir, { recursive: true });
+}
+app.use('/api/videos', express.static(videoStorageDir));
+
 app.get('/', (req, res) => {
     res.send('Dream Social API is running...');
 });

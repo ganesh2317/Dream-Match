@@ -1,4 +1,9 @@
 const prisma = require('../utils/prisma');
+const { exec } = require('child_process');
+const ffmpegStatic = require('ffmpeg-static');
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 // Base class for AI Video Providers
 class VideoProvider {
@@ -10,7 +15,7 @@ class VideoProvider {
         throw new Error('Not implemented');
     }
     // Returns { status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED', videoUrl: string | null }
-    async checkStatus(jobId) {
+    async checkStatus(jobId, dreamId) {
         throw new Error('Not implemented');
     }
 }
@@ -26,53 +31,107 @@ class SimulatedProvider extends VideoProvider {
 
     async generate(prompt) {
         const jobId = `${this.name.toLowerCase()}_job_${Math.random().toString(36).substr(2, 9)}`;
-        const videoUrl = this.getMockVideoUrl(prompt);
         this.jobs.set(jobId, {
             status: 'PENDING',
-            videoUrl,
+            videoUrl: '',
             createdAt: Date.now()
         });
         console.log(`[VideoProvider: ${this.name}] Initialized job ${jobId} for prompt: "${prompt}"`);
         return { jobId, status: 'PENDING' };
     }
 
-    async checkStatus(jobId) {
+    async compileVideo(dreamId) {
+        try {
+            const dream = await prisma.dream.findUnique({ where: { id: dreamId } });
+            if (!dream || !dream.imageUrl) {
+                console.warn(`[VideoProvider: ${this.name}] Dream image not found for id ${dreamId}`);
+                return null;
+            }
+
+            const tempDir = os.tmpdir();
+            const videoStorageDir = path.join(tempDir, 'dreammatch-videos');
+            if (!fs.existsSync(videoStorageDir)) {
+                fs.mkdirSync(videoStorageDir, { recursive: true });
+            }
+
+            const inputImagePath = path.join(tempDir, `input_${dreamId}.jpg`);
+            const outputVideoPath = path.join(videoStorageDir, `${dreamId}.mp4`);
+
+            // If it already exists, just return it
+            if (fs.existsSync(outputVideoPath)) {
+                return `/api/videos/${dreamId}.mp4`;
+            }
+
+            // Write image to disk
+            if (dream.imageUrl.startsWith('data:image/')) {
+                const base64Data = dream.imageUrl.replace(/^data:image\/\w+;base64,/, "");
+                fs.writeFileSync(inputImagePath, Buffer.from(base64Data, 'base64'));
+            } else {
+                // Fetch from URL
+                const response = await fetch(dream.imageUrl);
+                const buffer = await response.arrayBuffer();
+                fs.writeFileSync(inputImagePath, Buffer.from(buffer));
+            }
+
+            // Run ffmpeg
+            await new Promise((resolve, reject) => {
+                const filterComplex = `[0:v]scale=512:896,zoompan=z='min(zoom+0.0015,1.5)':x='iw/2-(iw/zoom)/2':y='ih/2-(ih/zoom)/2':d=125:s=512x896[vid]; ` +
+                                      `color=color=0x7c3aed@0.12:size=512x896:duration=5[col]; ` +
+                                      `[vid][col]overlay=shortest=1,vignette=angle=0.5,eq=brightness=0.03:contrast=1.1:saturation=1.2,noise=alls=12:allf=t`;
+
+                const ffmpegCmd = `"${ffmpegStatic}" -y -loop 1 -t 5 -i "${inputImagePath}" -filter_complex "${filterComplex}" -c:v libx264 -pix_fmt yuv420p "${outputVideoPath}"`;
+
+                console.log(`[VideoProvider: ${this.name}] Compiling video: ${ffmpegCmd}`);
+
+                exec(ffmpegCmd, (error, stdout, stderr) => {
+                    // Clean up input image
+                    try {
+                        if (fs.existsSync(inputImagePath)) {
+                            fs.unlinkSync(inputImagePath);
+                        }
+                    } catch (err) {}
+
+                    if (error) {
+                        console.error(`[VideoProvider: ${this.name}] ffmpeg error:`, stderr || error);
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+
+            console.log(`[VideoProvider: ${this.name}] Completed video generation: /api/videos/${dreamId}.mp4`);
+            return `/api/videos/${dreamId}.mp4`;
+        } catch (e) {
+            console.error(`[VideoProvider: ${this.name}] Error compiling video:`, e);
+            return null;
+        }
+    }
+
+    async checkStatus(jobId, dreamId) {
         const job = this.jobs.get(jobId);
         if (!job) {
             return { status: 'FAILED', videoUrl: null };
         }
 
-        // Simulate a 6 second processing delay to represent async queue processing
         const elapsed = Date.now() - job.createdAt;
         if (elapsed > 6000) {
-            job.status = 'COMPLETED';
-            console.log(`[VideoProvider: ${this.name}] Completed job ${jobId}`);
+            if (job.status !== 'COMPLETED') {
+                console.log(`[VideoProvider: ${this.name}] Starting ffmpeg compilation for job ${jobId}...`);
+                const videoUrl = await this.compileVideo(dreamId);
+                if (videoUrl) {
+                    job.status = 'COMPLETED';
+                    job.videoUrl = videoUrl;
+                    console.log(`[VideoProvider: ${this.name}] Completed job ${jobId}`);
+                } else {
+                    job.status = 'FAILED';
+                }
+            }
         } else if (elapsed > 2000) {
             job.status = 'PROCESSING';
         }
 
         return { status: job.status, videoUrl: job.status === 'COMPLETED' ? job.videoUrl : null };
-    }
-
-    getMockVideoUrl(description) {
-        const desc = description.toLowerCase();
-        if (desc.includes('fly') || desc.includes('flying') || desc.includes('city') || desc.includes('sunset') || desc.includes('above')) {
-            return 'https://assets.mixkit.co/videos/preview/mixkit-flying-over-a-city-at-sunset-124-large.mp4';
-        }
-        if (desc.includes('forest') || desc.includes('tree') || desc.includes('magical') || desc.includes('wood') || desc.includes('glow') || desc.includes('walk')) {
-            return 'https://assets.mixkit.co/videos/preview/mixkit-mysterious-forest-with-light-beams-and-fog-42867-large.mp4';
-        }
-        if (desc.includes('cyberpunk') || desc.includes('neon') || desc.includes('futuristic') || desc.includes('street')) {
-            return 'https://assets.mixkit.co/videos/preview/mixkit-neon-lights-in-a-futuristic-city-street-43187-large.mp4';
-        }
-        if (desc.includes('ocean') || desc.includes('sea') || desc.includes('wave') || desc.includes('beach') || desc.includes('water')) {
-            return 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-sea-waves-on-a-sandy-beach-14022-large.mp4';
-        }
-        if (desc.includes('space') || desc.includes('galaxy') || desc.includes('star') || desc.includes('universe') || desc.includes('nebula')) {
-            return 'https://assets.mixkit.co/videos/preview/mixkit-flying-through-stars-in-space-loop-4861-large.mp4';
-        }
-        // Fallback abstract cinematic loop
-        return 'https://assets.mixkit.co/videos/preview/mixkit-abstract-glowing-particles-in-motion-loop-4868-large.mp4';
     }
 }
 
@@ -180,7 +239,7 @@ class VideoQueue {
             const provider = providers[providerKey.toLowerCase()] || providers['luma'];
 
             try {
-                const { status, videoUrl } = await provider.checkStatus(jobId);
+                const { status, videoUrl } = await provider.checkStatus(jobId, dreamId);
                 
                 if (status === 'FAILED') {
                     if (job.attempts < 3) {
