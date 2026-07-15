@@ -294,14 +294,14 @@ const Dashboard = () => {
             {/* Create Dream Modal */}
             <AnimatePresence>
                 {showCreateModal && (
-                    <CreateDreamModal user={user} onClose={() => setShowCreateModal(false)} onPosted={fetchDreams} />
+                    <CreateDreamModal onClose={() => setShowCreateModal(false)} onPosted={fetchDreams} />
                 )}
             </AnimatePresence>
         </div>
     );
 };
 
-const CreateDreamModal = ({ user, onClose, onPosted }) => {
+const CreateDreamModal = ({ onClose, onPosted }) => {
     const [step, setStep] = useState(1);
     const [description, setDescription] = useState('');
     const [style, setStyle] = useState('surreal');
