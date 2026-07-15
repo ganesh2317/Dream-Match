@@ -4,7 +4,7 @@ import { Sparkles, MessageCircle, Zap, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Matches = ({ onMessage }) => {
+const Matches = ({ onMessage, onViewProfile }) => {
     const { user } = useAuth();
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -141,13 +141,18 @@ const Matches = ({ onMessage }) => {
                                 border: '4px solid #07070a', 
                                 objectFit: 'cover',
                                 zIndex: 1,
-                                position: 'relative'
+                                position: 'relative',
+                                cursor: 'pointer'
                             }} 
                             alt="twin-avatar"
+                            onClick={() => onViewProfile && onViewProfile(twinUser)}
                         />
                     </div>
 
-                    <h3 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    <h3 
+                        style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px', cursor: 'pointer' }}
+                        onClick={() => onViewProfile && onViewProfile(twinUser)}
+                    >
                         {twinUser.fullName || twinUser.username}
                     </h3>
                     <div style={{ fontSize: '15px', color: 'var(--primary)', fontWeight: 800, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '6px' }}>

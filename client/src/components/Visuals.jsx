@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Visuals = ({ initialDreamId }) => {
+const Visuals = ({ initialDreamId, onViewProfile }) => {
     const containerRef = useRef(null);
     const [visuals, setVisuals] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -469,8 +469,18 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh }) => {
                 zIndex: 10
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <img src={dream.user?.avatarUrl} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid var(--primary)', objectFit: 'cover', padding: '1px' }} alt="avatar" />
-                    <div style={{ fontWeight: 700, fontSize: '14px', textShadow: '0 2px 4px rgba(0,0,0,0.6)', color: 'white' }}>@{dream.user?.username}</div>
+                    <img 
+                        src={dream.user?.avatarUrl} 
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid var(--primary)', objectFit: 'cover', padding: '1px', cursor: 'pointer' }} 
+                        alt="avatar" 
+                        onClick={() => onViewProfile && onViewProfile(dream.user)}
+                    />
+                    <div 
+                        style={{ fontWeight: 700, fontSize: '14px', textShadow: '0 2px 4px rgba(0,0,0,0.6)', color: 'white', cursor: 'pointer' }}
+                        onClick={() => onViewProfile && onViewProfile(dream.user)}
+                    >
+                        @{dream.user?.username}
+                    </div>
                     
                     {/* Generated label */}
                     <div style={{

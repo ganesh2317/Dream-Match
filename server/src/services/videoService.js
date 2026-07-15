@@ -94,6 +94,45 @@ class VideoQueue {
         
         // Start background worker loop
         setInterval(() => this.processQueue(), 2000);
+
+        // Recover any pending/processing jobs from the database on startup
+        this.recoverPendingJobs();
+    }
+
+    async recoverPendingJobs() {
+        try {
+            const pendingDreams = await prisma.dream.findMany({
+                where: {
+                    videoStatus: { in: ['PENDING', 'PROCESSING'] }
+                }
+            });
+            for (const dream of pendingDreams) {
+                const providerKey = 'luma'; // default fallback
+                const provider = providers[providerKey] || providers.luma;
+                
+                // Re-register the job in the simulated provider
+                const jobId = `${provider.name.toLowerCase()}_job_${Math.random().toString(36).substr(2, 9)}`;
+                const videoUrl = provider.getMockVideoUrl(dream.description);
+                provider.jobs.set(jobId, {
+                    status: dream.videoStatus,
+                    videoUrl,
+                    createdAt: new Date(dream.createdAt).getTime()
+                });
+                
+                this.queue.push({
+                    dreamId: dream.id,
+                    jobId,
+                    providerKey,
+                    prompt: dream.description,
+                    attempts: 0
+                });
+            }
+            if (pendingDreams.length > 0) {
+                console.log(`[VideoQueue] Recovered ${pendingDreams.length} pending video generation jobs.`);
+            }
+        } catch (e) {
+            console.error('[VideoQueue] Failed to recover pending jobs:', e);
+        }
     }
 
     async enqueue(dreamId, prompt, providerKey = 'luma') {
@@ -116,7 +155,9 @@ class VideoQueue {
             this.queue.push({
                 dreamId,
                 jobId,
-                providerKey
+                providerKey,
+                prompt,
+                attempts: 0
             });
         } catch (e) {
             console.error(`[VideoQueue] Failed to initialize video generation for dream ${dreamId}:`, e);
@@ -141,21 +182,44 @@ class VideoQueue {
             try {
                 const { status, videoUrl } = await provider.checkStatus(jobId);
                 
-                // Build update payload — only set videoUrl when we actually have one
-                const updateData = { videoStatus: status };
-                if (videoUrl) {
-                    updateData.videoUrl = videoUrl;
-                    updateData.videoDuration = 5.0;
-                }
+                if (status === 'FAILED') {
+                    if (job.attempts < 3) {
+                        job.attempts = (job.attempts || 0) + 1;
+                        console.warn(`[VideoQueue] Job for dream ${dreamId} failed. Retrying (Attempt ${job.attempts}/3)...`);
+                        try {
+                            const { jobId: newJobId, status: newStatus } = await provider.generate(job.prompt || 'Dream details');
+                            job.jobId = newJobId;
+                            await prisma.dream.update({
+                                where: { id: dreamId },
+                                data: { videoStatus: newStatus }
+                            });
+                        } catch (err) {
+                            console.error(`[VideoQueue] Failed to recreate job on retry:`, err);
+                        }
+                    } else {
+                        toRemove.add(dreamId);
+                        await prisma.dream.update({
+                            where: { id: dreamId },
+                            data: { videoStatus: 'FAILED' }
+                        });
+                    }
+                } else {
+                    // Build update payload — only set videoUrl when we actually have one
+                    const updateData = { videoStatus: status };
+                    if (videoUrl) {
+                        updateData.videoUrl = videoUrl;
+                        updateData.videoDuration = 5.0;
+                    }
 
-                await prisma.dream.update({
-                    where: { id: dreamId },
-                    data: updateData
-                });
+                    await prisma.dream.update({
+                        where: { id: dreamId },
+                        data: updateData
+                    });
 
-                if (status === 'COMPLETED' || status === 'FAILED') {
-                    toRemove.add(dreamId);
-                    console.log(`[VideoQueue] Job for dream ${dreamId} finished with status: ${status}`);
+                    if (status === 'COMPLETED') {
+                        toRemove.add(dreamId);
+                        console.log(`[VideoQueue] Job for dream ${dreamId} finished with status: ${status}`);
+                    }
                 }
             } catch (err) {
                 console.error(`[VideoQueue] Error processing job for dream ${dreamId}:`, err.message || err);

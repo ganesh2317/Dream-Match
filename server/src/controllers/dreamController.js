@@ -517,11 +517,25 @@ const createDream = async (req, res) => {
             }
         });
 
-        // Start video generation in the background automatically
-        const videoProvider = process.env.VIDEO_PROVIDER || 'luma';
-        videoQueue.enqueue(dream.id, description, videoProvider).catch(err => {
-            console.error('Failed to auto-enqueue video generation:', err);
-        });
+        if (!videoUrl) {
+            // Start video generation in the background automatically
+            const videoProvider = process.env.VIDEO_PROVIDER || 'luma';
+            videoQueue.enqueue(dream.id, description, videoProvider).catch(err => {
+                console.error('Failed to auto-enqueue video generation:', err);
+            });
+        } else {
+            try {
+                await prisma.dream.update({
+                    where: { id: dream.id },
+                    data: {
+                        videoStatus: 'COMPLETED',
+                        videoProvider: 'AI Generated'
+                    }
+                });
+            } catch (dbErr) {
+                console.error('Failed to update dream status:', dbErr);
+            }
+        }
 
         // --- DREAM MATCHING LOGIC (Refined) ---
         const keywords = description.toLowerCase()
@@ -675,6 +689,25 @@ const commentDream = async (req, res) => {
             data: { text, dreamId: id, userId },
             include: { user: true }
         });
+
+        // Create notification for dream owner
+        const dream = await prisma.dream.findUnique({
+            where: { id },
+            select: { userId: true }
+        });
+
+        if (dream && dream.userId !== userId) {
+            await prisma.notification.create({
+                data: {
+                    type: 'COMMENT',
+                    senderId: userId,
+                    receiverId: dream.userId,
+                    dreamId: id,
+                    message: 'commented on your dream'
+                }
+            });
+        }
+
         res.json(comment);
     } catch (error) {
         res.status(500).json({ message: 'Error commenting' });

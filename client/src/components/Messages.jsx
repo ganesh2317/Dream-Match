@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Messages = ({ currentUser, initialUser, onClearInitial }) => {
+const Messages = ({ currentUser, initialUser, onClearInitial, onViewProfile }) => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -19,8 +19,28 @@ const Messages = ({ currentUser, initialUser, onClearInitial }) => {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [showNewChat, setShowNewChat] = useState(false);
     const chatEndRef = useRef(null);
     const pollingRef = useRef(null);
+
+    const [pinnedIds, setPinnedIds] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`pinned_conversations_${user?.id}`);
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            return [];
+        }
+    });
+
+    const togglePin = (otherUserId) => {
+        setPinnedIds(prev => {
+            const next = prev.includes(otherUserId)
+                ? prev.filter(id => id !== otherUserId)
+                : [...prev, otherUserId];
+            localStorage.setItem(`pinned_conversations_${user?.id}`, JSON.stringify(next));
+            return next;
+        });
+    };
 
     const fetchConversations = async () => {
         try {
@@ -186,10 +206,11 @@ const Messages = ({ currentUser, initialUser, onClearInitial }) => {
                     <img
                         src={selectedUser.avatarUrl}
                         alt={selectedUser.username}
-                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--primary)', padding: '1px' }}
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--primary)', padding: '1px', cursor: 'pointer' }}
+                        onClick={() => onViewProfile && onViewProfile(selectedUser)}
                     />
-                    <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>{selectedUser.fullName}</div>
+                    <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onViewProfile && onViewProfile(selectedUser)}>
+                        <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>{selectedUser.fullName || selectedUser.username}</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{selectedUser.username}</div>
                     </div>
                     <div style={{
@@ -270,7 +291,10 @@ const Messages = ({ currentUser, initialUser, onClearInitial }) => {
                                         {isMe && (
                                             msg.pending ?
                                                 <Check size={11} style={{ opacity: 0.5 }} /> :
-                                                <CheckCheck size={11} style={{ color: 'var(--success)' }} />
+                                                (msg.read ?
+                                                    <CheckCheck size={11} style={{ color: '#00a8ff' }} /> :
+                                                    <Check size={11} style={{ color: 'var(--text-muted)' }} />
+                                                )
                                         )}
                                     </div>
                                 </div>
@@ -332,9 +356,37 @@ const Messages = ({ currentUser, initialUser, onClearInitial }) => {
         );
     }
 
+    const sortedConversations = [...conversations].sort((a, b) => {
+        const aPinned = pinnedIds.includes(a.otherUserId);
+        const bPinned = pinnedIds.includes(b.otherUserId);
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+        return new Date(b.lastMessageAt || b.createdAt) - new Date(a.lastMessageAt || a.createdAt);
+    });
+
     return (
         <div style={{ maxWidth: '640px', margin: '0 auto' }} className="fade-in">
-            <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '24px', textAlign: 'center' }}>Messages</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div style={{ width: '40px' }} /> {/* Spacer */}
+                <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Messages</h2>
+                <button
+                    onClick={() => setShowNewChat(true)}
+                    style={{
+                        background: 'var(--primary-gradient)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 14px',
+                        borderRadius: '10px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 10px var(--primary-glow)'
+                    }}
+                    className="hover-scale"
+                >
+                    New Chat
+                </button>
+            </div>
 
             {conversations.length === 0 ? (
                 <GlassCard style={{ textAlign: 'center', padding: '64px 32px', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
@@ -358,77 +410,207 @@ const Messages = ({ currentUser, initialUser, onClearInitial }) => {
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <AnimatePresence>
-                        {conversations.map((conv, idx) => (
-                            <motion.div
-                                key={conv.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.25, delay: idx * 0.05 }}
-                            >
-                                <GlassCard
-                                    onClick={() => setSelectedUser(conv.otherUser)}
-                                    style={{
-                                        padding: '16px 20px',
-                                        cursor: 'pointer',
-                                        border: 'var(--glass-border)',
-                                        borderRadius: 'var(--radius-xl)'
-                                    }}
-                                    className="hover-scale-subtle animate-theme"
+                        {sortedConversations.map((conv, idx) => {
+                            const isPinned = pinnedIds.includes(conv.otherUserId);
+                            return (
+                                <motion.div
+                                    key={conv.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.25, delay: idx * 0.05 }}
                                 >
-                                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                                        <img
-                                            src={conv.otherUser.avatarUrl}
-                                            alt={conv.otherUser.username}
-                                            style={{
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '50%',
-                                                objectFit: 'cover',
-                                                border: '1.5px solid var(--primary)',
-                                                padding: '1px'
-                                            }}
-                                        />
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '2px', color: 'var(--text-primary)' }}>
-                                                {conv.otherUser.fullName}
+                                    <GlassCard
+                                        onClick={() => setSelectedUser(conv.otherUser)}
+                                        style={{
+                                            padding: '16px 20px',
+                                            cursor: 'pointer',
+                                            border: isPinned ? '1px solid var(--primary)' : 'var(--glass-border)',
+                                            borderRadius: 'var(--radius-xl)',
+                                            background: isPinned ? 'rgba(124, 58, 237, 0.03)' : 'var(--glass-bg)'
+                                        }}
+                                        className="hover-scale-subtle animate-theme"
+                                    >
+                                        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                                            <img
+                                                src={conv.otherUser.avatarUrl}
+                                                alt={conv.otherUser.username}
+                                                style={{
+                                                    width: '48px',
+                                                    height: '48px',
+                                                    borderRadius: '50%',
+                                                    objectFit: 'cover',
+                                                    border: '1.5px solid var(--primary)',
+                                                    padding: '1px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onViewProfile && onViewProfile(conv.otherUser);
+                                                }}
+                                            />
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '2px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    {conv.otherUser.fullName || conv.otherUser.username}
+                                                    {isPinned && <span style={{ fontSize: '10px' }}>📌</span>}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '12px',
+                                                    color: conv.unreadCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
+                                                    fontWeight: conv.unreadCount > 0 ? 700 : 400,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {conv.lastMessage || 'No messages yet'}
+                                                </div>
                                             </div>
-                                            <div style={{
-                                                fontSize: '12px',
-                                                color: conv.unreadCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
-                                                fontWeight: conv.unreadCount > 0 ? 700 : 400,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {conv.lastMessage || 'No messages yet'}
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                                                <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                                                    {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                </span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            togglePin(conv.otherUserId);
+                                                        }}
+                                                        style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            padding: 0,
+                                                            color: isPinned ? 'var(--primary)' : 'var(--text-muted)',
+                                                            cursor: 'pointer',
+                                                            boxShadow: 'none',
+                                                            transform: 'none',
+                                                            fontSize: '13px'
+                                                        }}
+                                                        title={isPinned ? 'Unpin Chat' : 'Pin Chat'}
+                                                    >
+                                                        📌
+                                                    </button>
+                                                    {conv.unreadCount > 0 && (
+                                                        <div style={{
+                                                            background: 'var(--primary)',
+                                                            borderRadius: '50%',
+                                                            minWidth: '20px',
+                                                            height: '20px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '10px',
+                                                            fontWeight: 800,
+                                                            padding: '0 5px',
+                                                            boxShadow: '0 2px 8px var(--primary-glow)',
+                                                            color: 'white'
+                                                        }}>
+                                                            {conv.unreadCount}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                        {conv.unreadCount > 0 && (
-                                            <div style={{
-                                                background: 'var(--primary)',
-                                                borderRadius: '50%',
-                                                minWidth: '20px',
-                                                height: '20px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '10px',
-                                                fontWeight: 800,
-                                                padding: '0 5px',
-                                                boxShadow: '0 2px 8px var(--primary-glow)',
-                                                color: 'white'
-                                            }}>
-                                                {conv.unreadCount}
-                                            </div>
-                                        )}
-                                    </div>
-                                </GlassCard>
-                            </motion.div>
-                        ))}
+                                    </GlassCard>
+                                </motion.div>
+                            );
+                        })}
                     </AnimatePresence>
                 </div>
             )}
+
+            {showNewChat && (
+                <NewConversationModal
+                    onClose={() => setShowNewChat(false)}
+                    onSelect={(u) => setSelectedUser(u)}
+                    onViewProfile={onViewProfile}
+                />
+            )}
+        </div>
+    );
+};
+
+const NewConversationModal = ({ onClose, onSelect, onViewProfile }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const delayDebounce = setTimeout(async () => {
+            if (!searchQuery.trim()) {
+                setSearchResults([]);
+                return;
+            }
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`/api/users/search?query=${encodeURIComponent(searchQuery)}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setSearchResults(data);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        }, 300);
+        return () => clearTimeout(delayDebounce);
+    }, [searchQuery]);
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(16px)',
+            zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px'
+        }} onClick={onClose}>
+            <GlassCard style={{
+                width: '100%', maxWidth: '420px', padding: '24px',
+                borderRadius: 'var(--radius-xl)', border: 'var(--glass-border)',
+                background: 'rgba(15, 15, 25, 0.75)', position: 'relative'
+            }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>New Message</h3>
+                    <button onClick={onClose} style={{ background: 'transparent', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600 }}>Close</button>
+                </div>
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search people..."
+                    style={{
+                        width: '100%', padding: '12px 16px', borderRadius: '12px',
+                        background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)',
+                        color: 'white', fontSize: '14px', outline: 'none', marginBottom: '16px'
+                    }}
+                />
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Searching...</div>
+                ) : searchResults.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                        {searchQuery ? 'No results found' : 'Type to search for users'}
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '250px', overflowY: 'auto' }} className="hide-scrollbar">
+                        {searchResults.map((u) => (
+                            <div
+                                key={u.id}
+                                onClick={() => { onSelect(u); onClose(); }}
+                                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 10px', borderRadius: '10px', cursor: 'pointer', transition: '0.2s' }}
+                                className="hover-bg-simple"
+                            >
+                                <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${u.username}`} style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{u.fullName || u.username}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{u.username}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </GlassCard>
         </div>
     );
 };

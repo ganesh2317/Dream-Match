@@ -4,7 +4,7 @@ import { Heart, UserPlus, Sparkles, Check, Inbox } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Notifications = () => {
+const Notifications = ({ onViewProfile }) => {
     const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -105,6 +105,7 @@ const Notifications = () => {
                                             idx={idx}
                                             markAsRead={markAsRead}
                                             getIcon={getIcon}
+                                            onViewProfile={onViewProfile}
                                         />
                                     ))}
                                 </AnimatePresence>
@@ -125,6 +126,7 @@ const Notifications = () => {
                                             idx={idx}
                                             markAsRead={markAsRead}
                                             getIcon={getIcon}
+                                            onViewProfile={onViewProfile}
                                         />
                                     ))}
                                 </AnimatePresence>
@@ -137,7 +139,7 @@ const Notifications = () => {
     );
 };
 
-const NotificationRow = ({ notification, idx, markAsRead, getIcon }) => {
+const NotificationRow = ({ notification, idx, markAsRead, getIcon, onViewProfile }) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -167,12 +169,23 @@ const NotificationRow = ({ notification, idx, markAsRead, getIcon }) => {
                             borderRadius: '50%',
                             objectFit: 'cover',
                             border: '1.5px solid var(--primary)',
-                            padding: '1px'
+                            padding: '1px',
+                            cursor: 'pointer'
+                        }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onViewProfile && onViewProfile(notification.sender);
                         }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--text-primary)' }}>
+                            <span 
+                                style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onViewProfile && onViewProfile(notification.sender);
+                                }}
+                            >
                                 {notification.sender.fullName || notification.sender.username}
                             </span>
                             <span style={{ color: 'var(--text-secondary)', fontSize: '13.5px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>

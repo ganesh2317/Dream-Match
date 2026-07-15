@@ -25,6 +25,7 @@ const Dashboard = () => {
     const [messageUser, setMessageUser] = useState(null);
     const [dbMatches, setDbMatches] = useState([]);
 
+    const [unreadMessages, setUnreadMessages] = useState(0);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
 
     const fetchDreams = async () => {
@@ -59,12 +60,40 @@ const Dashboard = () => {
         }
     };
 
+    const fetchUnreadMessagesCount = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            const res = await fetch('/api/messages/unread-count', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUnreadMessages(data.unreadCount || 0);
+            } else {
+                // Fallback: sum unread counts from conversations
+                const convRes = await fetch('/api/messages/conversations', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (convRes.ok) {
+                    const convs = await convRes.json();
+                    const totalUnread = convs.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
+                    setUnreadMessages(totalUnread);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     useEffect(() => {
         fetchDreams();
         fetchMatches();
+        fetchUnreadMessagesCount();
         const interval = setInterval(() => {
             fetchDreams();
             fetchMatches();
+            fetchUnreadMessagesCount();
         }, 10000);
 
         const handleResize = () => {
@@ -99,7 +128,7 @@ const Dashboard = () => {
             return <Profile user={viewingUser} onBack={() => setViewingUser(null)} onMessage={handleOpenMessage} onViewVisual={(id) => {
                 setInitialVisualId(id);
                 setActiveTab('visuals');
-            }} />;
+            }} onSettings={() => setActiveTab('settings')} onViewProfile={setViewingUser} />;
         }
 
         switch (activeTab) {
@@ -107,29 +136,29 @@ const Dashboard = () => {
                 return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
                     setInitialVisualId(id);
                     setActiveTab('visuals');
-                }} />;
+                }} onViewProfile={setViewingUser} unreadMessages={unreadMessages} onNavigateTab={setActiveTab} />;
             case 'search': 
                 return <Search onViewProfile={setViewingUser} />;
             case 'messages': 
-                return <Messages currentUser={user} initialUser={messageUser} onClearInitial={() => setMessageUser(null)} />;
+                return <Messages currentUser={user} initialUser={messageUser} onClearInitial={() => setMessageUser(null)} onViewProfile={setViewingUser} />;
             case 'matches': 
-                return <Matches onMessage={handleOpenMessage} />;
+                return <Matches onMessage={handleOpenMessage} onViewProfile={setViewingUser} />;
             case 'notifications': 
-                return <Notifications />;
+                return <Notifications onViewProfile={setViewingUser} />;
             case 'visuals': 
-                return <Visuals dreams={dreams} onRefresh={fetchDreams} initialDreamId={initialVisualId} />;
+                return <Visuals dreams={dreams} onRefresh={fetchDreams} initialDreamId={initialVisualId} onViewProfile={setViewingUser} />;
             case 'profile': 
                 return <Profile user={user} onViewVisual={(id) => {
                     setInitialVisualId(id);
                     setActiveTab('visuals');
-                }} onSettings={() => setActiveTab('settings')} />;
+                }} onSettings={() => setActiveTab('settings')} onViewProfile={setViewingUser} />;
             case 'settings':
                 return <Settings onBack={() => setActiveTab('profile')} />;
             default: 
                 return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
                     setInitialVisualId(id);
                     setActiveTab('visuals');
-                }} />;
+                }} onViewProfile={setViewingUser} unreadMessages={unreadMessages} />;
         }
     };
 
@@ -221,6 +250,7 @@ const Dashboard = () => {
                     setShowCreateModal={setShowCreateModal}
                     user={user}
                     logout={handleLogout}
+                    unreadMessages={unreadMessages}
                 />
             )}
 
@@ -352,12 +382,9 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                 setImages(prev => {
                     const next = [...prev];
                     next[index] = data.image;
-                    // Auto-select the first loaded variation
-                    if (!selectedImage && index === 0) {
-                        setSelectedImage(data.image);
-                    }
                     return next;
                 });
+                setSelectedImage(prev => prev || data.image);
             } else {
                 setFailedStates(prev => {
                     const next = [...prev];
@@ -439,11 +466,10 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                     setLoadingStates([true, true, true, true]);
                     setFailedStates([false, false, false, false]);
 
-                    // Sequentially fetch all 4 variations
-                    for (let i = 0; i < data.variations.length; i++) {
-                        await fetchVariation(i, data.variations[i], token);
-                    }
-                    await fetchVideo(data.video, token);
+                    // Parallel fetch all 4 variations and video concurrently
+                    const varPromises = data.variations.map((variation, i) => fetchVariation(i, variation, token));
+                    const vidPromise = fetchVideo(data.video, token);
+                    Promise.all([...varPromises, vidPromise]);
                 } else {
                     setImages(data.images);
                     setSelectedImage(data.images[0]);

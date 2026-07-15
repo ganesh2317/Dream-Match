@@ -3,8 +3,108 @@ import GlassCard from './GlassCard';
 import { Flame, Heart, MessageCircle, Eye, Share2, Sparkles, Send, Inbox, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Feed = ({ dreams, loading, onRefresh, onViewVisual }) => {
+const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(endpoint, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setUsers(data);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUsers();
+    }, [endpoint]);
+
+    const handleFollowToggle = async (e, user, index) => {
+        e.stopPropagation();
+        try {
+            const token = localStorage.getItem('token');
+            const url = user.isFollowing ? `/api/users/unfollow/${user.id}` : `/api/users/follow/${user.id}`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setUsers(prev => {
+                    const next = [...prev];
+                    next[index] = { ...user, isFollowing: !user.isFollowing };
+                    return next;
+                });
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(16px)',
+            zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px'
+        }} onClick={onClose}>
+            <GlassCard style={{
+                width: '100%', maxWidth: '420px', padding: '24px',
+                borderRadius: 'var(--radius-xl)', border: 'var(--glass-border)',
+                background: 'rgba(15, 15, 25, 0.75)', position: 'relative'
+            }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{title}</h3>
+                    <button onClick={onClose} style={{ background: 'transparent', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600 }}>Close</button>
+                </div>
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Loading...</div>
+                ) : users.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>No users found</div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '300px', overflowY: 'auto' }} className="hide-scrollbar">
+                        {users.map((u, i) => (
+                            <div key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => { onViewProfile(u); onClose(); }}>
+                                    <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${u.username}`} style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }} />
+                                    <div>
+                                        <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{u.fullName || u.username}</div>
+                                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{u.username}</div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={(e) => handleFollowToggle(e, u, i)}
+                                    style={{
+                                        background: u.isFollowing ? 'rgba(255,255,255,0.06)' : 'var(--primary-gradient)',
+                                        color: 'white',
+                                        fontSize: '11px',
+                                        fontWeight: 700,
+                                        padding: '6px 12px',
+                                        borderRadius: '8px',
+                                        border: u.isFollowing ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                                    }}
+                                >
+                                    {u.isFollowing ? 'Following' : 'Follow'}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </GlassCard>
+        </div>
+    );
+};
+
+const Feed = ({ dreams, loading, onRefresh, onViewVisual, onViewProfile, unreadMessages, onNavigateTab }) => {
     const [feedTab, setFeedTab] = useState('foryou'); // 'following' or 'foryou'
+    const [likesDreamId, setLikesDreamId] = useState(null);
 
     const handleLike = async (dreamId) => {
         try {
@@ -22,58 +122,104 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual }) => {
 
     return (
         <div style={{ maxWidth: '640px', margin: '0 auto', paddingBottom: '80px' }} className="fade-in">
-            {/* Mockup Header: Dream Feed with tabs */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>Dream Feed</h2>
-                <div style={{ display: 'flex', gap: '24px', position: 'relative' }}>
-                    <button 
-                        onClick={() => setFeedTab('following')}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: feedTab === 'following' ? 'var(--text-primary)' : 'var(--text-muted)',
-                            fontWeight: 700,
-                            fontSize: '14px',
-                            cursor: 'pointer',
-                            padding: '6px 4px',
-                            boxShadow: 'none',
-                            transform: 'none'
-                        }}
-                    >
-                        Following
-                    </button>
-                    <button 
-                        onClick={() => setFeedTab('foryou')}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: feedTab === 'foryou' ? 'var(--text-primary)' : 'var(--text-muted)',
-                            fontWeight: 700,
-                            fontSize: '14px',
-                            cursor: 'pointer',
-                            padding: '6px 4px',
-                            boxShadow: 'none',
-                            transform: 'none'
-                        }}
-                    >
-                        For You
-                    </button>
-                    {/* Active tab slide indicator line */}
-                    <motion.div 
-                        animate={{ x: feedTab === 'following' ? -38 : 38 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                        style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '50%',
-                            marginLeft: '-15px',
-                            width: '30px',
-                            height: '3px',
-                            background: 'var(--primary)',
-                            borderRadius: '10px'
-                        }}
-                    />
+            {/* Mockup Header: Dream Feed with tabs & Messages button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', position: 'relative' }}>
+                <div style={{ width: '40px' }} /> {/* Spacer to align title in center */}
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>Dream Feed</h2>
+                    <div style={{ display: 'flex', gap: '24px', position: 'relative' }}>
+                        <button 
+                            onClick={() => setFeedTab('following')}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: feedTab === 'following' ? 'var(--text-primary)' : 'var(--text-muted)',
+                                fontWeight: 700,
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                padding: '6px 4px',
+                                boxShadow: 'none',
+                                transform: 'none'
+                            }}
+                        >
+                            Following
+                        </button>
+                        <button 
+                            onClick={() => setFeedTab('foryou')}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: feedTab === 'foryou' ? 'var(--text-primary)' : 'var(--text-muted)',
+                                fontWeight: 700,
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                padding: '6px 4px',
+                                boxShadow: 'none',
+                                transform: 'none'
+                            }}
+                        >
+                            For You
+                        </button>
+                        {/* Active tab slide indicator line */}
+                        <motion.div 
+                            animate={{ x: feedTab === 'following' ? -38 : 38 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                            style={{
+                                position: 'absolute',
+                                bottom: '0',
+                                left: '50%',
+                                marginLeft: '-15px',
+                                width: '30px',
+                                height: '3px',
+                                background: 'var(--primary)',
+                                borderRadius: '10px'
+                            }}
+                        />
+                    </div>
                 </div>
+
+                {/* Top-Right Message Button */}
+                <button
+                    onClick={() => onNavigateTab && onNavigateTab('messages')}
+                    style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        color: 'var(--text-primary)',
+                        padding: '10px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative',
+                        boxShadow: 'none',
+                        transform: 'none'
+                    }}
+                    className="hover-scale"
+                >
+                    <MessageCircle size={18} />
+                    {unreadMessages > 0 && (
+                        <span style={{
+                            position: 'absolute',
+                            top: '-4px',
+                            right: '-4px',
+                            background: 'var(--error)',
+                            color: 'white',
+                            fontSize: '9px',
+                            fontWeight: 'bold',
+                            borderRadius: '50%',
+                            width: '15px',
+                            height: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)'
+                        }}>
+                            {unreadMessages}
+                        </span>
+                    )}
+                </button>
             </div>
 
             {loading ? (
@@ -106,9 +252,20 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual }) => {
                             onLike={() => handleLike(dream.id)}
                             onRefresh={onRefresh}
                             onViewVisual={onViewVisual}
+                            onViewProfile={onViewProfile}
+                            onViewLikes={setLikesDreamId}
                         />
                     ))}
                 </div>
+            )}
+
+            {likesDreamId && (
+                <UserListModal
+                    title="Likes"
+                    endpoint={`/api/users/dreams/${likesDreamId}/likes`}
+                    onClose={() => setLikesDreamId(null)}
+                    onViewProfile={onViewProfile}
+                />
             )}
         </div>
     );
@@ -138,7 +295,7 @@ const FeedSkeleton = () => (
     </div>
 );
 
-const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
+const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onViewLikes }) => {
     const [showComments, setShowComments] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -227,9 +384,19 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
             <GlassCard style={{ padding: '0', overflow: 'hidden', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }} className="hover-scale-subtle">
                 {/* Card Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px' }}>
-                    <img src={avatar} style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--primary)', objectFit: 'cover', padding: '2px' }} alt="avatar" />
+                    <img 
+                        src={avatar} 
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--primary)', objectFit: 'cover', padding: '2px', cursor: 'pointer' }} 
+                        alt="avatar" 
+                        onClick={() => onViewProfile && onViewProfile(user)}
+                    />
                     <div>
-                        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>{username}</div>
+                        <div 
+                            style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                            onClick={() => onViewProfile && onViewProfile(user)}
+                        >
+                            {username}
+                        </div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                             {new Date(dream.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </div>
@@ -320,7 +487,15 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                             }}
                         >
                             <Heart size={20} fill={dream.isLiked ? '#ff4757' : 'none'} style={{ transition: 'color var(--transition-fast)' }} />
-                            <span>{likes}</span>
+                            <span 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onViewLikes && onViewLikes(dream.id);
+                                }}
+                                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                {likes}
+                            </span>
                         </motion.button>
 
                         <button
@@ -381,10 +556,20 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual }) => {
                                                 const commentAvatar = commentUser.avatarUrl || `https://ui-avatars.com/api/?name=${commentUser.username}&background=random`;
                                                 return (
                                                     <div key={comment.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                                                        <img src={commentAvatar} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} alt="comment-avatar" />
+                                                        <img 
+                                                            src={commentAvatar} 
+                                                            style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }} 
+                                                            alt="comment-avatar" 
+                                                            onClick={() => onViewProfile && onViewProfile(commentUser)}
+                                                        />
                                                         <div style={{ flex: 1, background: 'rgba(255, 255, 255, 0.02)', padding: '8px 12px', borderRadius: '12px', border: '1px solid var(--glass-border-light)' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                                                                <span style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary)' }}>{commentUser.username || 'dreamer'}</span>
+                                                                <span 
+                                                                    style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                                                                    onClick={() => onViewProfile && onViewProfile(commentUser)}
+                                                                >
+                                                                    {commentUser.username || 'dreamer'}
+                                                                </span>
                                                                 <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
                                                                     {new Date(comment.createdAt).toLocaleDateString()}
                                                                 </span>

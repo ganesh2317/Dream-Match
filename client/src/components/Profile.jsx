@@ -18,11 +18,95 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings }) => {
+const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(endpoint, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setUsers(data);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUsers();
+    }, [endpoint]);
+
+    const handleFollowToggle = async (e, user, index) => {
+        e.stopPropagation();
+        try {
+            const token = localStorage.getItem('token');
+            const url = user.isFollowing ? `/api/users/unfollow/${user.id}` : `/api/users/follow/${user.id}`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setUsers(prev => {
+                    const next = [...prev];
+                    next[index] = { ...user, isFollowing: !user.isFollowing };
+                    return next;
+                });
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(16px)',
+            zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px'
+        }} onClick={onClose}>
+            <GlassCard style={{
+                width: '100%', maxWidth: '420px', padding: '24px',
+                borderRadius: 'var(--radius-xl)', border: 'var(--glass-border)',
+                background: 'rgba(15, 15, 25, 0.75)', position: 'relative'
+            }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{title}</h3>
+                    <button onClick={onClose} style={{ background: 'transparent', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600 }}>Close</button>
+                </div>
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Loading...</div>
+                ) : users.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>No users found</div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '300px', overflowY: 'auto' }} className="hide-scrollbar">
+                        {users.map((u, i) => (
+                            <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => { onViewProfile(u); onClose(); }}>
+                                <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${u.username}`} style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }} />
+                                <div>
+                                    <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{u.fullName || u.username}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{u.username}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </GlassCard>
+        </div>
+    );
+};
+
+const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, onViewProfile }) => {
     const { user: contextUser, updateUser } = useAuth();
     const [user, setUser] = useState(propUser || contextUser);
     const [userDreams, setUserDreams] = useState([]);
     const [galleryTab, setGalleryTab] = useState('dreams'); // 'dreams' or 'visuals'
+    const [userListModalConfig, setUserListModalConfig] = useState(null);
 
     const [isEditing, setIsEditing] = useState(false);
     const [bio, setBio] = useState('');
@@ -304,6 +388,49 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings }
                     </div>
 
                     <div style={{ marginBottom: '28px' }}>
+                        {/* Compatibility Card (for other users) */}
+                        {propUser && propUser.id !== contextUser?.id && (
+                            <div style={{
+                                padding: '16px 20px',
+                                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                                border: '1px solid rgba(99, 102, 241, 0.15)',
+                                borderRadius: '16px',
+                                marginBottom: '20px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyComposite: 'space-between', justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                        <Sparkles size={16} color="var(--primary)" /> Compatibility Score
+                                    </div>
+                                    <div style={{ fontSize: '18px', fontWeight: 900, color: 'var(--success)' }}>
+                                        {user.compatibilityScore !== undefined ? Math.round(user.compatibilityScore * 100) : 0}%
+                                    </div>
+                                </div>
+                                
+                                {user.mutualInterests && user.mutualInterests.length > 0 && (
+                                    <div>
+                                        <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '6px' }}>Mutual Dream Interests</div>
+                                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                            {user.mutualInterests.map((interest, idx) => (
+                                                <span key={idx} style={{ background: 'rgba(139, 92, 246, 0.12)', border: '1px solid rgba(139, 92, 246, 0.2)', color: '#c084fc', fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '100px' }}>
+                                                    #{interest}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {user.recentActivity && (
+                                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }}></span>
+                                        {user.recentActivity}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {isEditing ? (
                             <textarea
                                 placeholder="Tell the dreamscape about yourself (max 100 characters)..."
@@ -336,7 +463,8 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings }
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                         <StatBox icon={ImageIcon} value={userDreams.length} label="Dreams" color="var(--primary)" />
                         <StatBox icon={Video} value={visualsOnly.length} label="Visuals" color="var(--accent)" />
-                        <StatBox icon={Users} value={user._count?.followers || 0} label="Followers" color="var(--success)" />
+                        <StatBox icon={Users} value={user._count?.followers || 0} label="Followers" color="var(--success)" onClick={() => setUserListModalConfig({ title: 'Followers', endpoint: `/api/users/${user.id}/followers` })} />
+                        <StatBox icon={Users} value={user._count?.following || 0} label="Following" color="var(--primary)" onClick={() => setUserListModalConfig({ title: 'Following', endpoint: `/api/users/${user.id}/following` })} />
                     </div>
                 </div>
             </GlassCard>
@@ -391,6 +519,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings }
                             <motion.div
                                 whileHover={{ y: -4 }}
                                 key={dream.id}
+                                onClick={() => onViewVisual && onViewVisual(dream.id)}
                                 style={{
                                     borderRadius: '16px',
                                     overflow: 'hidden',
@@ -495,7 +624,16 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings }
                     </GlassCard>
                 )
             )}
-            
+
+            {userListModalConfig && (
+                <UserListModal
+                    title={userListModalConfig.title}
+                    endpoint={userListModalConfig.endpoint}
+                    onClose={() => setUserListModalConfig(null)}
+                    onViewProfile={onViewProfile}
+                />
+            )}
+
             <style>{`
                 .dream-thumb:hover .overlay {
                     opacity: 1 !important;
@@ -511,9 +649,10 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings }
     );
 };
 
-const StatBox = ({ icon: Icon, value, label, color }) => (
+const StatBox = ({ icon: Icon, value, label, color, onClick }) => (
     <motion.div 
         whileHover={{ y: -2, background: 'rgba(255,255,255,0.05)' }}
+        onClick={onClick}
         style={{ 
             textAlign: 'center', 
             padding: '14px 20px', 
@@ -522,7 +661,8 @@ const StatBox = ({ icon: Icon, value, label, color }) => (
             minWidth: '95px',
             flex: '1',
             border: 'var(--glass-border)',
-            transition: 'border var(--transition-fast)'
+            transition: 'border var(--transition-fast)',
+            cursor: onClick ? 'pointer' : 'default'
         }}
     >
         <Icon size={16} color={color} style={{ marginBottom: '6px' }} />
