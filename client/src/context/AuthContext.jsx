@@ -1,13 +1,28 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
+/**
+ * Context to share authentication state and actions across the application.
+ */
 const AuthContext = createContext();
 
+/**
+ * Provider component that wraps the application and manages the user's authentication session,
+ * persistent token storage, login/registration actions, and updates to user fields.
+ */
 export const AuthProvider = ({ children }) => {
+    // The current authenticated user object or null if not logged in
     const [user, setUser] = useState(null);
+    // Loading state indicating if the initial session check or auth requests are in progress
     const [loading, setLoading] = useState(true);
 
     const API_URL = '/api/auth';
 
+    /**
+     * Checks user session validity using the stored JWT token.
+     * Fetches user profile data from backend if token is valid.
+     * 
+     * @param {string} token - The JWT token to authorize the request
+     */
     const fetchMe = async (token) => {
         try {
             const res = await fetch(`${API_URL}/me`, {
@@ -33,6 +48,8 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // On mount, check if there is an existing token stored in localStorage
+    // and attempt to restore the user session.
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -42,6 +59,14 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
+    /**
+     * Authenticates the user with username and password.
+     * Saves the returned JWT token to localStorage upon success.
+     * 
+     * @param {string} username - User's unique username
+     * @param {string} password - User's password
+     * @returns {Promise<Object>} The authenticated user object
+     */
     const login = async (username, password) => {
         setLoading(true);
         try {
@@ -71,6 +96,13 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Registers a new user account with details (fullName, username, password, age, gender).
+     * Automatically logs the user in and stores the JWT token upon successful registration.
+     * 
+     * @param {Object} formData - User details required for registration
+     * @returns {Promise<Object>} The newly registered and authenticated user object
+     */
     const register = async (formData) => {
         setLoading(true);
         try {
@@ -93,11 +125,20 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Logs the current user out, clearing the authentication token from localStorage
+     * and resetting the user state back to null.
+     */
     const logout = () => {
         localStorage.removeItem('token');
         setUser(null);
     };
 
+    /**
+     * Updates specific fields of the current user profile state.
+     * 
+     * @param {Object} updatedFields - Fields to merge into the existing user object
+     */
     const updateUser = (updatedFields) => {
         setUser(prev => prev ? { ...prev, ...updatedFields } : null);
     };
@@ -109,4 +150,8 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
+/**
+ * Custom hook to easily consume the AuthContext state and functions.
+ * Must be used within an AuthProvider component.
+ */
 export const useAuth = () => useContext(AuthContext);
