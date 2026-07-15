@@ -13,7 +13,19 @@ Dream Match is a premium, full-stack social web application where users can reco
 ### Prerequisites
 
 - Node.js (v18 or higher recommended)
-- PostgreSQL database URL configured in your environment variable
+- PostgreSQL database instance
+
+### Environment Setup
+
+Create a `.env` file inside the `server/` directory and configure the following environment variables:
+
+```env
+DATABASE_URL="your-postgresql-connection-string"
+JWT_SECRET="your-jwt-secret-key"
+PORT=3000
+RESEND_API_KEY="your-resend-api-key"
+FROM_EMAIL="onboarding@resend.dev"
+```
 
 ### Start the Backend Server
 
@@ -29,4 +41,18 @@ node index.js
 cd client
 npm install
 npm run dev
+```
+
+## Developer Guide
+
+### Running Backend Tests
+To run the Express backend integration tests, run the following inside the `server/` directory:
+```bash
+npm test
+```
+
+### Running Frontend Linter
+To scan and lint the frontend React components, run the following inside the `client/` directory:
+```bash
+npm run lint
 ```
