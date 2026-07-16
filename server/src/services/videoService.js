@@ -48,6 +48,23 @@ class SimulatedProvider extends VideoProvider {
                 return null;
             }
 
+            // If it's not localhost or ffmpeg is not available, serve CDN streaming placeholder:
+            const isProduction = process.env.NODE_ENV === 'production' || !ffmpegStatic;
+            if (isProduction) {
+                console.log(`[VideoProvider: ${this.name}] Serving secure public CORS-compliant streaming MP4.`);
+                const videoOptions = [
+                    'https://lorem.video/720p_h264_10s.mp4',
+                    'https://lorem.video/1080p_h264_10s.mp4',
+                    'https://lorem.video/480p_h264_10s.mp4'
+                ];
+                let hash = 0;
+                for (let i = 0; i < dreamId.length; i++) {
+                    hash = dreamId.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const selectedVideo = videoOptions[Math.abs(hash) % videoOptions.length];
+                return selectedVideo;
+            }
+
             const tempDir = os.tmpdir();
             const videoStorageDir = path.join(tempDir, 'dreammatch-videos');
             if (!fs.existsSync(videoStorageDir)) {
@@ -154,8 +171,43 @@ class VideoQueue {
         // Start background worker loop
         setInterval(() => this.processQueue(), 2000);
 
+        // Clean up legacy hotlinked video URLs on startup
+        this.migrateLegacyUrls();
+
         // Recover any pending/processing jobs from the database on startup
         this.recoverPendingJobs();
+    }
+
+    async migrateLegacyUrls() {
+        try {
+            const legacyDreams = await prisma.dream.findMany({
+                where: {
+                    videoUrl: { contains: 'mixkit.co' }
+                }
+            });
+            for (const dream of legacyDreams) {
+                const videoOptions = [
+                    'https://lorem.video/720p_h264_10s.mp4',
+                    'https://lorem.video/1080p_h264_10s.mp4',
+                    'https://lorem.video/480p_h264_10s.mp4'
+                ];
+                let hash = 0;
+                for (let i = 0; i < dream.id.length; i++) {
+                    hash = dream.id.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const selectedVideo = videoOptions[Math.abs(hash) % videoOptions.length];
+
+                await prisma.dream.update({
+                    where: { id: dream.id },
+                    data: { videoUrl: selectedVideo }
+                });
+            }
+            if (legacyDreams.length > 0) {
+                console.log(`[VideoQueue] Migrated ${legacyDreams.length} legacy mixkit video URLs to secure lorem.video placeholders.`);
+            }
+        } catch (e) {
+            console.error('[VideoQueue] Failed to migrate legacy URLs:', e);
+        }
     }
 
     async recoverPendingJobs() {
@@ -171,10 +223,9 @@ class VideoQueue {
                 
                 // Re-register the job in the simulated provider
                 const jobId = `${provider.name.toLowerCase()}_job_${Math.random().toString(36).substr(2, 9)}`;
-                const videoUrl = provider.getMockVideoUrl(dream.description);
                 provider.jobs.set(jobId, {
                     status: dream.videoStatus,
-                    videoUrl,
+                    videoUrl: '',
                     createdAt: new Date(dream.createdAt).getTime()
                 });
                 

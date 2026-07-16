@@ -87,7 +87,17 @@ const videoStorageDir = path.join(os.tmpdir(), 'dreammatch-videos');
 if (!fs.existsSync(videoStorageDir)) {
     fs.mkdirSync(videoStorageDir, { recursive: true });
 }
-app.use('/api/videos', express.static(videoStorageDir));
+app.get('/api/videos/:filename', (req, res) => {
+    const filePath = path.join(videoStorageDir, req.params.filename);
+    if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+    }
+    const fallbackPath = path.join(__dirname, 'fallback.mp4');
+    if (fs.existsSync(fallbackPath)) {
+        return res.sendFile(fallbackPath);
+    }
+    res.status(404).send('Video not found');
+});
 
 app.get('/', (req, res) => {
     res.send('Dream Social API is running...');
