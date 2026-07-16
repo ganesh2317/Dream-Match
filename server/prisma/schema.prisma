@@ -22,6 +22,8 @@ model User {
   bio          String?
   streakCount  Int      @default(0)
   lastPostedAt DateTime?
+  role         String   @default("USER")
+  status       String   @default("ACTIVE") // ACTIVE, SUSPENDED, BANNED
   
   dreams       Dream[]
   likes        Like[]
@@ -69,6 +71,8 @@ model Dream {
   user        User     @relation(fields: [userId], references: [id])
   
   views       Int      @default(0)
+  status      String   @default("VISIBLE") // VISIBLE, HIDDEN
+  isFeatured  Boolean  @default(false)
   likes       Like[]
   comments    Comment[]
 
@@ -167,4 +171,21 @@ model PendingVerification {
   attempts     Int      @default(0)
   otpExpiresAt DateTime
   createdAt    DateTime @default(now())
+}
+
+model ErrorLog {
+  id        String   @id @default(uuid())
+  type      String   // BACKEND, API, VISUAL_GENERATION
+  message   String
+  stack     String?
+  endpoint  String?
+  createdAt DateTime @default(now())
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

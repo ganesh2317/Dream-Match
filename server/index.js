@@ -71,12 +71,14 @@ const dreamRoutes = require('./src/routes/dreamRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const messageRoutes = require('./src/routes/messageRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/dreams', dreamRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
 
 const path = require('path');
 const fs = require('fs');
@@ -92,8 +94,24 @@ app.get('/', (req, res) => {
 });
 
 // Global Error Handling Middleware
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
     console.error(`[${new Date().toISOString()}] Error:`, err.stack || err.message);
+    
+    // Automatically log unhandled errors to the Prisma database ErrorLog table
+    try {
+        const prisma = require('./src/utils/prisma');
+        await prisma.errorLog.create({
+            data: {
+                type: 'BACKEND',
+                message: err.message || 'An unexpected backend error occurred',
+                stack: err.stack || null,
+                endpoint: `${req.method} ${req.originalUrl || req.url}`
+            }
+        });
+    } catch (logError) {
+        console.error('Failed to log error to database:', logError.message);
+    }
+
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
     res.status(statusCode).json({
         message: err.message || 'An unexpected error occurred',

@@ -91,6 +91,8 @@ const register = async (req, res) => {
                 avatarUrl: user.avatarUrl,
                 streakCount: 0,
                 bio: null,
+                role: user.role,
+                status: user.status,
                 _count: { followers: 0, following: 0 }
             }
         });
@@ -156,6 +158,8 @@ const login = async (req, res) => {
                 avatarUrl: user.avatarUrl,
                 streakCount: finalStreak,
                 bio: user.bio,
+                role: user.role,
+                status: user.status,
                 _count: user._count
             },
         });
