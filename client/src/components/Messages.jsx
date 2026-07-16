@@ -204,14 +204,14 @@ const Messages = ({ currentUser, initialUser, onClearInitial, onViewProfile }) =
                         <ArrowLeft size={16} />
                     </button>
                     <img
-                        src={selectedUser.avatarUrl}
-                        alt={selectedUser.username}
+                        src={selectedUser?.avatarUrl || `https://ui-avatars.com/api/?name=${selectedUser?.username || 'user'}`}
+                        alt={selectedUser?.username || 'user'}
                         style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--primary)', padding: '1px', cursor: 'pointer' }}
                         onClick={() => onViewProfile && onViewProfile(selectedUser)}
                     />
                     <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onViewProfile && onViewProfile(selectedUser)}>
-                        <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>{selectedUser.fullName || selectedUser.username}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{selectedUser.username}</div>
+                        <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>{selectedUser?.fullName || selectedUser?.username || 'Wanderer'}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{selectedUser?.username || 'user'}</div>
                     </div>
                     <div style={{
                         width: '8px',
@@ -356,13 +356,15 @@ const Messages = ({ currentUser, initialUser, onClearInitial, onViewProfile }) =
         );
     }
 
-    const sortedConversations = [...conversations].sort((a, b) => {
-        const aPinned = pinnedIds.includes(a.otherUserId);
-        const bPinned = pinnedIds.includes(b.otherUserId);
-        if (aPinned && !bPinned) return -1;
-        if (!aPinned && bPinned) return 1;
-        return new Date(b.lastMessageAt || b.createdAt) - new Date(a.lastMessageAt || a.createdAt);
-    });
+    const sortedConversations = [...conversations]
+        .filter(conv => conv && conv.otherUser)
+        .sort((a, b) => {
+            const aPinned = pinnedIds.includes(a.otherUserId);
+            const bPinned = pinnedIds.includes(b.otherUserId);
+            if (aPinned && !bPinned) return -1;
+            if (!aPinned && bPinned) return 1;
+            return new Date(b.lastMessageAt || b.createdAt) - new Date(a.lastMessageAt || a.createdAt);
+        });
 
     return (
         <div style={{ maxWidth: '640px', margin: '0 auto' }} className="fade-in">

@@ -333,7 +333,7 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
     const likes = dream._count?.likes || 0;
     const commentsCount = dream._count?.comments || 0;
     const views = dream.views || 0;
-    const comments = dream.comments || [];
+    const comments = (dream.comments || []).filter(c => c && c.user);
 
     const handleImageDoubleClick = (e) => {
         e.preventDefault();

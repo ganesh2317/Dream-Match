@@ -20,7 +20,8 @@ const Matches = ({ onMessage, onViewProfile }) => {
             });
             if (res.ok) {
                 const data = await res.json();
-                setMatches(data);
+                const validMatches = (data || []).filter(m => m && m.sender && m.receiver);
+                setMatches(validMatches);
             }
         } catch (error) {
             console.error(error);

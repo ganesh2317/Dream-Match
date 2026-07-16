@@ -35,7 +35,8 @@ const Dashboard = () => {
             const res = await fetch('/api/dreams', { headers });
             if (res.ok) {
                 const data = await res.json();
-                setDreams(data);
+                const validDreams = (data || []).filter(d => d && d.user);
+                setDreams(validDreams);
             }
         } catch (error) {
             console.error(error);
@@ -53,7 +54,8 @@ const Dashboard = () => {
             });
             if (res.ok) {
                 const data = await res.json();
-                setDbMatches(data.slice(0, 3)); // show top 3 on dashboard sidebar
+                const validMatches = (data || []).filter(m => m && m.sender && m.receiver);
+                setDbMatches(validMatches.slice(0, 3)); // show top 3 on dashboard sidebar
             }
         } catch (error) {
             console.error('Error fetching dashboard matches:', error);

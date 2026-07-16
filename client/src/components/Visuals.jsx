@@ -29,7 +29,8 @@ const Visuals = ({ initialDreamId, onViewProfile }) => {
             });
             if (res.ok) {
                 const data = await res.json();
-                setVisuals(data);
+                const validVisuals = (data || []).filter(v => v && v.user);
+                setVisuals(validVisuals);
             }
         } catch (e) {
             console.error('Error fetching visuals:', e);

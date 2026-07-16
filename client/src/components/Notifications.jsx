@@ -17,7 +17,8 @@ const Notifications = ({ onViewProfile }) => {
             });
             if (res.ok) {
                 const data = await res.json();
-                setNotifications(data);
+                const validNotifications = (data || []).filter(n => n && n.sender);
+                setNotifications(validNotifications);
             }
         } catch (error) {
             console.error(error);
