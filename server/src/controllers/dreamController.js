@@ -2,10 +2,14 @@ const prisma = require('../utils/prisma');
 const { differenceInCalendarDays } = require('../utils/streak');
 const { videoQueue } = require('../services/videoService');
 
-// AI Image & Visual Generation using Pollinations.ai (Enhanced for Accuracy & Realism)
-// Uses intelligent keyword extraction and real-world photographic references
+/**
+ * AI Image & Visual Generation helper functions using Pollinations.ai.
+ * Uses intelligent keyword extraction and real-world photographic references.
+ */
 
-// Helper function to extract and enhance keywords from dream description
+/**
+ * Helper function to extract and enhance keywords from dream description.
+ */
 const extractKeyElements = (description) => {
     const lowerDesc = description.toLowerCase();
 
