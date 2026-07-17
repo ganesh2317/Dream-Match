@@ -56,3 +56,13 @@ To scan and lint the frontend React components, run the following inside the `cl
 ```bash
 npm run lint
 ```
+
+### Promoting a User to Administrator Role
+To promote any existing user in the database to the `'ADMIN'` role, run the helper script inside the `server/` directory:
+```bash
+node promote_admin.js <username>
+```
+For example, to promote the user `demo`:
+```bash
+node promote_admin.js demo
+```
