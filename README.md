@@ -32,7 +32,7 @@ FROM_EMAIL="onboarding@resend.dev"
 ```bash
 cd server
 npm install
-node index.js
+npm run dev
 ```
 
 ### Start the Frontend Client
