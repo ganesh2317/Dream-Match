@@ -4,6 +4,11 @@ const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
+/**
+ * Database seeding script.
+ * Upserts a default 'demo' user into the database with a pre-hashed password
+ * to facilitate local testing and environment initialization.
+ */
 async function main() {
     console.log('Seeding database...');
 
@@ -11,6 +16,7 @@ async function main() {
     const password = 'password123';
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Upsert demo user: create if not exists, otherwise skip modification
     const user = await prisma.user.upsert({
         where: { username },
         update: {},
