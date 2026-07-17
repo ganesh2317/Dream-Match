@@ -41,6 +41,12 @@ const TABS = [
     { id: 'settings', label: 'System Settings', icon: Settings }
 ];
 
+/**
+ * Admin Panel Dashboard component.
+ * Exposes system telemetry, user/content moderation controls,
+ * analytics tables, system settings, and centralized error logs
+ * restricted to authorized administrators.
+ */
 const Admin = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('dashboard');
