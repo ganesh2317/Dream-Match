@@ -5,6 +5,10 @@ const prisma = require('../utils/prisma');
  * Middleware to enforce admin-only access routes.
  * Decodes the JWT authorization header, verifies user existence,
  * checks that the account is active, and verifies the user has the 'ADMIN' role.
+ * 
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
  */
 const protectAdmin = async (req, res, next) => {
     let token;
