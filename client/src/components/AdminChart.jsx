@@ -3,6 +3,12 @@ import React, { useState } from 'react';
 /**
  * Animated neon line chart using raw SVG paths and gradient fills.
  * Zero-dependency, fully responsive, and compliant with React 19.
+ * 
+ * @param {Object} props - Component properties
+ * @param {Array<Object>} props.data - The data array of chart data values to plot
+ * @param {Array<string>} props.dataKeys - Key names in the data objects to trace
+ * @param {Array<string>} props.colors - Stroke and fill neon accent colors for each line
+ * @param {Array<string>} props.labels - Display labels mapping to each key for tooltips
  */
 export const AdminLineChart = ({ data = [], dataKeys = ['value'], colors = ['#6366f1'], labels = ['Users'] }) => {
     const [hoveredPoint, setHoveredPoint] = useState(null);
