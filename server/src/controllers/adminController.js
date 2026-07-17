@@ -1,7 +1,14 @@
 const prisma = require('../utils/prisma');
 const { videoQueue } = require('../services/videoService');
 
-// Helper to generate consistent distribution based on string input (stable mock fallback)
+/**
+ * Helper to generate consistent distribution based on string input (stable mock fallback).
+ * Used to mock geographic or device demographics deterministically.
+ * 
+ * @param {string} str - Input key (e.g. user ID) to derive the hash from
+ * @param {Array<string>} choices - Array of distribution string options to select from
+ * @returns {string} One of the choice strings in the array
+ */
 const getStableDistribution = (str, choices) => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
