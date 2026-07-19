@@ -1,8 +1,21 @@
+/**
+ * @file promote_admin.js
+ * Command-line utility script to promote an existing user to the ADMIN role.
+ * Usage: node promote_admin.js <username>
+ * If username is not provided, defaults to 'demo'.
+ */
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const username = process.argv[2] || 'demo';
 
+/**
+ * Main execution function that connects to the database, queries the user by username,
+ * updates their role to 'ADMIN', and logs the updated user record.
+ * 
+ * @returns {Promise<void>}
+ */
 async function main() {
     console.log(`Promoting user "${username}" to ADMIN role...`);
     const user = await prisma.user.findUnique({

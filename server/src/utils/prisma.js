@@ -1,3 +1,11 @@
+/**
+ * @file Database utility file initializing the Prisma client instance.
+ * It dynamically configures the database connection URL based on the environment variables.
+ * Under Vercel environment, it automatically configures a local SQLite fallback database.
+ * 
+ * @module prisma
+ */
+
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
@@ -31,6 +39,12 @@ if (process.env.NODE_ENV === 'production' && !dbUrl.startsWith('postgresql://') 
     console.error('❌ CRITICAL CONFIG ERROR: DATABASE_URL does not start with postgresql:// or postgres:// in production!');
 }
 
+/**
+ * Global PrismaClient instance used to communicate with the database.
+ * Configured with dynamic datasource URL mapping for PostgreSQL or SQLite fallbacks.
+ * 
+ * @type {PrismaClient}
+ */
 const prisma = new PrismaClient({
     datasources: {
         db: {

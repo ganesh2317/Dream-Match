@@ -1,5 +1,17 @@
+/**
+ * @file notificationController.js
+ * Controller handling user notification retrieval and status updates.
+ */
+
 const prisma = require('../utils/prisma');
 
+/**
+ * Retrieves the up to 50 most recent notifications for the authenticated user.
+ * 
+ * @param {import('express').Request} req - Express request object containing authenticated user info
+ * @param {import('express').Response} res - Express response object returning list of notifications
+ * @returns {Promise<void>}
+ */
 const getNotifications = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -27,6 +39,13 @@ const getNotifications = async (req, res) => {
     }
 };
 
+/**
+ * Marks a specific notification as read after validating ownership.
+ * 
+ * @param {import('express').Request} req - Express request object containing params.id and authenticated user info
+ * @param {import('express').Response} res - Express response object returning success status
+ * @returns {Promise<void>}
+ */
 const markAsRead = async (req, res) => {
     try {
         const { id } = req.params;
@@ -52,6 +71,13 @@ const markAsRead = async (req, res) => {
     }
 };
 
+/**
+ * Marks all unread notifications for the authenticated user as read.
+ * 
+ * @param {import('express').Request} req - Express request object containing authenticated user info
+ * @param {import('express').Response} res - Express response object returning success status
+ * @returns {Promise<void>}
+ */
 const markAllAsRead = async (req, res) => {
     try {
         const userId = req.user.id;
