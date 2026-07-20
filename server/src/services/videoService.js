@@ -5,6 +5,11 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
+const isProduction = process.env.NODE_ENV === 'production';
+const videoStorageDir = isProduction
+    ? path.join(os.tmpdir(), 'dreammatch-videos')
+    : path.resolve(__dirname, '..', '..', '..', 'videos');
+
 // Base class for AI Video Providers
 class VideoProvider {
     constructor(name) {
@@ -48,29 +53,11 @@ class SimulatedProvider extends VideoProvider {
                 return null;
             }
 
-            // If it's not localhost or ffmpeg is not available, serve CDN streaming placeholder:
-            const isProduction = process.env.NODE_ENV === 'production' || !ffmpegStatic;
-            if (isProduction) {
-                console.log(`[VideoProvider: ${this.name}] Serving secure public CORS-compliant streaming MP4.`);
-                const videoOptions = [
-                    'https://lorem.video/720p_h264_10s.mp4',
-                    'https://lorem.video/1080p_h264_10s.mp4',
-                    'https://lorem.video/480p_h264_10s.mp4'
-                ];
-                let hash = 0;
-                for (let i = 0; i < dreamId.length; i++) {
-                    hash = dreamId.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const selectedVideo = videoOptions[Math.abs(hash) % videoOptions.length];
-                return selectedVideo;
-            }
-
-            const tempDir = os.tmpdir();
-            const videoStorageDir = path.join(tempDir, 'dreammatch-videos');
             if (!fs.existsSync(videoStorageDir)) {
                 fs.mkdirSync(videoStorageDir, { recursive: true });
             }
 
+            const tempDir = os.tmpdir();
             const inputImagePath = path.join(tempDir, `input_${dreamId}.jpg`);
             const outputVideoPath = path.join(videoStorageDir, `${dreamId}.mp4`);
 
@@ -93,8 +80,8 @@ class SimulatedProvider extends VideoProvider {
             // Run ffmpeg
             await new Promise((resolve, reject) => {
                 const filterComplex = `[0:v]scale=512:896,zoompan=z='min(zoom+0.0015,1.5)':x='iw/2-(iw/zoom)/2':y='ih/2-(ih/zoom)/2':d=125:s=512x896[vid]; ` +
-                                      `color=color=0x7c3aed@0.12:size=512x896:duration=5[col]; ` +
-                                      `[vid][col]overlay=shortest=1,vignette=angle=0.5,eq=brightness=0.03:contrast=1.1:saturation=1.2,noise=alls=12:allf=t`;
+                                       `color=color=0x7c3aed@0.12:size=512x896:duration=5[col]; ` +
+                                       `[vid][col]overlay=shortest=1,vignette=angle=0.5,eq=brightness=0.03:contrast=1.1:saturation=1.2,noise=alls=12:allf=t`;
 
                 const ffmpegCmd = `"${ffmpegStatic}" -y -loop 1 -t 5 -i "${inputImagePath}" -filter_complex "${filterComplex}" -c:v libx264 -pix_fmt yuv420p "${outputVideoPath}"`;
 
@@ -171,42 +158,72 @@ class VideoQueue {
         // Start background worker loop
         setInterval(() => this.processQueue(), 2000);
 
+        // Run initialization asynchronously and sequentially
+        this.init();
+    }
+
+    async init() {
         // Clean up legacy hotlinked video URLs on startup
-        this.migrateLegacyUrls();
+        await this.migrateLegacyUrls();
 
         // Recover any pending/processing jobs from the database on startup
-        this.recoverPendingJobs();
+        await this.recoverPendingJobs();
+
+        // Rebuild completed videos that are missing from disk
+        await this.rebuildMissingVideos();
     }
 
     async migrateLegacyUrls() {
         try {
             const legacyDreams = await prisma.dream.findMany({
                 where: {
-                    videoUrl: { contains: 'mixkit.co' }
+                    OR: [
+                        { videoUrl: { contains: 'mixkit.co' } },
+                        { videoUrl: { contains: 'lorem.video' } }
+                    ]
                 }
             });
             for (const dream of legacyDreams) {
-                const videoOptions = [
-                    'https://lorem.video/720p_h264_10s.mp4',
-                    'https://lorem.video/1080p_h264_10s.mp4',
-                    'https://lorem.video/480p_h264_10s.mp4'
-                ];
-                let hash = 0;
-                for (let i = 0; i < dream.id.length; i++) {
-                    hash = dream.id.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const selectedVideo = videoOptions[Math.abs(hash) % videoOptions.length];
-
                 await prisma.dream.update({
                     where: { id: dream.id },
-                    data: { videoUrl: selectedVideo }
+                    data: {
+                        videoUrl: `/api/videos/${dream.id}.mp4`,
+                        videoStatus: 'COMPLETED',
+                        videoProvider: 'Luma Dream Machine'
+                    }
                 });
             }
             if (legacyDreams.length > 0) {
-                console.log(`[VideoQueue] Migrated ${legacyDreams.length} legacy mixkit video URLs to secure lorem.video placeholders.`);
+                console.log(`[VideoQueue] Migrated ${legacyDreams.length} legacy/placeholder video URLs to local persistent endpoint.`);
             }
         } catch (e) {
             console.error('[VideoQueue] Failed to migrate legacy URLs:', e);
+        }
+    }
+
+    async rebuildMissingVideos() {
+        try {
+            const completedDreams = await prisma.dream.findMany({
+                where: {
+                    videoStatus: 'COMPLETED',
+                    videoUrl: { startsWith: '/api/videos/' }
+                }
+            });
+            let rebuildCount = 0;
+            for (const dream of completedDreams) {
+                const filename = dream.videoUrl.replace('/api/videos/', '');
+                const filePath = path.join(videoStorageDir, filename);
+                if (!fs.existsSync(filePath)) {
+                    console.log(`[VideoQueue] Missing video file for dream ${dream.id}. Re-enqueuing for compilation...`);
+                    await this.enqueue(dream.id, dream.description, 'luma');
+                    rebuildCount++;
+                }
+            }
+            if (rebuildCount > 0) {
+                console.log(`[VideoQueue] Re-enqueued ${rebuildCount} missing videos for compilation.`);
+            }
+        } catch (e) {
+            console.error('[VideoQueue] Failed to rebuild missing videos:', e);
         }
     }
 

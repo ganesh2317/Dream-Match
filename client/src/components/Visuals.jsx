@@ -134,16 +134,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
     const [isError, setIsError] = useState(false);
     const [showHeartOverlay, setShowHeartOverlay] = useState(false);
 
-    useEffect(() => {
-        if (shouldLoad) {
-            console.log(`[Visuals] Video player diagnostic:`, {
-                videoUrl: dream.videoUrl,
-                videoStatus: dream.videoStatus,
-                provider: dream.videoProvider,
-                dreamId: dream.id
-            });
-        }
-    }, [shouldLoad, dream]);
+
 
     // Prevent duplicate view triggers on rapid toggles
     const viewTriggered = useRef(false);

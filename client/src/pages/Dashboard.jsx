@@ -335,16 +335,12 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
     const [mood, setMood] = useState('peaceful');
     const [visibility, setVisibility] = useState('Everyone');
     const [images, setImages] = useState([]);
-    const [videoUrl, setVideoUrl] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
     const [generating, setGenerating] = useState(false);
 
     const [loadingStates, setLoadingStates] = useState([false, false, false, false]);
-    const [videoLoading, setVideoLoading] = useState(false);
     const [failedStates, setFailedStates] = useState([false, false, false, false]);
-    const [videoFailed, setVideoFailed] = useState(false);
     const [variationsMeta, setVariationsMeta] = useState([]);
-    const [videoMeta, setVideoMeta] = useState(null);
 
     const MOODS = [
         { id: 'happy', label: 'Happy', emoji: '😃' },
@@ -410,38 +406,6 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
         }
     };
 
-    const fetchVideo = async (meta, token) => {
-        setVideoLoading(true);
-        setVideoFailed(false);
-        try {
-            const res = await fetch('/api/dreams/generate-single', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    prompt: meta.prompt,
-                    seed: meta.seed,
-                    width: 512,
-                    height: 896
-                })
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                setVideoUrl(data.image);
-            } else {
-                setVideoFailed(true);
-            }
-        } catch (error) {
-            console.error('Error loading video:', error);
-            setVideoFailed(true);
-        } finally {
-            setVideoLoading(false);
-        }
-    };
-
     const handleGenerate = async () => {
         if (!description) return;
         setGenerating(true);
@@ -462,22 +426,17 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                 const data = await res.json();
                 if (data.pending) {
                     setVariationsMeta(data.variations);
-                    setVideoMeta(data.video);
                     setImages([null, null, null, null]);
                     setSelectedImage(null);
                     setLoadingStates([true, true, true, true]);
                     setFailedStates([false, false, false, false]);
 
-                    // Parallel fetch all 4 variations and video concurrently
-                    const varPromises = data.variations.map((variation, i) => fetchVariation(i, variation, token));
-                    const vidPromise = fetchVideo(data.video, token);
-                    Promise.all([...varPromises, vidPromise]);
+                    // Parallel fetch all 4 variations concurrently
+                    data.variations.forEach((variation, i) => fetchVariation(i, variation, token));
                 } else {
                     setImages(data.images);
                     setSelectedImage(data.images[0]);
-                    setVideoUrl(data.videoUrl);
                     setLoadingStates([false, false, false, false]);
-                    setVideoLoading(false);
                 }
             } else {
                 alert('Failed to initialize image generation');
@@ -497,13 +456,6 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
         const meta = variationsMeta[index];
         if (meta && token) {
             await fetchVariation(index, meta, token);
-        }
-    };
-
-    const handleRetryVideo = async () => {
-        const token = localStorage.getItem('token');
-        if (videoMeta && token) {
-            await fetchVideo(videoMeta, token);
         }
     };
 
@@ -544,7 +496,7 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
                 body: JSON.stringify({
                     description,
                     imageUrl: selectedImage,
-                    videoUrl: videoUrl,
+                    videoUrl: "",
                     theme: mood
                 })
             });
@@ -851,29 +803,15 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
 
                             {/* Actions and Regenerate buttons */}
                             <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-                                {videoFailed && (
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '10px', fontSize: '12px', color: '#ff7675' }}>
-                                        <span>Video generation timed out.</span>
-                                        <button onClick={handleRetryVideo} style={{ padding: '6px 12px', fontSize: '11px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>Retry Video</button>
-                                    </div>
-                                )}
-                                
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
                                     <motion.button
                                         whileHover={{ scale: 1.01 }}
                                         whileTap={{ scale: 0.99 }}
                                         onClick={handlePost}
-                                        disabled={!selectedImage || videoLoading}
+                                        disabled={!selectedImage}
                                         style={{ width: '100%', padding: '16px', fontSize: '15px', borderRadius: 'var(--radius-md)', background: 'var(--primary-gradient)', boxShadow: '0 8px 20px var(--primary-glow)' }}
                                     >
-                                        {videoLoading ? (
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                                <div className="loading-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', borderTopColor: 'white' }} />
-                                                <span>Synthesizing Reel...</span>
-                                            </div>
-                                        ) : (
-                                            <span>Post Dream</span>
-                                        )}
+                                        <span>Post Dream</span>
                                     </motion.button>
                                     
                                     <button 

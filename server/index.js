@@ -83,18 +83,19 @@ app.use('/api/admin', adminRoutes);
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const videoStorageDir = path.join(os.tmpdir(), 'dreammatch-videos');
+const isProduction = process.env.NODE_ENV === 'production';
+const videoStorageDir = isProduction
+    ? path.join(os.tmpdir(), 'dreammatch-videos')
+    : path.resolve(__dirname, '..', 'videos');
+
 if (!fs.existsSync(videoStorageDir)) {
     fs.mkdirSync(videoStorageDir, { recursive: true });
 }
+
 app.get('/api/videos/:filename', (req, res) => {
     const filePath = path.join(videoStorageDir, req.params.filename);
     if (fs.existsSync(filePath)) {
         return res.sendFile(filePath);
-    }
-    const fallbackPath = path.join(__dirname, 'fallback.mp4');
-    if (fs.existsSync(fallbackPath)) {
-        return res.sendFile(fallbackPath);
     }
     res.status(404).send('Video not found');
 });
@@ -195,16 +196,15 @@ app.get("/health", (req, res) => {
 
 
 
-/**
- * Start Server
- */
-server.listen(PORT, "0.0.0.0", () => {
-    console.log("======================================");
-    console.log("🚀 Dream Match Backend Started");
-    console.log(`🌍 Environment : ${process.env.NODE_ENV}`);
-    console.log(`📡 Port        : ${PORT}`);
-    console.log("======================================");
-});
+if (process.env.NODE_ENV !== 'test') {
+    server.listen(PORT, "0.0.0.0", () => {
+        console.log("======================================");
+        console.log("🚀 Dream Match Backend Started");
+        console.log(`🌍 Environment : ${process.env.NODE_ENV}`);
+        console.log(`📡 Port        : ${PORT}`);
+        console.log("======================================");
+    });
+}
 
 /**
  * Handle Unexpected Errors
