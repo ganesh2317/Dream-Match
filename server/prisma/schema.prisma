@@ -76,7 +76,17 @@ model Dream {
   likes       Like[]
   comments    Comment[]
 
+  videoBlob     VideoBlob?
+
   createdAt   DateTime @default(now())
+}
+
+model VideoBlob {
+  id        String   @id @default(uuid())
+  dreamId   String   @unique
+  dream     Dream    @relation(fields: [dreamId], references: [id], onDelete: Cascade)
+  data      String
+  createdAt DateTime @default(now())
 }
 
 model Like {

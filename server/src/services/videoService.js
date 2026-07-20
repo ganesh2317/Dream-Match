@@ -104,6 +104,23 @@ class SimulatedProvider extends VideoProvider {
                 });
             });
 
+            // Read compiled video from disk, convert to Base64, and save to VideoBlob
+            if (fs.existsSync(outputVideoPath)) {
+                const buffer = fs.readFileSync(outputVideoPath);
+                const base64Data = buffer.toString('base64');
+                await prisma.videoBlob.upsert({
+                    where: { dreamId },
+                    update: { data: base64Data },
+                    create: { dreamId, data: base64Data }
+                });
+                console.log(`[VideoProvider: ${this.name}] Successfully saved compiled video to VideoBlob table for dream: ${dreamId}`);
+                
+                // Clean up local video file
+                try {
+                    fs.unlinkSync(outputVideoPath);
+                } catch (e) {}
+            }
+
             console.log(`[VideoProvider: ${this.name}] Completed video generation: /api/videos/${dreamId}.mp4`);
             return `/api/videos/${dreamId}.mp4`;
         } catch (e) {
@@ -207,14 +224,13 @@ class VideoQueue {
                 where: {
                     videoStatus: 'COMPLETED',
                     videoUrl: { startsWith: '/api/videos/' }
-                }
+                },
+                include: { videoBlob: true }
             });
             let rebuildCount = 0;
             for (const dream of completedDreams) {
-                const filename = dream.videoUrl.replace('/api/videos/', '');
-                const filePath = path.join(videoStorageDir, filename);
-                if (!fs.existsSync(filePath)) {
-                    console.log(`[VideoQueue] Missing video file for dream ${dream.id}. Re-enqueuing for compilation...`);
+                if (!dream.videoBlob) {
+                    console.log(`[VideoQueue] Missing persistent database video record for dream ${dream.id}. Re-enqueuing for compilation...`);
                     await this.enqueue(dream.id, dream.description, 'luma');
                     rebuildCount++;
                 }
