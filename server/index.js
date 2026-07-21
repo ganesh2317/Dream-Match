@@ -105,7 +105,8 @@ app.get('/api/videos/:filename', async (req, res, next) => {
         const dreamId = req.params.filename.replace('.mp4', '');
         const prisma = require('./src/utils/prisma');
         const videoRecord = await prisma.videoBlob.findUnique({
-            where: { dreamId }
+            where: { dreamId },
+            select: { data: true }
         });
 
         if (videoRecord && videoRecord.data) {

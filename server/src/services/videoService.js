@@ -83,7 +83,7 @@ class SimulatedProvider extends VideoProvider {
                                        `color=color=0x7c3aed@0.12:size=512x896:duration=5[col]; ` +
                                        `[vid][col]overlay=shortest=1,vignette=angle=0.5,eq=brightness=0.03:contrast=1.1:saturation=1.2,noise=alls=12:allf=t`;
 
-                const ffmpegCmd = `"${ffmpegStatic}" -y -loop 1 -t 5 -i "${inputImagePath}" -filter_complex "${filterComplex}" -c:v libx264 -pix_fmt yuv420p "${outputVideoPath}"`;
+                const ffmpegCmd = `"${ffmpegStatic}" -y -loop 1 -t 5 -i "${inputImagePath}" -filter_complex "${filterComplex}" -c:v libx264 -b:v 1500k -crf 28 -preset ultrafast -pix_fmt yuv420p "${outputVideoPath}"`;
 
                 console.log(`[VideoProvider: ${this.name}] Compiling video: ${ffmpegCmd}`);
 
