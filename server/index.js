@@ -94,6 +94,14 @@ if (!fs.existsSync(videoStorageDir)) {
 
 app.get('/api/videos/:filename', async (req, res, next) => {
     try {
+        const filePath = path.join(videoStorageDir, req.params.filename);
+
+        // 1. If video is already cached on disk, serve with high-performance native streaming
+        if (fs.existsSync(filePath)) {
+            return res.sendFile(filePath);
+        }
+
+        // 2. Fetch from VideoBlob database table, populate disk cache, and stream
         const dreamId = req.params.filename.replace('.mp4', '');
         const prisma = require('./src/utils/prisma');
         const videoRecord = await prisma.videoBlob.findUnique({
@@ -102,42 +110,7 @@ app.get('/api/videos/:filename', async (req, res, next) => {
 
         if (videoRecord && videoRecord.data) {
             const buffer = Buffer.from(videoRecord.data, 'base64');
-            const range = req.headers.range;
-
-            if (range) {
-                const parts = range.replace(/bytes=/, "").split("-");
-                const start = parseInt(parts[0], 10);
-                const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
-
-                if (start >= buffer.length || end >= buffer.length || start < 0 || end < start) {
-                    res.writeHead(416, {
-                        'Content-Range': `bytes */${buffer.length}`,
-                        'Content-Type': 'video/mp4'
-                    });
-                    return res.end();
-                }
-
-                const chunksize = (end - start) + 1;
-                res.writeHead(206, {
-                    'Content-Range': `bytes ${start}-${end}/${buffer.length}`,
-                    'Accept-Ranges': 'bytes',
-                    'Content-Length': chunksize,
-                    'Content-Type': 'video/mp4'
-                });
-                return res.end(buffer.slice(start, end + 1));
-            } else {
-                res.writeHead(200, {
-                    'Content-Length': buffer.length,
-                    'Content-Type': 'video/mp4',
-                    'Accept-Ranges': 'bytes'
-                });
-                return res.end(buffer);
-            }
-        }
-
-        // Fallback to local disk (primarily for local development)
-        const filePath = path.join(videoStorageDir, req.params.filename);
-        if (fs.existsSync(filePath)) {
+            fs.writeFileSync(filePath, buffer);
             return res.sendFile(filePath);
         }
 

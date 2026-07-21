@@ -115,10 +115,7 @@ class SimulatedProvider extends VideoProvider {
                 });
                 console.log(`[VideoProvider: ${this.name}] Successfully saved compiled video to VideoBlob table for dream: ${dreamId}`);
                 
-                // Clean up local video file
-                try {
-                    fs.unlinkSync(outputVideoPath);
-                } catch (e) {}
+                // Keep compiled video file on disk for instant streaming serving
             }
 
             console.log(`[VideoProvider: ${this.name}] Completed video generation: /api/videos/${dreamId}.mp4`);
