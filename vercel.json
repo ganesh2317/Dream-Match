@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://dream-match.onrender.com/api/:path*"
+    }
+  ]
+}

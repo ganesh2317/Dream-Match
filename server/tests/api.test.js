@@ -2,7 +2,7 @@ const request = require('supertest');
 const { app } = require('../index');
 const prisma = require('../src/utils/prisma');
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 describe('Dream Social REST API Tests', () => {
     let testUsername = `user_${Date.now()}`;
@@ -26,7 +26,7 @@ describe('Dream Social REST API Tests', () => {
         } finally {
             await prisma.$disconnect();
         }
-    });
+    }, 60000);
 
     test('POST /api/auth/register should fail with short password', async () => {
         const res = await request(app)

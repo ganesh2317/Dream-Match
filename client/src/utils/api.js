@@ -2,10 +2,21 @@ const API_URL = import.meta.env.PROD
     ? 'https://dream-match.onrender.com/api'
     : '/api';
 
+export const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+    }
+    const host = import.meta.env.PROD
+        ? 'https://dream-match.onrender.com'
+        : '';
+    return `${host}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 export const api = {
     async get(endpoint) {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}${endpoint}`, {
+        const res = await fetch(`${API_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`, {
             headers: {
                 'Authorization': token ? `Bearer ${token}` : '',
                 'Content-Type': 'application/json',
@@ -16,7 +27,7 @@ export const api = {
 
     async post(endpoint, body) {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}${endpoint}`, {
+        const res = await fetch(`${API_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`, {
             method: 'POST',
             headers: {
                 'Authorization': token ? `Bearer ${token}` : '',

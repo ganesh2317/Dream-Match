@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
+import { getMediaUrl } from '../utils/api';
 import { 
     Heart, 
     MessageCircle, 
@@ -24,7 +25,7 @@ const Visuals = ({ initialDreamId, onViewProfile }) => {
     const fetchVisuals = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('/api/dreams/visuals', {
+            const res = await fetch(getMediaUrl('/api/dreams/visuals'), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -143,7 +144,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
     async function incrementView() {
         try {
             const token = localStorage.getItem('token');
-            await fetch(`/api/dreams/${dream.id}/view`, {
+            await fetch(getMediaUrl(`/api/dreams/${dream.id}/view`), {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -190,7 +191,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
             setLiked(nextLiked);
             setLikeCount(prev => nextLiked ? prev + 1 : Math.max(0, prev - 1));
 
-            const res = await fetch(`/api/dreams/${dream.id}/like`, {
+            const res = await fetch(getMediaUrl(`/api/dreams/${dream.id}/like`), {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -261,13 +262,14 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
                 >
                     <video
                         ref={videoRef}
-                        src={dream.videoUrl}
+                        src={getMediaUrl(dream.videoUrl)}
                         loop
                         muted={isMuted}
                         playsInline
                         onLoadStart={() => setIsLoading(true)}
                         onCanPlay={() => setIsLoading(false)}
-                        onError={() => {
+                        onError={(e) => {
+                            console.error('Video error event for dream:', dream.id, 'src:', getMediaUrl(dream.videoUrl));
                             setIsError(true);
                             setIsLoading(false);
                         }}
