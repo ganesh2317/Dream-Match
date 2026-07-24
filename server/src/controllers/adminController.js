@@ -1,5 +1,4 @@
 const prisma = require('../utils/prisma');
-const { videoQueue } = require('../services/videoService');
 
 /**
  * Helper to generate consistent distribution based on string input (stable mock fallback).

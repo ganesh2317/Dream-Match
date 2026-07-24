@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, MessageCircle, PlusSquare, Bell, User as UserIcon, LogOut, Search, Video, Users } from 'lucide-react';
+import { Home, MessageCircle, PlusSquare, Bell, LogOut, Search, Video, Users } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { motion } from 'framer-motion';
 

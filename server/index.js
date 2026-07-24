@@ -3,7 +3,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { PrismaClient } = require('@prisma/client');
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 dotenv.config();
 
@@ -80,9 +82,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
 const isProduction = process.env.NODE_ENV === 'production';
 const videoStorageDir = isProduction
     ? path.join(os.tmpdir(), 'dreammatch-videos')
