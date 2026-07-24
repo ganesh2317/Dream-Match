@@ -1,4 +1,10 @@
 
+/**
+ * Calculates calendar day difference between two dates ignoring time components.
+ * @param {Date|string} date1 - Starting date
+ * @param {Date|string} date2 - Ending date
+ * @returns {number} Difference in calendar days
+ */
 const differenceInCalendarDays = (date1, date2) => {
     const d1 = new Date(date1);
     const d2 = new Date(date2);
