@@ -1,5 +1,16 @@
+/**
+ * @file Controller handling user profile search, follow, and unfollow operations.
+ * @module userController
+ */
+
 const prisma = require('../utils/prisma');
 
+/**
+ * Searches users by username or full name and includes follow status for the requester.
+ * 
+ * @param {import('express').Request} req - Express request object containing query param
+ * @param {import('express').Response} res - Express response object
+ */
 const searchUsers = async (req, res) => {
     try {
         const { query } = req.query;
@@ -48,6 +59,12 @@ const searchUsers = async (req, res) => {
     }
 };
 
+/**
+ * Follows a user and creates a real-time notification.
+ * 
+ * @param {import('express').Request} req - Express request object containing user ID in params
+ * @param {import('express').Response} res - Express response object
+ */
 const followUser = async (req, res) => {
     try {
         const { id: followingId } = req.params;
@@ -82,6 +99,12 @@ const followUser = async (req, res) => {
     }
 };
 
+/**
+ * Unfollows a user.
+ * 
+ * @param {import('express').Request} req - Express request object containing target user ID in params
+ * @param {import('express').Response} res - Express response object
+ */
 const unfollowUser = async (req, res) => {
     try {
         const { id: followingId } = req.params;
