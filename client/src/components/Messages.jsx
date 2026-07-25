@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Messages = ({ currentUser, initialUser, onClearInitial, onViewProfile }) => {
+const Messages = ({ initialUser, onClearInitial, onViewProfile }) => {
     const { user } = useAuth();
     const [conversations, setConversations] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -27,7 +27,7 @@ const Messages = ({ currentUser, initialUser, onClearInitial, onViewProfile }) =
         try {
             const saved = localStorage.getItem(`pinned_conversations_${user?.id}`);
             return saved ? JSON.parse(saved) : [];
-        } catch (e) {
+        } catch {
             return [];
         }
     });
@@ -531,7 +531,7 @@ const Messages = ({ currentUser, initialUser, onClearInitial, onViewProfile }) =
     );
 };
 
-const NewConversationModal = ({ onClose, onSelect, onViewProfile }) => {
+const NewConversationModal = ({ onClose, onSelect }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);

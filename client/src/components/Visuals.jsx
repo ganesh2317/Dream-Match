@@ -268,7 +268,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
                         playsInline
                         onLoadStart={() => setIsLoading(true)}
                         onCanPlay={() => setIsLoading(false)}
-                        onError={(e) => {
+                        onError={() => {
                             console.error('Video error event for dream:', dream.id, 'src:', getMediaUrl(dream.videoUrl));
                             setIsError(true);
                             setIsLoading(false);

@@ -40,30 +40,7 @@ const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
             }
         };
         fetchUsers();
-    }, [endpoint]);
-
-    const handleFollowToggle = async (e, user, index) => {
-        e.stopPropagation();
-        try {
-            const token = localStorage.getItem('token');
-            const url = user.isFollowing ? `/api/users/unfollow/${user.id}` : `/api/users/follow/${user.id}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) {
-                setUsers(prev => {
-                    const next = [...prev];
-                    next[index] = { ...user, isFollowing: !user.isFollowing };
-                    return next;
-                });
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    return (
+    }, [endpoint]);    return (
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(16px)',
@@ -85,7 +62,7 @@ const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
                     <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>No users found</div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '300px', overflowY: 'auto' }} className="hide-scrollbar">
-                        {users.map((u, i) => (
+                        {users.map((u) => (
                             <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => { onViewProfile(u); onClose(); }}>
                                 <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${u.username}`} style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }} />
                                 <div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { Search as SearchIcon, UserPlus, UserMinus, User, Zap } from 'lucide-react';
+import { Search as SearchIcon, User, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Search = ({ onViewProfile }) => {

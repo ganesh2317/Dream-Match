@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
 import { Heart, UserPlus, Sparkles, Check, Inbox } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Notifications = ({ onViewProfile }) => {
-    const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
 

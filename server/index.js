@@ -6,6 +6,8 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const http = require('http');
+const { Server } = require('socket.io');
 
 dotenv.config();
 
@@ -147,11 +149,7 @@ app.use(async (err, req, res, next) => {
     res.status(statusCode).json({
         message: err.message || 'An unexpected error occurred',
         stack: process.env.NODE_ENV === 'production' ? null : err.stack
-    });
 });
-
-const http = require('http');
-const { Server } = require('socket.io');
 
 const server = http.createServer(app);
 
