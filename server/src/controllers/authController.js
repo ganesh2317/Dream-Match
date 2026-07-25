@@ -3,6 +3,13 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prisma');
 
 const { calculateStreak } = require('../utils/streak');
+
+/**
+ * Registers a new user with profile info and returns a signed JWT token.
+ * 
+ * @param {import('express').Request} req - Express request object containing registration payload
+ * @param {import('express').Response} res - Express response object
+ */
 const register = async (req, res) => {
     try {
         const { fullName, username, email, password, gender, age } = req.body;
@@ -106,6 +113,12 @@ const register = async (req, res) => {
     }
 };
 
+/**
+ * Authenticates user credentials and returns a signed JWT token.
+ * 
+ * @param {import('express').Request} req - Express request object containing username and password
+ * @param {import('express').Response} res - Express response object
+ */
 const login = async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -169,6 +182,12 @@ const login = async (req, res) => {
     }
 };
 
+/**
+ * Retrieves profile data and activity details for the currently authenticated user.
+ * 
+ * @param {import('express').Request} req - Express request object with user context
+ * @param {import('express').Response} res - Express response object
+ */
 const getMe = async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
@@ -204,6 +223,12 @@ const getMe = async (req, res) => {
     }
 };
 
+/**
+ * Updates profile bio and avatar URL for the authenticated user.
+ * 
+ * @param {import('express').Request} req - Express request object containing updated bio/avatarUrl
+ * @param {import('express').Response} res - Express response object
+ */
 const updateProfile = async (req, res) => {
     try {
         const { bio, avatarUrl } = req.body;
