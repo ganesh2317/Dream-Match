@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import GlassCard from '../components/GlassCard';
 import Input from '../components/Input';
-import { User, Lock, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { User, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
