@@ -1,3 +1,7 @@
+/**
+ * @file Streak calculation utility functions.
+ * Handles streak tracking and calendar day difference calculations.
+ */
 
 /**
  * Calculates calendar day difference between two dates ignoring time components.
