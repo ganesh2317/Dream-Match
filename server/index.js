@@ -149,6 +149,7 @@ app.use(async (err, req, res, next) => {
     res.status(statusCode).json({
         message: err.message || 'An unexpected error occurred',
         stack: process.env.NODE_ENV === 'production' ? null : err.stack
+    });
 });
 
 const server = http.createServer(app);
