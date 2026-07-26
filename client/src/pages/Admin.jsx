@@ -189,10 +189,11 @@ const Admin = () => {
         setLoading(false);
     };
 
-    useEffect(() => {
+    const handleTabChange = (newTab) => {
         setPage(1);
         setSearchQuery('');
-    }, [activeTab]);
+        setActiveTab(newTab);
+    };
 
     useEffect(() => {
         refreshData();
@@ -376,7 +377,7 @@ const Admin = () => {
                         return (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => handleTabChange(tab.id)}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',

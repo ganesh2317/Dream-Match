@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import GlassCard from './GlassCard';
 import { Search as SearchIcon, User, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,7 +8,7 @@ const Search = ({ onViewProfile }) => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const handleSearch = async () => {
+    const handleSearch = useCallback(async () => {
         if (!query.trim()) return;
         setLoading(true);
         try {
@@ -25,7 +25,7 @@ const Search = ({ onViewProfile }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [query]);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -34,7 +34,7 @@ const Search = ({ onViewProfile }) => {
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [query]);
+    }, [query, handleSearch]);
 
     return (
         <div style={{ maxWidth: '640px', margin: '0 auto' }} className="fade-in">

@@ -96,7 +96,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
         if (user) {
             setIsFollowingState(user.isFollowing || false);
         }
-    }, [user?.isFollowing]);
+    }, [user, user?.isFollowing]);
 
     const handleFollowToggle = async () => {
         const endpoint = isFollowingState ? 'unfollow' : 'follow';
@@ -158,7 +158,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
         };
 
         fetchUserProfile();
-    }, [propUser?.id, contextUser?.username]);
+    }, [propUser, propUser?.id, propUser?.username, contextUser, contextUser?.username]);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];

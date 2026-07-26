@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import GlassCard from './GlassCard';
 import { getMediaUrl } from '../utils/api';
 import { 
@@ -141,7 +141,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
     const viewTriggered = useRef(false);
 
     // Hoisted helper method for logging views to avoid linter warnings
-    async function incrementView() {
+    const incrementView = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
             await fetch(getMediaUrl(`/api/dreams/${dream.id}/view`), {
@@ -152,12 +152,16 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
         } catch (e) {
             console.error('Error logging view:', e);
         }
-    }
+    }, [dream.id, onRefresh]);
 
     useEffect(() => {
-        setLiked(dream.isLiked || false);
-        setLikeCount(dream._count?.likes || 0);
-    }, [dream.isLiked, dream._count?.likes]);
+        if (liked !== (dream.isLiked || false)) {
+            setLiked(dream.isLiked || false);
+        }
+        if (likeCount !== (dream._count?.likes || 0)) {
+            setLikeCount(dream._count?.likes || 0);
+        }
+    }, [dream.isLiked, dream._count?.likes, liked, likeCount]);
 
     // Handle play / pause based on intersection state
     useEffect(() => {
@@ -179,7 +183,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
             videoRef.current.pause();
             setIsPlaying(false);
         }
-    }, [isActive, shouldLoad]);
+    }, [isActive, shouldLoad, incrementView]);
 
     const handleLike = async (e) => {
         if (e) e.stopPropagation();
