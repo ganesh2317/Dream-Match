@@ -1,3 +1,8 @@
+/**
+ * @file adminMiddleware.js
+ * Middleware enforcing administrator role requirements and active account checks.
+ */
+
 const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prisma');
 

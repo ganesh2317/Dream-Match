@@ -1,3 +1,8 @@
+/**
+ * @file authMiddleware.js
+ * Middleware for validating JWT authentication tokens on protected API routes.
+ */
+
 const jwt = require('jsonwebtoken');
 
 /**
