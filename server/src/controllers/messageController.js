@@ -1,5 +1,17 @@
+/**
+ * @file messageController.js
+ * Controller handling user messaging, conversation history, and unread statuses.
+ */
+
 const prisma = require('../utils/prisma');
 
+/**
+ * Fetches all active conversations for the authenticated user ordered by recent activity.
+ * 
+ * @param {import('express').Request} req - Express request object containing authenticated user payload
+ * @param {import('express').Response} res - Express response object returning conversation list
+ * @returns {Promise<void>}
+ */
 const getConversations = async (req, res) => {
     try {
         const userId = req.user.id;
