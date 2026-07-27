@@ -132,3 +132,9 @@ For example, to promote the user `demo`:
 node promote_admin.js demo
 ```
 
+---
+
+## License & Maintenance
+
+This repository is maintained under clean production guidelines. All maintenance updates enforce strict non-functional code quality, automated test coverage, and ESLint compliance.
+
