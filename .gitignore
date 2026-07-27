@@ -1,7 +1,16 @@
+# Dependencies
 node_modules
+
+# Production build artifacts
 dist
+
+# Environment configuration and secrets
 .env
+
+# Database files and system logs
 *.db
 *.log
+
+# Operating system metadata and video uploads
 .DS_Store
 videos/
