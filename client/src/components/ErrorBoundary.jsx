@@ -2,6 +2,10 @@ import React, { Component } from 'react';
 import GlassCard from './GlassCard';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
+/**
+ * @file ErrorBoundary.jsx
+ * React Error Boundary component catching uncaught UI errors and displaying a fallback card.
+ */
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
