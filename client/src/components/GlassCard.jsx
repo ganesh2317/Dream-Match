@@ -1,6 +1,7 @@
 import React from 'react';
 
 /**
+ * @file GlassCard.jsx
  * GlassCard component providing a consistent premium glassmorphic style.
  * 
  * @param {object} props - Component props
