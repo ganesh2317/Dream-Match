@@ -40,12 +40,8 @@ const Input = ({ label, type = 'text', placeholder, value, onChange, name, icon:
                     placeholder={placeholder}
                     value={value}
                     onChange={onChange}
-                    onFocus={() => {
-                        setFocused(true);
-                    }}
-                    onBlur={() => {
-                        setFocused(false);
-                    }}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
                     style={{
                         width: '100%',
                         padding: '14px 16px',
