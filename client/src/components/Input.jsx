@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
 
+/**
+ * Custom styled glassmorphic input component supporting leading icons and focus states.
+ * 
+ * @param {object} props - Component props
+ * @param {string} [props.label] - Optional field label text
+ * @param {string} [props.type='text'] - HTML input type string
+ * @param {string} [props.placeholder] - Placeholder text
+ * @param {string|number} [props.value] - Controlled input value
+ * @param {Function} [props.onChange] - Change event callback handler
+ * @param {string} [props.name] - Input field name
+ * @param {React.ElementType} [props.icon] - Lucide icon component reference
+ * @param {React.CSSProperties} [props.style] - Style overrides
+ */
 const Input = ({ label, type = 'text', placeholder, value, onChange, name, icon: Icon, style = {}, ...props }) => {
     const [focused, setFocused] = useState(false);
 
