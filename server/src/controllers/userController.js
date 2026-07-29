@@ -4,6 +4,7 @@
  */
 
 const prisma = require('../utils/prisma');
+const { calculateProfileCompletion, getProfileCompletionForUser } = require('../services/profileCompletionService');
 
 /**
  * Searches users by username or full name and includes follow status for the requester.
@@ -197,6 +198,8 @@ const getProfile = async (req, res) => {
         // Remove followers array and password
         const { followers, password, dreams, ...userData } = user;
 
+        const profileCompletion = calculateProfileCompletion(user);
+
         res.json({
             ...userData,
             dreams: formattedDreams,
@@ -205,7 +208,8 @@ const getProfile = async (req, res) => {
             mutualInterests: mutualInterests.slice(0, 5),
             recentActivity: formattedDreams.length > 0 
                 ? `Shared a dream on ${new Date(formattedDreams[0].createdAt).toLocaleDateString()}`
-                : 'Exploring the dreamscape'
+                : 'Exploring the dreamscape',
+            profileCompletion
         });
     } catch (error) {
         console.error(error);
@@ -330,4 +334,15 @@ const getDreamLikes = async (req, res) => {
     }
 };
 
-module.exports = { searchUsers, followUser, unfollowUser, getProfile, getFollowers, getFollowing, getDreamLikes };
+const getProfileCompletion = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const completion = await getProfileCompletionForUser(userId);
+        res.json(completion);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error calculating profile completion' });
+    }
+};
+
+module.exports = { searchUsers, followUser, unfollowUser, getProfile, getFollowers, getFollowing, getDreamLikes, getProfileCompletion };

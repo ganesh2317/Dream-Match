@@ -52,4 +52,13 @@ router.get('/:id/following', protect, userController.getFollowing);
  */
 router.get('/dreams/:id/likes', protect, userController.getDreamLikes);
 
+/**
+ * @route   GET /api/users/profile-completion
+ * @desc    Get profile completion status for authenticated user
+ * @access  Private
+ */
+router.get('/profile-completion', protect, userController.getProfileCompletion);
+
 module.exports = router;
+
+

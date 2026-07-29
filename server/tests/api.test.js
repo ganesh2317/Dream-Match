@@ -118,4 +118,40 @@ describe('Dream Social REST API Tests', () => {
         expect(res.body.image).toContain('data:image/');
         expect(res.body.image).toContain('base64,');
     }, 30000);
+
+    test('GET /api/users/profile-completion should return 0% completion for newly registered user', async () => {
+        const res = await request(app)
+            .get('/api/users/profile-completion')
+            .set('Authorization', `Bearer ${testUserToken}`);
+        expect(res.statusCode).toBe(200);
+        expect(res.body.percentage).toBe(0);
+        expect(res.body.completed).toEqual([]);
+        expect(res.body.remaining).toEqual(expect.arrayContaining([
+            "Profile Picture", "Bio", "Age", "Gender", "First Dream", "Follow Someone"
+        ]));
+    });
+
+    test('PUT /api/auth/profile should update bio, age, gender, avatar and increase completion score', async () => {
+        const res = await request(app)
+            .put('/api/auth/profile')
+            .set('Authorization', `Bearer ${testUserToken}`)
+            .send({
+                bio: 'Dream wanderer exploring the clouds',
+                avatarUrl: 'https://example.com/custom-avatar.png',
+                age: 25,
+                gender: 'male'
+            });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.bio).toBe('Dream wanderer exploring the clouds');
+        expect(res.body.avatarUrl).toBe('https://example.com/custom-avatar.png');
+        expect(res.body.age).toBe(25);
+        expect(res.body.gender).toBe('male');
+        expect(res.body.profileCompletion).toBeDefined();
+        // 20% avatar + 20% bio + 15% age + 15% gender = 70%
+        expect(res.body.profileCompletion.percentage).toBe(70);
+        expect(res.body.profileCompletion.completed).toEqual(expect.arrayContaining([
+            "Profile Picture", "Bio", "Age", "Gender"
+        ]));
+    });
 });
+

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
+import ProfileCompletionCard from './ProfileCompletionCard';
 import { 
     User as UserIcon, 
     Edit2, 
@@ -17,6 +18,41 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const calculateClientCompletion = (u, dreamsCount = 0) => {
+    if (!u) return { percentage: 0, completed: [], remaining: ["Profile Picture", "Bio", "Age", "Gender", "First Dream", "Follow Someone"] };
+    const hasAvatar = Boolean(u.avatarUrl && typeof u.avatarUrl === 'string' && u.avatarUrl.trim() !== '' && !u.avatarUrl.includes('ui-avatars.com'));
+    const hasBio = Boolean(u.bio && typeof u.bio === 'string' && u.bio.trim().length > 0);
+    const parsedAge = typeof u.age === 'string' ? parseInt(u.age) : u.age;
+    const hasAge = Boolean(parsedAge !== null && parsedAge !== undefined && !isNaN(parsedAge) && parsedAge > 0);
+    const hasGender = Boolean(u.gender && typeof u.gender === 'string' && u.gender.trim() !== '' && u.gender !== 'prefer-not-to-say');
+    const actualDreamsCount = u._count?.dreams ?? dreamsCount;
+    const hasDream = Boolean(actualDreamsCount > 0);
+    const hasFollow = Boolean((u._count?.following ?? 0) > 0);
+
+    const items = [
+        { name: "Profile Picture", weight: 20, done: hasAvatar },
+        { name: "Bio", weight: 20, done: hasBio },
+        { name: "Age", weight: 15, done: hasAge },
+        { name: "Gender", weight: 15, done: hasGender },
+        { name: "First Dream", weight: 15, done: hasDream },
+        { name: "Follow Someone", weight: 15, done: hasFollow }
+    ];
+
+    let percentage = 0;
+    const completed = [];
+    const remaining = [];
+    items.forEach(i => {
+        if (i.done) {
+            percentage += i.weight;
+            completed.push(i.name);
+        } else {
+            remaining.push(i.name);
+        }
+    });
+
+    return { percentage, completed, remaining };
+};
 
 const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
     const [users, setUsers] = useState([]);
@@ -87,8 +123,11 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
 
     const [isEditing, setIsEditing] = useState(false);
     const [bio, setBio] = useState('');
+    const [age, setAge] = useState('');
+    const [gender, setGender] = useState('prefer-not-to-say');
     const [preview, setPreview] = useState('');
     const [saving, setSaving] = useState(false);
+
     
     const [isFollowingState, setIsFollowingState] = useState(false);
 
@@ -181,13 +220,18 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({ bio, avatarUrl: preview })
+                body: JSON.stringify({ 
+                    bio, 
+                    avatarUrl: preview,
+                    age: age !== '' ? parseInt(age) : null,
+                    gender
+                })
             });
 
             if (res.ok) {
                 const data = await res.json();
-                updateUser({ bio: data.bio, avatarUrl: data.avatarUrl });
-                setUser(prev => ({ ...prev, bio: data.bio, avatarUrl: data.avatarUrl }));
+                updateUser({ bio: data.bio, avatarUrl: data.avatarUrl, age: data.age, gender: data.gender });
+                setUser(prev => ({ ...prev, bio: data.bio, avatarUrl: data.avatarUrl, age: data.age, gender: data.gender }));
                 setPreview('');
             } else {
                 alert('Failed to update profile');
@@ -199,6 +243,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
             setIsEditing(false);
         }
     };
+
 
     if (!user) return (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
@@ -306,9 +351,10 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
                                 {!propUser ? (
                                     !isEditing ? (
                                         <>
-                                            <button onClick={() => { setIsEditing(true); setBio(user.bio || ''); }} style={{ padding: '8px 16px', fontSize: '13px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <button onClick={() => { setIsEditing(true); setBio(user.bio || ''); setAge(user.age ? String(user.age) : ''); setGender(user.gender || 'prefer-not-to-say'); }} style={{ padding: '8px 16px', fontSize: '13px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 <Edit2 size={14} /> Edit Profile
                                             </button>
+
                                             {onSettings && (
                                                 <button 
                                                     onClick={onSettings}
@@ -409,32 +455,87 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
                         )}
 
                         {isEditing ? (
-                            <textarea
-                                placeholder="Tell the dreamscape about yourself (max 100 characters)..."
-                                value={bio}
-                                onChange={(e) => setBio(e.target.value.slice(0, 100))}
-                                maxLength={100}
-                                style={{
-                                    width: '100%',
-                                    minHeight: '70px',
-                                    background: 'rgba(0, 0, 0, 0.2)',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                                    borderRadius: '12px',
-                                    padding: '12px',
-                                    color: 'white',
-                                    fontSize: '13px',
-                                    resize: 'none',
-                                    outline: 'none',
-                                    transition: 'border var(--transition-fast)'
-                                }}
-                                onFocus={e => e.target.style.borderColor = 'var(--primary)'}
-                                onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
-                            />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, uppercase: true, marginBottom: '4px' }}>BIO</label>
+                                    <textarea
+                                        placeholder="Tell the dreamscape about yourself (max 100 characters)..."
+                                        value={bio}
+                                        onChange={(e) => setBio(e.target.value.slice(0, 100))}
+                                        maxLength={100}
+                                        style={{
+                                            width: '100%',
+                                            minHeight: '70px',
+                                            background: 'rgba(0, 0, 0, 0.2)',
+                                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                                            borderRadius: '12px',
+                                            padding: '12px',
+                                            color: 'white',
+                                            fontSize: '13px',
+                                            resize: 'none',
+                                            outline: 'none',
+                                            transition: 'border var(--transition-fast)'
+                                        }}
+                                        onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                                        onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                                    />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, uppercase: true, marginBottom: '4px' }}>AGE</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Your age"
+                                            value={age}
+                                            onChange={(e) => setAge(e.target.value)}
+                                            min="1"
+                                            max="120"
+                                            style={{
+                                                width: '100%',
+                                                background: 'rgba(0, 0, 0, 0.2)',
+                                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                                borderRadius: '10px',
+                                                padding: '10px 12px',
+                                                color: 'white',
+                                                fontSize: '13px',
+                                                outline: 'none'
+                                            }}
+                                            onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                                            onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, uppercase: true, marginBottom: '4px' }}>GENDER</label>
+                                        <select
+                                            value={gender}
+                                            onChange={(e) => setGender(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                background: '#0a0a0f',
+                                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                                borderRadius: '10px',
+                                                padding: '10px 12px',
+                                                color: 'white',
+                                                fontSize: '13px',
+                                                outline: 'none'
+                                            }}
+                                            onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                                            onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                                        >
+                                            <option value="prefer-not-to-say">Prefer not to say</option>
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
                             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: '14.5px', maxWidth: '600px' }}>
                                 {user.bio || 'This wanderer has yet to record their path in the dreamscape.'}
                             </p>
                         )}
+
                     </div>
 
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -445,6 +546,15 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
                     </div>
                 </div>
             </GlassCard>
+
+            {(!propUser || propUser.id === contextUser?.id) && (
+                <ProfileCompletionCard 
+                    completion={calculateClientCompletion(user, userDreams.length)} 
+                    user={user} 
+                    onEditProfile={() => setIsEditing(true)}
+                />
+            )}
+
 
             <div style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prisma');
 
 const { calculateStreak } = require('../utils/streak');
+const { calculateProfileCompletion } = require('../services/profileCompletionService');
 
 /**
  * Registers a new user with profile info and returns a signed JWT token.
@@ -216,12 +217,15 @@ const getMe = async (req, res) => {
             finalStreak = 0;
         }
 
-        res.json({ ...user, streakCount: finalStreak });
+        const profileCompletion = calculateProfileCompletion(user);
+
+        res.json({ ...user, streakCount: finalStreak, profileCompletion });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
 
 /**
  * Updates profile bio and avatar URL for the authenticated user.
@@ -231,25 +235,51 @@ const getMe = async (req, res) => {
  */
 const updateProfile = async (req, res) => {
     try {
-        const { bio, avatarUrl } = req.body;
+        const { bio, avatarUrl, age, gender } = req.body;
         // Basic validation
         if (bio && bio.length > 100) {
             return res.status(400).json({ message: 'Bio must be under 100 characters' });
         }
 
+        let parsedAge;
+        if (age !== undefined && age !== null && age !== '') {
+            parsedAge = parseInt(age);
+            if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+                return res.status(400).json({ message: 'Age must be a valid number between 1 and 120' });
+            }
+        }
+
+        const validGenders = ['male', 'female', 'other', 'prefer-not-to-say'];
+        if (gender && !validGenders.includes(gender)) {
+            return res.status(400).json({ message: 'Invalid gender value' });
+        }
+
         const updatedUser = await prisma.user.update({
             where: { id: req.user.id },
             data: {
-                bio: bio || undefined,
-                avatarUrl: avatarUrl || undefined
+                bio: bio !== undefined ? (bio ? bio.trim() : null) : undefined,
+                avatarUrl: avatarUrl || undefined,
+                age: parsedAge !== undefined ? parsedAge : undefined,
+                gender: gender !== undefined ? gender : undefined
+            },
+            include: {
+                _count: {
+                    select: { followers: true, following: true, dreams: true }
+                }
             }
         });
 
-        res.json(updatedUser);
+        const profileCompletion = calculateProfileCompletion(updatedUser);
+
+        res.json({
+            ...updatedUser,
+            profileCompletion
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error updating profile' });
     }
 };
+
 
 module.exports = { register, login, getMe, updateProfile };
