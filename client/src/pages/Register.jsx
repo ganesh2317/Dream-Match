@@ -4,7 +4,7 @@ import Input from '../components/Input';
 import { User, Lock, ArrowRight, Smile, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Register = () => {
     const [formData, setFormData] = useState({

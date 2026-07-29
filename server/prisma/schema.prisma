@@ -30,6 +30,7 @@ model User {
   comments     Comment[]
   
   // Basic relationship for matches (simplified for MVP)
+
   sentMatches     Match[]  @relation("Sender")
   receivedMatches Match[]  @relation("Receiver")
 

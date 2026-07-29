@@ -12,7 +12,7 @@ import Settings from '../components/Settings';
 import BottomNavigation from '../components/BottomNavigation';
 import { Moon, X, Sparkles, Wand2, Zap, Flame, PlusSquare, Bell, LogOut, MessageCircle, Heart, Download, Share2, Compass, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Dashboard = () => {
     const { user, logout } = useAuth();

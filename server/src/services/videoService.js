@@ -170,7 +170,8 @@ class VideoQueue {
         this.processing = false;
         
         // Start background worker loop
-        setInterval(() => this.processQueue(), 2000);
+        const timer = setInterval(() => this.processQueue(), 2000);
+        if (timer.unref) timer.unref();
 
         // Run initialization asynchronously and sequentially
         this.init();
