@@ -124,9 +124,18 @@ const login = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // Find user
-        const user = await prisma.user.findUnique({
-            where: { username },
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Username and password are required' });
+        }
+
+        const cleanIdentifier = String(username).trim();
+        const isEmail = cleanIdentifier.includes('@');
+
+        // Find user by username or email
+        const user = await prisma.user.findFirst({
+            where: isEmail
+                ? { email: { equals: cleanIdentifier.toLowerCase() } }
+                : { username: { equals: cleanIdentifier } },
             include: {
                 _count: {
                     select: { followers: true, following: true }
@@ -135,15 +144,15 @@ const login = async (req, res) => {
         });
 
         if (!user) {
-            console.log(`Login failed: User '${username}' not found.`);
-            return res.status(400).json({ message: 'Invalid credentials' });
+            console.log(`Login failed: User '${cleanIdentifier}' not found.`);
+            return res.status(400).json({ message: 'Invalid username or password' });
         }
 
         // Check password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            console.log(`Login failed: Password mismatch for user '${username}'.`);
-            return res.status(400).json({ message: 'Invalid credentials' });
+            console.log(`Login failed: Password mismatch for user '${cleanIdentifier}'.`);
+            return res.status(400).json({ message: 'Invalid username or password' });
         }
 
         // Generate token
@@ -152,15 +161,20 @@ const login = async (req, res) => {
         });
 
         // Check streak on login
-        const { shouldReset } = calculateStreak(user.lastPostedAt, user.streakCount);
-        let finalStreak = user.streakCount;
-
-        if (shouldReset) {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { streakCount: 0 }
-            });
-            finalStreak = 0;
+        let finalStreak = user.streakCount || 0;
+        if (user.lastPostedAt) {
+            try {
+                const { shouldReset } = calculateStreak(user.lastPostedAt, user.streakCount || 0);
+                if (shouldReset) {
+                    await prisma.user.update({
+                        where: { id: user.id },
+                        data: { streakCount: 0 }
+                    });
+                    finalStreak = 0;
+                }
+            } catch (streakErr) {
+                console.error('Streak calculation warning:', streakErr.message);
+            }
         }
 
         res.json({
@@ -174,12 +188,12 @@ const login = async (req, res) => {
                 bio: user.bio,
                 role: user.role,
                 status: user.status,
-                _count: user._count
+                _count: user._count || { followers: 0, following: 0 }
             },
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error during login' });
+        console.error('Login error details:', error);
+        res.status(500).json({ message: error.message || 'Server error during login' });
     }
 };
 

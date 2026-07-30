@@ -62,7 +62,7 @@ describe('Dream Social REST API Tests', () => {
                 password: 'wrongpassword'
             });
         expect(res.statusCode).toBe(400);
-        expect(res.body.message).toBe('Invalid credentials');
+        expect(res.body.message).toBe('Invalid username or password');
     });
 
     test('POST /api/auth/login should succeed and return JWT', async () => {
