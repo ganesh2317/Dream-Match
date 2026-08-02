@@ -3,7 +3,7 @@ import React from 'react';
 /**
  * @file GlassCard.jsx
  * GlassCard component providing a consistent premium glassmorphic style.
- * 
+ *
  * @param {object} props - Component props
  * @param {React.ReactNode} props.children - Child components to render inside the card
  * @param {string} [props.className] - Optional additional CSS class names
