@@ -9,10 +9,8 @@ import { CheckCircle2, Circle, Sparkles, Trophy } from 'lucide-react';
  * 
  * @param {Object} props
  * @param {Object} props.completion - Profile completion object { percentage, completed, remaining }
- * @param {Object} [props.user] - User object for fallback evaluation
- * @param {Function} [props.onEditProfile] - Optional click handler to quick-action edit
  */
-const ProfileCompletionCard = ({ completion, user, onEditProfile }) => {
+const ProfileCompletionCard = ({ completion }) => {
     // Standard criteria mapping with display names matching required UI
     const allCriteria = [
         { id: 'Profile Picture', label: 'Profile Picture' },
