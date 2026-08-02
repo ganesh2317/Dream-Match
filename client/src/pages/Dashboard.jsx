@@ -521,7 +521,7 @@ const CreateDreamModal = ({ onClose, onPosted }) => {
             style={{ 
                 position: 'fixed', 
                 inset: 0, 
-                background: 'rgba(5, 5, 8, 0.85)', 
+                background: 'var(--modal-overlay)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 

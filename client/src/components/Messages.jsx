@@ -564,14 +564,14 @@ const NewConversationModal = ({ onClose, onSelect }) => {
     return (
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(16px)',
+            background: 'var(--modal-overlay)', backdropFilter: 'blur(16px)',
             zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '20px'
         }} onClick={onClose}>
             <GlassCard style={{
                 width: '100%', maxWidth: '420px', padding: '24px',
                 borderRadius: 'var(--radius-xl)', border: 'var(--glass-border)',
-                background: 'rgba(15, 15, 25, 0.75)', position: 'relative'
+                background: 'var(--glass-bg)', position: 'relative'
             }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>New Message</h3>

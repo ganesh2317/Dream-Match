@@ -8,6 +8,7 @@ import {
     Shield, 
     Users, 
     Moon, 
+    Sun,
     Bell, 
     Globe, 
     Sliders, 
@@ -42,7 +43,7 @@ const Settings = ({ onBack }) => {
         {
             title: 'Preferences',
             items: [
-                { id: 'theme', label: 'Dark Mode', icon: Moon, type: 'toggle', value: theme === 'dark', onChange: toggleTheme },
+                { id: 'theme', label: theme === 'dark' ? 'Dark Mode' : 'Light Mode', icon: theme === 'dark' ? Moon : Sun, type: 'toggle', value: theme === 'dark', onChange: toggleTheme },
                 { id: 'notifications', label: 'Push Notifications', icon: Bell, type: 'toggle', value: true, onChange: () => {} },
                 { id: 'language', label: 'Language', icon: Globe, type: 'value', valueText: 'English' },
                 { id: 'content', label: 'Content Preferences', icon: Sliders }

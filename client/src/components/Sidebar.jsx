@@ -1,9 +1,12 @@
 import React from 'react';
-import { Home, MessageCircle, PlusSquare, Bell, LogOut, Search, Video, Users } from 'lucide-react';
+import { Home, MessageCircle, PlusSquare, Bell, LogOut, Search, Video, Users, Sun, Moon } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { motion } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 
 const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) => {
+    const { theme, toggleTheme } = useTheme();
+
     return (
         <GlassCard className="sidebar" style={{ 
             width: '280px', 
@@ -38,6 +41,11 @@ const Sidebar = ({ activeTab, setActiveTab, setShowCreateModal, user, logout }) 
                 <NavItem icon={Video} label="Visuals" active={activeTab === 'visuals'} onClick={() => setActiveTab('visuals')} />
                 <NavItem icon={Users} label="Matches" active={activeTab === 'matches'} onClick={() => setActiveTab('matches')} />
                 <NavItem icon={Bell} label="Notifications" active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} />
+                <NavItem 
+                    icon={theme === 'dark' ? Sun : Moon} 
+                    label={theme === 'dark' ? 'Light Mode' : 'Dark Mode'} 
+                    onClick={toggleTheme} 
+                />
             </nav>
 
             <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import GlassCard from '../components/GlassCard';
 import Input from '../components/Input';
-import { User, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { User, Lock, ArrowRight, AlertCircle, Sun, Moon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Login = () => {
+    const { theme, toggleTheme } = useTheme();
     const [isWelcome, setIsWelcome] = useState(true);
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [error, setError] = useState('');
@@ -49,6 +51,35 @@ const Login = () => {
             overflow: 'hidden',
             background: 'var(--bg-dark)'
         }}>
+            {/* Top Right Floating Theme Toggle */}
+            <button
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                style={{
+                    position: 'absolute',
+                    top: '24px',
+                    right: '24px',
+                    zIndex: 10,
+                    background: 'var(--glass-bg)',
+                    color: theme === 'dark' ? '#fbbf24' : 'var(--primary)',
+                    padding: '10px 14px',
+                    borderRadius: '100px',
+                    border: 'var(--glass-border)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    boxShadow: 'none',
+                    transform: 'none'
+                }}
+                className="hover-scale"
+            >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
             {/* Ambient Animated Cosmic Background */}
             <div style={{
                 position: 'absolute',

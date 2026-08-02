@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { Flame, Heart, MessageCircle, Eye, Share2, Sparkles, Send, Inbox, Bookmark } from 'lucide-react';
+import { Flame, Heart, MessageCircle, Eye, Share2, Sparkles, Send, Inbox, Bookmark, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 
 const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
     const [users, setUsers] = useState([]);
@@ -51,14 +52,14 @@ const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
     return (
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(16px)',
+            background: 'var(--modal-overlay)', backdropFilter: 'blur(16px)',
             zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '20px'
         }} onClick={onClose}>
             <GlassCard style={{
                 width: '100%', maxWidth: '420px', padding: '24px',
                 borderRadius: 'var(--radius-xl)', border: 'var(--glass-border)',
-                background: 'rgba(15, 15, 25, 0.75)', position: 'relative'
+                background: 'var(--glass-bg)', position: 'relative'
             }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{title}</h3>
@@ -103,6 +104,7 @@ const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
 };
 
 const Feed = ({ dreams, loading, onRefresh, onViewVisual, onViewProfile, unreadMessages, onNavigateTab }) => {
+    const { theme, toggleTheme } = useTheme();
     const [feedTab, setFeedTab] = useState('foryou'); // 'following' or 'foryou'
     const [likesDreamId, setLikesDreamId] = useState(null);
 
@@ -122,9 +124,30 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual, onViewProfile, unreadM
 
     return (
         <div style={{ maxWidth: '640px', margin: '0 auto', paddingBottom: '80px' }} className="fade-in">
-            {/* Mockup Header: Dream Feed with tabs & Messages button */}
+            {/* Mockup Header: Dream Feed with tabs, theme toggle & Messages button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', position: 'relative' }}>
-                <div style={{ width: '40px' }} /> {/* Spacer to align title in center */}
+                <button
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                    aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                    style={{
+                        background: 'var(--glass-bg)',
+                        color: theme === 'dark' ? '#fbbf24' : 'var(--primary)',
+                        padding: '10px',
+                        borderRadius: '12px',
+                        border: 'var(--glass-border)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: 'none',
+                        transform: 'none',
+                        transition: 'all var(--transition-fast)'
+                    }}
+                    className="hover-scale"
+                >
+                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>Dream Feed</h2>
