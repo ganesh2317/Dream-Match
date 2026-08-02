@@ -43,10 +43,13 @@ The project is structured into a client frontend and a server backend:
 
 ## Running the Application Locally
 
+> [!TIP]
+> Make sure both the client and server instances are running concurrently for full real-time Socket.io features to function locally.
+
 ### Prerequisites
 
-- **Node.js** (v18 or higher recommended)
-- **PostgreSQL** database instance (optional for development, as a SQLite fallback is integrated when using Vercel or when a connection string is not provided)
+- **Node.js**: `v18.0.0` or higher
+- **PostgreSQL Database**: Neon serverless or local instance (SQLite fallback supported for quick local development)
 
 ### Environment Setup
 
