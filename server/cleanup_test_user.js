@@ -1,8 +1,8 @@
 /**
  * @file cleanup_test_user.js
- * Utility script to clean up testing/onboarding data for a specific test user account
- * (specifically 'ganeshmahalatkar@gmail.com').
- * This is useful to reset registration and OTP verification state during local development/testing.
+ * @module cleanupTestUser
+ * Utility script to clean up testing/onboarding data for a specific test user account.
+ * Useful to reset registration and verification state during local development and testing.
  */
 
 const { PrismaClient } = require('@prisma/client');
