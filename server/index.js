@@ -1,3 +1,8 @@
+/**
+ * Dream Match Backend Application Entry Point
+ * Express API server with Socket.io real-time websockets integration.
+ */
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -212,8 +217,6 @@ app.get("/health", (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
-
-
 
 if (process.env.NODE_ENV !== 'test') {
     server.listen(PORT, "0.0.0.0", () => {
