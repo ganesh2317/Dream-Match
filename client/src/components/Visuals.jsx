@@ -5,14 +5,12 @@ import {
     Heart, 
     MessageCircle, 
     Share2, 
-    Music2, 
     Sparkles, 
     Video, 
     VolumeX, 
     Volume2, 
     Play, 
-    Bookmark, 
-    AlertCircle 
+    Bookmark 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

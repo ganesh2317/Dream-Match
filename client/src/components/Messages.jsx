@@ -5,7 +5,6 @@ import {
     Send, 
     ArrowLeft, 
     Inbox, 
-    MessageCircle, 
     Check, 
     CheckCheck 
 } from 'lucide-react';
