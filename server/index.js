@@ -19,6 +19,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxies (Vercel, Render) for accurate client IP rate-limiting
+app.set('trust proxy', 1);
+
 // Security Headers (CSP disabled to avoid blocking third-party avatars/images like ui-avatars and pollinations.ai)
 app.use(helmet({ contentSecurityPolicy: false }));
 
@@ -49,46 +52,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Rate Limiting
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 150, // limit each IP to 150 requests per window
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { message: 'Too many requests, please try again after 15 minutes.' }
-});
-
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 30, // limit login/register attempts
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { message: 'Too many authentication attempts, please try again after 15 minutes.' }
-});
-
-// Apply Rate Limiters (disabled in local development to avoid blocking automated tests)
-if (process.env.NODE_ENV === 'production') {
-    app.use('/api/auth/login', authLimiter);
-    app.use('/api/auth/register', authLimiter);
-    app.use('/api/dreams/generate', authLimiter);
-    app.use('/api', apiLimiter);
-}
-
-// Routes
-const authRoutes = require('./src/routes/authRoutes');
-const dreamRoutes = require('./src/routes/dreamRoutes');
-const userRoutes = require('./src/routes/userRoutes');
-const notificationRoutes = require('./src/routes/notificationRoutes');
-const messageRoutes = require('./src/routes/messageRoutes');
-const adminRoutes = require('./src/routes/adminRoutes');
-
-app.use('/api/auth', authRoutes);
-app.use('/api/dreams', dreamRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/admin', adminRoutes);
-
 const isProduction = process.env.NODE_ENV === 'production';
 const videoStorageDir = isProduction
     ? path.join(os.tmpdir(), 'dreammatch-videos')
@@ -98,6 +61,7 @@ if (!fs.existsSync(videoStorageDir)) {
     fs.mkdirSync(videoStorageDir, { recursive: true });
 }
 
+// Media streaming endpoint mounted BEFORE rate limiters so video playback is never blocked by HTTP 429
 app.get('/api/videos/:filename', async (req, res, next) => {
     try {
         const filePath = path.join(videoStorageDir, req.params.filename);
@@ -121,11 +85,63 @@ app.get('/api/videos/:filename', async (req, res, next) => {
             return res.sendFile(filePath);
         }
 
-        return res.status(404).send('Video not found');
+        // 3. If video record is missing but dream exists, re-enqueue for generation on demand
+        const dream = await prisma.dream.findUnique({
+            where: { id: dreamId },
+            select: { id: true, description: true, imageUrl: true }
+        });
+
+        if (dream) {
+            console.log(`[MediaEndpoint] Video missing on disk and DB for dream ${dreamId}. Triggering auto-compile...`);
+            const { videoQueue } = require('./src/services/videoService');
+            videoQueue.enqueue(dream.id, dream.description, 'luma');
+        }
+
+        return res.status(404).send('Video generation in progress or file not found');
     } catch (err) {
         next(err);
     }
 });
+
+// Rate Limiting (configured with trust proxy support)
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 2000, // generous limit per client IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests, please try again after 15 minutes.' }
+});
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit login/register attempts
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many authentication attempts, please try again after 15 minutes.' }
+});
+
+// Apply Rate Limiters in production
+if (process.env.NODE_ENV === 'production') {
+    app.use('/api/auth/login', authLimiter);
+    app.use('/api/auth/register', authLimiter);
+    app.use('/api/dreams/generate', authLimiter);
+    app.use('/api', apiLimiter);
+}
+
+// Routes
+const authRoutes = require('./src/routes/authRoutes');
+const dreamRoutes = require('./src/routes/dreamRoutes');
+const userRoutes = require('./src/routes/userRoutes');
+const notificationRoutes = require('./src/routes/notificationRoutes');
+const messageRoutes = require('./src/routes/messageRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/dreams', dreamRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
     res.send('Dream Social API is running...');
