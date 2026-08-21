@@ -111,13 +111,18 @@ export const AuthProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.message || 'Registration failed');
-
-            localStorage.setItem('token', data.token);
-            setUser(data.user);
-            return data.user;
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Registration failed');
+                localStorage.setItem('token', data.token);
+                setUser(data.user);
+                return data.user;
+            } else {
+                const errorText = await res.text();
+                console.error('Registration failed (non-JSON):', errorText);
+                throw new Error('Database or backend server is temporarily unavailable. Please try again in a moment.');
+            }
         } finally {
             setLoading(false);
         }

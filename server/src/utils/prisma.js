@@ -11,8 +11,11 @@ const path = require('path');
 
 let dbUrl = process.env.DATABASE_URL;
 
-if (!dbUrl) {
-    dbUrl = 'file:./dev.db';
+if (dbUrl && (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://'))) {
+    if (!dbUrl.includes('connect_timeout')) {
+        const separator = dbUrl.includes('?') ? '&' : '?';
+        dbUrl += `${separator}connect_timeout=30&pool_timeout=30`;
+    }
 }
 
 /**

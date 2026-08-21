@@ -22,7 +22,20 @@ export const api = {
                 'Content-Type': 'application/json',
             },
         });
-        return res.json();
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || 'API request failed');
+            }
+            return data;
+        } else {
+            const text = await res.text();
+            if (!res.ok) {
+                throw new Error(res.status === 503 || res.status === 500 ? 'Service temporarily unavailable. Please try again shortly.' : `Server error (${res.status})`);
+            }
+            return text;
+        }
     },
 
     async post(endpoint, body) {
@@ -35,10 +48,16 @@ export const api = {
             },
             body: JSON.stringify(body),
         });
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Something went wrong');
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || 'API request failed');
+            }
+            return data;
+        } else {
+            const text = await res.text();
+            throw new Error(res.status === 503 || res.status === 500 ? 'Service temporarily unavailable. Please try again shortly.' : `Server error (${res.status})`);
         }
-        return res.json();
     }
 };
