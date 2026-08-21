@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { Heart, UserPlus, Sparkles, Inbox } from 'lucide-react';
+import { Heart, UserPlus, Sparkles, Inbox, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Notifications = ({ onViewProfile }) => {

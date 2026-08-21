@@ -56,7 +56,7 @@ export const api = {
             }
             return data;
         } else {
-            const text = await res.text();
+            await res.text(); // consume body to free connection
             throw new Error(res.status === 503 || res.status === 500 ? 'Service temporarily unavailable. Please try again shortly.' : `Server error (${res.status})`);
         }
     }

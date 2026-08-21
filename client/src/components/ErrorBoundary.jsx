@@ -53,10 +53,10 @@ class ErrorBoundary extends Component {
               <AlertTriangle size={32} color="var(--error)" />
             </div>
             <h2 style={{ fontSize: '24px', marginBottom: '12px', fontWeight: 800 }}>The Subconscious Collapsed</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '16px', lineHeight: '1.6' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: import.meta.env.DEV && this.state.error ? '16px' : '32px', lineHeight: '1.6' }}>
               We encountered a glitch while rendering the dreamscape. Don't worry, your dreams are safe.
             </p>
-            {this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <pre style={{
                 textAlign: 'left',
                 background: 'rgba(239,68,68,0.08)',

@@ -6,7 +6,8 @@ import {
     ArrowLeft, 
     Inbox, 
     Check, 
-    CheckCheck 
+    CheckCheck,
+    MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
