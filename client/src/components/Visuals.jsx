@@ -10,7 +10,9 @@ import {
     VolumeX, 
     Volume2, 
     Play, 
-    Bookmark 
+    Bookmark,
+    Music2,
+    AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
