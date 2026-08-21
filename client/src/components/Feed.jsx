@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
 import { Flame, Heart, MessageCircle, Eye, Share2, Sparkles, Send, Inbox, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 
 const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
     const [users, setUsers] = useState([]);

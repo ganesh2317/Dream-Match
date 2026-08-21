@@ -35,8 +35,8 @@ const Login = () => {
     };
 
     const handleGuestContinue = () => {
-        // Fallback guest behavior (e.g. autofill demonstration credentials or alert)
-        setFormData({ username: 'dreamer_guest', password: 'password123' });
+        // Fallback guest behavior (autofill demo credentials)
+        setFormData({ username: 'demo', password: 'password123' });
         setIsWelcome(false);
     };
 
