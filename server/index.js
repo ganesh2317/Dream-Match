@@ -22,8 +22,11 @@ const PORT = process.env.PORT || 3000;
 // Trust reverse proxies (Vercel, Render) for accurate client IP rate-limiting
 app.set('trust proxy', 1);
 
-// Security Headers (CSP disabled to avoid blocking third-party avatars/images like ui-avatars and pollinations.ai)
-app.use(helmet({ contentSecurityPolicy: false }));
+// Security Headers (CSP disabled to avoid blocking third-party media; CORP set to cross-origin for video media streaming)
+app.use(helmet({ 
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // CORS Policy with secure allowed-origins
 const allowedOrigins = [
@@ -61,7 +64,20 @@ if (!fs.existsSync(videoStorageDir)) {
     fs.mkdirSync(videoStorageDir, { recursive: true });
 }
 
-// Media streaming endpoint mounted BEFORE rate limiters so video playback is never blocked by HTTP 429
+// Media CORS & CORP middleware mounted BEFORE rate limiters so video playback is never blocked by CORS/CORP or HTTP 429
+app.use('/api/videos', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Authorization, Content-Type');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Accept-Ranges', 'bytes');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
+    next();
+});
+
 app.get('/api/videos/:filename', async (req, res, next) => {
     try {
         const filePath = path.join(videoStorageDir, req.params.filename);

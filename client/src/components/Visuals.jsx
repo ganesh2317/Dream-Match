@@ -270,6 +270,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
                         loop
                         muted={isMuted}
                         playsInline
+                        crossOrigin="anonymous"
                         onLoadStart={() => setIsLoading(true)}
                         onCanPlay={() => setIsLoading(false)}
                         onError={() => {
