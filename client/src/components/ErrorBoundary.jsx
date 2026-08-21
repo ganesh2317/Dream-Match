@@ -9,15 +9,17 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
 
+
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught an error", error, errorInfo);
+    this.setState({ errorInfo });
   }
 
   handleReset = () => {
@@ -51,9 +53,27 @@ class ErrorBoundary extends Component {
               <AlertTriangle size={32} color="var(--error)" />
             </div>
             <h2 style={{ fontSize: '24px', marginBottom: '12px', fontWeight: 800 }}>The Subconscious Collapsed</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '32px', lineHeight: '1.6' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '16px', lineHeight: '1.6' }}>
               We encountered a glitch while rendering the dreamscape. Don't worry, your dreams are safe.
             </p>
+            {this.state.error && (
+              <pre style={{
+                textAlign: 'left',
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                borderRadius: '8px',
+                padding: '12px',
+                fontSize: '11px',
+                color: '#ef4444',
+                overflowX: 'auto',
+                marginBottom: '20px',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word'
+              }}>
+                {this.state.error.toString()}
+                {this.state.errorInfo && '\n\nComponent Stack:' + this.state.errorInfo.componentStack}
+              </pre>
+            )}
             <button
               onClick={this.handleReset}
               style={{
