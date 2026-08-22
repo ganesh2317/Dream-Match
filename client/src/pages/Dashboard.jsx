@@ -266,8 +266,8 @@ const Dashboard = () => {
                 {renderContent()}
             </div>
 
-            {/* Right Sidebar (Desktop only) */}
-            {!isMobile && activeTab !== 'settings' && activeTab !== 'messages' && (
+            {/* Right Sidebar (Desktop feed tab only to keep other pages focused and uncluttered) */}
+            {!isMobile && activeTab === 'feed' && (
                 <div style={{ width: '310px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     <GlassCard style={{ padding: '24px', background: 'rgba(99, 102, 241, 0.03)', border: '1px solid rgba(99, 102, 241, 0.08)', borderRadius: 'var(--radius-xl)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
