@@ -3,8 +3,6 @@ import { Home, Video, Heart, User, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const BottomNavigation = ({ activeTab, setActiveTab, onAddClick }) => {
-    // Navigation items representing the main user-experience hubs of the platform.
-    // Styled exactly to replicate screens 4, 5, 6, 7, 8, 9, 10
     const navItems = [
         { id: 'feed', icon: Home, label: 'Home' },
         { id: 'visuals', icon: Video, label: 'Visuals' },
@@ -21,18 +19,18 @@ const BottomNavigation = ({ activeTab, setActiveTab, onAddClick }) => {
             transform: 'translateX(-50%)',
             width: 'calc(100% - 40px)',
             maxWidth: '480px',
-            height: '70px',
-            background: 'var(--glass-bg)',
-            backdropFilter: 'var(--glass-blur)',
-            WebkitBackdropFilter: 'var(--glass-blur)',
-            border: 'var(--glass-border)',
+            height: '68px',
+            background: 'var(--glass-float-bg, var(--glass-bg))',
+            backdropFilter: 'var(--glass-float-blur, var(--glass-blur))',
+            WebkitBackdropFilter: 'var(--glass-float-blur, var(--glass-blur))',
+            border: 'var(--glass-float-border, var(--glass-border))',
             borderRadius: 'var(--radius-2xl)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-around',
-            padding: '0 10px',
-            boxShadow: 'var(--glass-shadow)',
-            zIndex: 999
+            padding: '0 8px',
+            boxShadow: 'var(--shadow-high)',
+            zIndex: 999,
         }}>
             {navItems.map((item) => {
                 const Icon = item.icon;
@@ -42,12 +40,13 @@ const BottomNavigation = ({ activeTab, setActiveTab, onAddClick }) => {
                     return (
                         <motion.button
                             key={item.id}
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.92 }}
+                            whileHover={{ scale: 1.06 }}
+                            whileTap={{ scale: 0.93 }}
                             onClick={onAddClick}
+                            aria-label="Record a Dream"
                             style={{
-                                width: '48px',
-                                height: '48px',
+                                width: '46px',
+                                height: '46px',
                                 borderRadius: '50%',
                                 background: 'var(--primary-gradient)',
                                 border: 'none',
@@ -56,12 +55,12 @@ const BottomNavigation = ({ activeTab, setActiveTab, onAddClick }) => {
                                 justifyContent: 'center',
                                 color: 'white',
                                 cursor: 'pointer',
-                                boxShadow: '0 6px 16px var(--primary-glow)',
+                                boxShadow: '0 4px 16px var(--phosphor-glow)',
                                 position: 'relative',
-                                top: '-4px'
+                                top: '-4px',
                             }}
                         >
-                            <Icon size={24} strokeWidth={2.5} />
+                            <Icon size={22} strokeWidth={2.5} />
                         </motion.button>
                     );
                 }
@@ -69,69 +68,65 @@ const BottomNavigation = ({ activeTab, setActiveTab, onAddClick }) => {
                 return (
                     <button
                         key={item.id}
-                        onClick={() => {
-                            // If user goes to profile or matches, clear settings subview
-                            setActiveTab(item.id);
-                        }}
+                        onClick={() => setActiveTab(item.id)}
+                        aria-label={item.label}
+                        aria-current={isActive ? 'page' : undefined}
                         style={{
                             background: 'transparent',
                             border: 'none',
-                            padding: '8px 12px',
+                            padding: '8px 10px',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '4px',
+                            gap: '3px',
                             position: 'relative',
-                            color: isActive ? 'var(--primary)' : 'var(--text-dim)',
+                            color: isActive ? 'var(--phosphor)' : 'var(--fog)',
                             cursor: 'pointer',
                             transition: 'color var(--transition-fast)',
                             boxShadow: 'none',
-                            transform: 'none'
+                            transform: 'none',
+                            fontFamily: 'var(--font-body)',
                         }}
                     >
                         {isActive && (
                             <motion.div
                                 layoutId="bottomBubble"
-                                className="absolute-bg"
                                 style={{
                                     position: 'absolute',
                                     inset: 0,
-                                    background: 'var(--primary-glow)',
+                                    background: 'var(--phosphor-subtle)',
                                     borderRadius: 'var(--radius-md)',
-                                    zIndex: -1
+                                    zIndex: -1,
                                 }}
                                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                             />
                         )}
-                        
                         <motion.div
-                            animate={{ scale: isActive ? 1.08 : 1 }}
+                            animate={{ scale: isActive ? 1.1 : 1 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                             style={{ display: 'flex', alignItems: 'center' }}
                         >
                             <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                         </motion.div>
-                        
-                        <span style={{ 
-                            fontSize: '9px', 
-                            fontWeight: isActive ? 700 : 500,
-                            letterSpacing: '0.2px',
-                            color: isActive ? 'var(--text-primary)' : 'var(--text-dim)'
+                        <span style={{
+                            fontSize: '9px',
+                            fontWeight: isActive ? 600 : 400,
+                            letterSpacing: '0.1px',
+                            color: isActive ? 'var(--text-primary)' : 'var(--fog)',
                         }}>
                             {item.label}
                         </span>
-
                         {isActive && (
                             <motion.div
                                 layoutId="bottomDot"
                                 style={{
                                     position: 'absolute',
                                     bottom: '1px',
-                                    width: '4px',
-                                    height: '4px',
+                                    width: '3px',
+                                    height: '3px',
                                     borderRadius: '50%',
-                                    background: 'var(--primary)'
+                                    background: 'var(--phosphor)',
                                 }}
                             />
                         )}

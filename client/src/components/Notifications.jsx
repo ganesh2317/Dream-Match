@@ -68,25 +68,22 @@ const Notifications = ({ onViewProfile }) => {
 
     return (
         <div style={{ maxWidth: '640px', margin: '0 auto', paddingBottom: '80px' }} className="fade-in">
-            <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '24px', textAlign: 'center' }}>Notifications</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '24px', textAlign: 'center' }}>Notifications</h2>
 
             {notifications.length === 0 ? (
-                <GlassCard style={{ textAlign: 'center', padding: '64px 32px', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
+                <GlassCard level="float" style={{ textAlign: 'center', padding: '72px 32px', borderRadius: 'var(--radius-xl)' }}>
+                    {/* Single centered dot — minimal design moment */}
                     <div style={{
-                        width: '64px',
-                        height: '64px',
+                        width: '8px',
+                        height: '8px',
                         borderRadius: '50%',
-                        background: 'rgba(99, 102, 241, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 20px'
-                    }}>
-                        <Inbox size={32} color="var(--primary)" style={{ opacity: 0.6 }} />
-                    </div>
-                    <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>All caught up</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '300px', margin: '0 auto', lineHeight: 1.5 }}>
-                        When someone likes your dreams or follows you, you'll see it here!
+                        background: 'var(--fog)',
+                        margin: '0 auto 28px',
+                        opacity: 0.4,
+                    }} />
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 'var(--text-lg)', marginBottom: '10px' }}>Nothing yet</h3>
+                    <p style={{ fontFamily: 'var(--font-body)', color: 'var(--fog)', fontSize: 'var(--text-sm)', maxWidth: '280px', margin: '0 auto', lineHeight: 1.6 }}>
+                        You'll see likes, follows, and matches here.
                     </p>
                 </GlassCard>
             ) : (

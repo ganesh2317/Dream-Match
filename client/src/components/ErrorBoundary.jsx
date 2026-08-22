@@ -37,36 +37,51 @@ class ErrorBoundary extends Component {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '20px',
-          background: 'var(--bg-gradient)'
+          background: 'var(--bg-dark)',
+          backgroundImage: 'radial-gradient(ellipse at 50% 30%, rgba(248,113,113,0.06) 0%, transparent 55%), var(--bg-gradient)',
         }}>
-          <GlassCard style={{ maxWidth: '500px', textAlign: 'center', padding: '40px' }}>
+          <GlassCard level="float" style={{ maxWidth: '500px', textAlign: 'center', padding: '48px 40px' }}>
             <div style={{
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: 'rgba(239, 68, 68, 0.1)',
+              background: 'var(--alert-glow)',
+              border: '1px solid rgba(248, 113, 113, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 24px'
+              margin: '0 auto 28px'
             }}>
-              <AlertTriangle size={32} color="var(--error)" />
+              <AlertTriangle size={28} color="var(--alert)" />
             </div>
-            <h2 style={{ fontSize: '24px', marginBottom: '12px', fontWeight: 800 }}>The Subconscious Collapsed</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: import.meta.env.DEV && this.state.error ? '16px' : '32px', lineHeight: '1.6' }}>
-              We encountered a glitch while rendering the dreamscape. Don't worry, your dreams are safe.
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--text-xl)',
+              fontWeight: 600,
+              letterSpacing: '-0.02em',
+              marginBottom: '12px',
+            }}>The Subconscious Collapsed</h2>
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              color: 'var(--fog)',
+              fontSize: 'var(--text-base)',
+              marginBottom: import.meta.env.DEV && this.state.error ? '16px' : '36px',
+              lineHeight: '1.65'
+            }}>
+              Something went wrong in the dreamscape. Your data is safe.
             </p>
             {import.meta.env.DEV && this.state.error && (
               <pre style={{
                 textAlign: 'left',
-                background: 'rgba(239,68,68,0.08)',
-                border: '1px solid rgba(239,68,68,0.2)',
-                borderRadius: '8px',
-                padding: '12px',
+                background: 'var(--alert-glow)',
+                border: '1px solid rgba(248, 113, 113, 0.2)',
+                borderRadius: 'var(--radius-md)',
+                padding: '14px',
                 fontSize: '11px',
-                color: '#ef4444',
+                fontFamily: 'var(--font-body)',
+                color: 'var(--alert)',
                 overflowX: 'auto',
-                marginBottom: '20px',
+                marginBottom: '24px',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word'
               }}>
@@ -78,11 +93,13 @@ class ErrorBoundary extends Component {
               onClick={this.handleReset}
               style={{
                 padding: '14px 28px',
-                borderRadius: '12px',
+                borderRadius: 'var(--radius-md)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontSize: '15px'
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--text-base)',
+                fontWeight: 600,
               }}
             >
               <RefreshCw size={16} /> Reconnect Mind

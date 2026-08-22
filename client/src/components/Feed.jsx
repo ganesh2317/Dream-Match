@@ -150,7 +150,7 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual, onViewProfile, unreadM
                 </button>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>Dream Feed</h2>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px', letterSpacing: '-0.02em' }}>Dream Feed</h2>
                     <div style={{ display: 'flex', gap: '24px', position: 'relative' }}>
                         <button 
                             onClick={() => setFeedTab('following')}
@@ -248,22 +248,24 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual, onViewProfile, unreadM
             {loading ? (
                 <FeedSkeleton />
             ) : dreams.length === 0 ? (
-                <GlassCard style={{ textAlign: 'center', padding: '64px 32px', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
-                    <div style={{
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '50%',
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 20px'
-                    }}>
-                        <Inbox size={32} color="var(--primary)" style={{ opacity: 0.6 }} />
-                    </div>
-                    <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>No dreams here yet</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '300px', margin: '0 auto 24px', lineHeight: 1.5 }}>
-                        The subconscious world is waiting. Share your first vision with the network.
+                <GlassCard level="float" style={{ textAlign: 'center', padding: '72px 32px', borderRadius: 'var(--radius-xl)' }}>
+                    <p style={{
+                        fontFamily: 'var(--font-display)',
+                        fontStyle: 'italic',
+                        fontSize: 'var(--text-3xl)',
+                        color: 'var(--fog)',
+                        opacity: 0.35,
+                        marginBottom: '24px',
+                        lineHeight: 1,
+                    }}>~</p>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: '10px' }}>
+                        {feedTab === 'following' ? 'No dreams from people you follow' : 'Nothing here yet'}
+                    </h3>
+                    <p style={{ fontFamily: 'var(--font-body)', color: 'var(--fog)', fontSize: 'var(--text-sm)', maxWidth: '300px', margin: '0 auto', lineHeight: 1.6 }}>
+                        {feedTab === 'following'
+                            ? 'Find dreamers on the For You tab, then follow the ones who interest you.'
+                            : 'Record your first dream to see it here.'
+                        }
                     </p>
                 </GlassCard>
             ) : (
@@ -398,29 +400,24 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
     };
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            style={{ width: '100%' }}
-        >
-            <GlassCard style={{ padding: '0', overflow: 'hidden', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }} className="hover-scale-subtle">
+        <div className="dream-surface" style={{ width: '100%' }}>
+            <GlassCard level="float" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-xl)' }} className="hover-scale-subtle">
                 {/* Card Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px' }}>
                     <img 
                         src={avatar} 
-                        style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--primary)', objectFit: 'cover', padding: '2px', cursor: 'pointer' }} 
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--phosphor)', objectFit: 'cover', padding: '2px', cursor: 'pointer' }} 
                         alt="avatar" 
                         onClick={() => onViewProfile && onViewProfile(user)}
                     />
                     <div>
                         <div 
-                            style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                            style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--text-primary)', cursor: 'pointer' }}
                             onClick={() => onViewProfile && onViewProfile(user)}
                         >
                             {username}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', color: 'var(--fog)' }}>
                             {new Date(dream.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </div>
                     </div>
@@ -481,9 +478,9 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
                                     e.stopPropagation();
                                     onViewVisual(dream.id);
                                 }}
-                                style={{ background: 'var(--primary-gradient)', backdropFilter: 'blur(10px)', padding: '6px 14px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'white', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px var(--primary-glow)' }}
+                                style={{ background: 'var(--primary-gradient)', backdropFilter: 'blur(10px)', padding: '5px 13px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', color: 'white', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px var(--phosphor-glow)' }}
                             >
-                                <Sparkles size={12} /> Watch Reel
+                                <Sparkles size={11} /> Watch Reel
                             </div>
                         )}
                         <div style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', padding: '5px 10px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'white' }}>
@@ -494,7 +491,7 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
 
                 {/* Content Section */}
                 <div style={{ padding: '20px' }}>
-                    <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-primary)', marginBottom: '20px', fontWeight: 400 }}>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-base)', lineHeight: '1.65', color: 'var(--text-secondary)', marginBottom: '20px', fontWeight: 400 }}>
                         {dream.description}
                     </p>
 
@@ -505,8 +502,8 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
                             onClick={onLike}
                             style={{
                                 background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '6px',
-                                color: dream.isLiked ? '#ff4757' : 'var(--text-secondary)',
-                                fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none'
+                                color: dream.isLiked ? 'var(--dream-rose)' : 'var(--fog)',
+                                fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', fontWeight: 500, boxShadow: 'none', transform: 'none'
                             }}
                         >
                             <Heart size={20} fill={dream.isLiked ? '#ff4757' : 'none'} style={{ transition: 'color var(--transition-fast)' }} />
@@ -525,8 +522,8 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
                             onClick={() => setShowComments(!showComments)}
                             style={{
                                 background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '6px',
-                                color: showComments ? 'var(--primary)' : 'var(--text-secondary)',
-                                fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none'
+                                color: showComments ? 'var(--phosphor)' : 'var(--fog)',
+                                fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', fontWeight: 500, boxShadow: 'none', transform: 'none'
                             }}
                         >
                             <MessageCircle size={20} />
@@ -652,7 +649,7 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
                     </AnimatePresence>
                 </div>
             </GlassCard>
-        </motion.div>
+        </div>
     );
 };
 

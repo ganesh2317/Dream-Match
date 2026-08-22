@@ -19,7 +19,7 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.username || !formData.password) {
-            setError('Please enter both username and password');
+            setError('Enter your username and password to continue.');
             return;
         }
         setError('');
@@ -28,14 +28,13 @@ const Login = () => {
             await login(formData.username, formData.password);
             navigate('/');
         } catch (err) {
-            setError(err.message || 'Invalid credentials');
+            setError(err.message || 'Wrong username or password.');
         } finally {
             setLoading(false);
         }
     };
 
     const handleGuestContinue = () => {
-        // Fallback guest behavior (autofill demo credentials)
         setFormData({ username: 'demo', password: 'password123' });
         setIsWelcome(false);
     };
@@ -49,9 +48,18 @@ const Login = () => {
             padding: '20px',
             position: 'relative',
             overflow: 'hidden',
-            background: 'var(--bg-dark)'
+            background: 'var(--bg-dark)',
         }}>
-            {/* Top Right Floating Theme Toggle */}
+            {/* Ambient nocturnal glow — no particles */}
+            <div style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: 'radial-gradient(ellipse at 30% 25%, var(--phosphor-glow) 0%, transparent 55%), radial-gradient(ellipse at 70% 75%, var(--afterimage-glow) 0%, transparent 55%)',
+                zIndex: 0,
+                pointerEvents: 'none',
+            }} />
+
+            {/* Theme toggle */}
             <button
                 onClick={toggleTheme}
                 title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -61,222 +69,179 @@ const Login = () => {
                     top: '24px',
                     right: '24px',
                     zIndex: 10,
-                    background: 'var(--glass-bg)',
-                    color: theme === 'dark' ? '#fbbf24' : 'var(--primary)',
-                    padding: '10px 14px',
-                    borderRadius: '100px',
-                    border: 'var(--glass-border)',
-                    cursor: 'pointer',
+                    background: 'var(--glass-float-bg)',
+                    color: theme === 'dark' ? 'var(--afterimage)' : 'var(--phosphor)',
+                    padding: '9px 14px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: 'var(--glass-float-border)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    boxShadow: 'none',
-                    transform: 'none'
+                    gap: '7px',
+                    fontSize: 'var(--text-sm)',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 500,
+                    boxShadow: 'var(--shadow-low)',
+                    transform: 'none',
+                    backdropFilter: 'var(--glass-float-blur)',
                 }}
-                className="hover-scale"
             >
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
                 <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
-            {/* Ambient Animated Cosmic Background */}
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundImage: 'radial-gradient(circle at 30% 30%, var(--primary-glow) 0%, transparent 60%), radial-gradient(circle at 70% 70%, rgba(217, 70, 239, 0.1) 0%, transparent 60%)',
-                zIndex: 0,
-                pointerEvents: 'none'
-            }} />
-
-            {/* Glowing floating particle animation backdrops */}
-            <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden', opacity: 0.4 }}>
-                {[...Array(12)].map((_, i) => (
-                    <motion.div
-                        key={i}
-                        animate={{
-                            y: [Math.random() * 800, Math.random() * -200],
-                            x: [Math.random() * 1000, Math.random() * 1000 + 50],
-                            opacity: [0, 0.8, 0]
-                        }}
-                        transition={{
-                            duration: 15 + Math.random() * 15,
-                            repeat: Infinity,
-                            ease: 'linear'
-                        }}
-                        style={{
-                            position: 'absolute',
-                            width: `${2 + Math.random() * 4}px`,
-                            height: `${2 + Math.random() * 4}px`,
-                            borderRadius: '50%',
-                            background: 'white',
-                            boxShadow: '0 0 10px white'
-                        }}
-                    />
-                ))}
-            </div>
 
             <AnimatePresence mode="wait">
                 {isWelcome ? (
-                    /* Welcome / Sign Up Screen 1 */
+                    /* Welcome Screen */
                     <motion.div
                         key="welcome"
-                        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -15 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
                         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        style={{ width: '100%', maxWidth: '400px', zIndex: 1 }}
+                        style={{ width: '100%', maxWidth: '390px', zIndex: 1 }}
                     >
-                        <GlassCard style={{
-                            padding: '40px 32px',
-                            background: 'var(--glass-bg)',
-                            border: 'var(--glass-border)',
+                        <GlassCard level="float" style={{
+                            padding: '44px 36px',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
                             textAlign: 'center',
-                            position: 'relative'
                         }}>
-                            {/* Moon Logo Box */}
+                            {/* Moon icon mark */}
                             <motion.div
-                                initial={{ rotate: -10, scale: 0.9 }}
-                                animate={{ rotate: 0, scale: 1 }}
-                                transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                                initial={{ scale: 0.85, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: 'spring', stiffness: 240, damping: 18, delay: 0.1 }}
                                 style={{
-                                    width: '72px',
-                                    height: '72px',
+                                    width: '68px',
+                                    height: '68px',
                                     borderRadius: '20px',
-                                    background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                                    background: 'linear-gradient(135deg, var(--phosphor) 0%, var(--phosphor-dim) 100%)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    boxShadow: '0 12px 24px rgba(124, 58, 237, 0.3)',
+                                    boxShadow: '0 12px 28px var(--phosphor-glow)',
                                     marginBottom: '28px',
-                                    color: 'white',
-                                    fontSize: '32px'
+                                    fontSize: '30px',
                                 }}
                             >
                                 🌙
                             </motion.div>
 
                             <h1 style={{
-                                fontSize: '32px',
-                                fontWeight: 800,
-                                background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                letterSpacing: '-0.04em',
-                                marginBottom: '8px'
-                            }}>Dream Match</h1>
+                                fontFamily: 'var(--font-display)',
+                                fontSize: 'var(--text-2xl)',
+                                fontWeight: 700,
+                                letterSpacing: '-0.02em',
+                                marginBottom: '10px',
+                                color: 'var(--text-primary)',
+                            }}>DreamMatch</h1>
 
                             <p style={{
-                                color: 'var(--text-muted)',
-                                fontSize: '14px',
-                                lineHeight: 1.5,
+                                fontFamily: 'var(--font-body)',
+                                color: 'var(--fog)',
+                                fontSize: 'var(--text-sm)',
+                                lineHeight: 1.6,
                                 marginBottom: '40px',
-                                maxWidth: '260px'
+                                maxWidth: '240px',
                             }}>
-                                Where dreams connect hearts & minds
+                                Where dreams find each other in the dark.
                             </p>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '14px' }}>
-                                <motion.button
-                                    whileHover={{ scale: 1.02, y: -1 }}
-                                    whileTap={{ scale: 0.98 }}
+                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '12px' }}>
+                                <button
                                     onClick={() => setIsWelcome(false)}
                                     style={{
                                         width: '100%',
-                                        padding: '16px',
+                                        padding: '15px',
                                         background: 'var(--primary-gradient)',
                                         borderRadius: 'var(--radius-md)',
-                                        fontSize: '15px',
-                                        fontWeight: 700,
-                                        boxShadow: '0 8px 20px var(--primary-glow)'
+                                        fontSize: 'var(--text-base)',
+                                        fontWeight: 600,
+                                        boxShadow: '0 6px 20px var(--phosphor-glow)',
+                                        fontFamily: 'var(--font-body)',
                                     }}
                                 >
-                                    Login
-                                </motion.button>
+                                    Sign in
+                                </button>
 
-                                <motion.button
-                                    whileHover={{ scale: 1.02, background: 'var(--glass-hover)' }}
-                                    whileTap={{ scale: 0.98 }}
+                                <button
                                     onClick={() => navigate('/register')}
                                     style={{
                                         width: '100%',
-                                        padding: '16px',
+                                        padding: '15px',
                                         background: 'transparent',
-                                        border: 'var(--glass-border)',
+                                        border: 'var(--glass-float-border)',
                                         color: 'var(--text-primary)',
                                         borderRadius: 'var(--radius-md)',
-                                        fontSize: '15px',
-                                        fontWeight: 700,
-                                        boxShadow: 'none'
+                                        fontSize: 'var(--text-base)',
+                                        fontWeight: 500,
+                                        boxShadow: 'none',
+                                        fontFamily: 'var(--font-body)',
                                     }}
                                 >
-                                    Sign Up
-                                </motion.button>
+                                    Create account
+                                </button>
 
                                 <button
                                     onClick={handleGuestContinue}
                                     style={{
                                         background: 'transparent',
-                                        color: 'var(--text-muted)',
-                                        fontSize: '13px',
-                                        fontWeight: 500,
+                                        color: 'var(--fog)',
+                                        fontSize: 'var(--text-sm)',
+                                        fontWeight: 400,
                                         boxShadow: 'none',
                                         padding: '8px',
-                                        marginTop: '10px'
+                                        marginTop: '4px',
+                                        fontFamily: 'var(--font-body)',
                                     }}
-                                    onMouseEnter={e => e.target.style.color = 'var(--primary)'}
-                                    onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
                                 >
-                                    Continue as Guest
+                                    Continue as guest
                                 </button>
                             </div>
 
-                            {/* Hero Artwork integration at the bottom */}
+                            {/* Hero artwork */}
                             <div style={{
-                                width: '120%',
-                                height: '140px',
+                                width: '115%',
+                                height: '130px',
                                 marginTop: '40px',
-                                borderRadius: '16px',
+                                borderRadius: 'var(--radius-lg)',
                                 overflow: 'hidden',
-                                opacity: 0.85,
-                                border: '1px solid rgba(255, 255, 255, 0.05)',
-                                display: 'flex',
-                                alignItems: 'flex-end',
-                                position: 'relative'
+                                opacity: 0.82,
+                                border: '1px solid rgba(196, 205, 232, 0.07)',
+                                position: 'relative',
                             }}>
                                 <img
                                     src="/dream_login_hero.png"
-                                    alt="Dream scape artwork"
+                                    alt="Dreamscape artwork"
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
                                 <div style={{
                                     position: 'absolute',
                                     inset: 0,
-                                    background: 'linear-gradient(to top, rgba(7,7,10,0.6) 0%, transparent 60%)'
+                                    background: 'linear-gradient(to top, rgba(8,9,18,0.65) 0%, transparent 55%)',
                                 }} />
                             </div>
                         </GlassCard>
                     </motion.div>
                 ) : (
-                    /* Username/Password Login Form */
+                    /* Login form */
                     <motion.div
                         key="login-form"
-                        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -15 }}
-                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        style={{ width: '100%', maxWidth: '400px', zIndex: 1 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
+                        transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+                        style={{ width: '100%', maxWidth: '390px', zIndex: 1 }}
                     >
-                        <GlassCard style={{ padding: '40px 32px', background: 'var(--glass-bg)', border: 'var(--glass-border)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                        <GlassCard level="float" style={{ padding: '44px 36px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
                                 <button
                                     onClick={() => setIsWelcome(true)}
+                                    aria-label="Back to welcome"
                                     style={{
-                                        background: 'rgba(255,255,255,0.05)',
-                                        color: 'var(--text-primary)',
+                                        background: 'var(--glass-whisper-bg)',
+                                        color: 'var(--text-secondary)',
                                         border: 'none',
                                         borderRadius: '50%',
                                         width: '32px',
@@ -285,49 +250,65 @@ const Login = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        boxShadow: 'none'
+                                        boxShadow: 'none',
+                                        fontFamily: 'var(--font-body)',
+                                        fontSize: '16px',
                                     }}
                                 >
                                     ←
                                 </button>
-                                <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>Log In</span>
+                                <span style={{
+                                    fontFamily: 'var(--font-body)',
+                                    fontSize: 'var(--text-xs)',
+                                    color: 'var(--fog)',
+                                    fontWeight: 500,
+                                    letterSpacing: '0.06em',
+                                    textTransform: 'uppercase',
+                                }}>Sign In</span>
                             </div>
 
-                            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                            <div style={{ marginBottom: '32px' }}>
                                 <h2 style={{
-                                    fontSize: '28px',
-                                    fontWeight: 800,
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: 'var(--text-xl)',
+                                    fontWeight: 600,
                                     color: 'var(--text-primary)',
-                                    letterSpacing: '-0.03em',
-                                    marginBottom: '8px'
-                                }}>Welcome Back</h2>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-                                    Continue your journey into the dreamscape.
+                                    letterSpacing: '-0.02em',
+                                    marginBottom: '6px',
+                                }}>Welcome back</h2>
+                                <p style={{
+                                    fontFamily: 'var(--font-body)',
+                                    color: 'var(--fog)',
+                                    fontSize: 'var(--text-sm)',
+                                }}>
+                                    Pick up where your last dream ended.
                                 </p>
                             </div>
 
                             <AnimatePresence mode="wait">
                                 {error && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: -10, height: 0 }}
-                                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
                                         exit={{ opacity: 0, height: 0 }}
                                         style={{ overflow: 'hidden' }}
                                     >
                                         <div style={{
-                                            padding: '14px 16px',
-                                            background: 'rgba(220, 38, 38, 0.1)',
-                                            color: '#fc8181',
+                                            padding: '13px 15px',
+                                            background: 'var(--alert-glow)',
+                                            color: 'var(--alert)',
                                             borderRadius: 'var(--radius-md)',
                                             marginBottom: '20px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '10px',
-                                            fontSize: '13px',
-                                            border: '1px solid rgba(220, 38, 38, 0.2)',
-                                            fontWeight: 500
+                                            fontSize: 'var(--text-sm)',
+                                            border: '1px solid rgba(248, 113, 113, 0.2)',
+                                            fontFamily: 'var(--font-body)',
+                                            fontWeight: 500,
                                         }}>
-                                            <AlertCircle size={16} style={{ flexShrink: 0 }} /> <span>{error}</span>
+                                            <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                                            <span>{error}</span>
                                         </div>
                                     </motion.div>
                                 )}
@@ -350,49 +331,45 @@ const Login = () => {
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     required
                                     disabled={loading}
-                                    style={{ marginTop: '16px' }}
                                 />
 
-                                <motion.button
-                                    whileHover={{ scale: 1.01 }}
-                                    whileTap={{ scale: 0.99 }}
+                                <button
                                     type="submit"
                                     disabled={loading}
                                     style={{
                                         width: '100%',
-                                        padding: '16px',
+                                        padding: '15px',
                                         borderRadius: 'var(--radius-md)',
-                                        fontSize: '15px',
-                                        fontWeight: 700,
-                                        marginTop: '32px',
+                                        fontSize: 'var(--text-base)',
+                                        fontWeight: 600,
+                                        marginTop: '28px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         gap: '8px',
-                                        transition: 'all var(--transition-fast)',
                                         opacity: loading ? 0.8 : 1,
                                         cursor: loading ? 'not-allowed' : 'pointer',
                                         background: 'var(--primary-gradient)',
-                                        boxShadow: '0 8px 20px var(--primary-glow)'
+                                        boxShadow: '0 6px 20px var(--phosphor-glow)',
+                                        fontFamily: 'var(--font-body)',
                                     }}
                                 >
                                     {loading ? (
-                                        <div className="loading-spinner" style={{ width: '18px', height: '18px', borderWidth: '2px', borderTopColor: 'white' }} />
+                                        <div className="loading-spinner" style={{ width: '18px', height: '18px' }} />
                                     ) : (
                                         <>Sign In <ArrowRight size={16} /></>
                                     )}
-                                </motion.button>
+                                </button>
                             </form>
 
-                            <div style={{ marginTop: '32px', textAlign: 'center' }}>
-                                <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                            <div style={{ marginTop: '28px', textAlign: 'center' }}>
+                                <span style={{ fontFamily: 'var(--font-body)', color: 'var(--fog)', fontSize: 'var(--text-sm)' }}>
                                     New here?{' '}
                                     <Link to="/register" style={{
-                                        color: 'var(--primary)',
+                                        color: 'var(--phosphor)',
                                         textDecoration: 'none',
                                         fontWeight: 600,
                                         marginLeft: '4px',
-                                        transition: 'color var(--transition-fast)'
                                     }}>
                                         Create an account
                                     </Link>

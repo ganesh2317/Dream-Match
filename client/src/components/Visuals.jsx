@@ -84,13 +84,22 @@ const Visuals = ({ initialDreamId, onViewProfile }) => {
 
     if (visuals.length === 0) {
         return (
-            <GlassCard style={{ height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
-                <div style={{ padding: '24px', background: 'var(--primary-glow)', borderRadius: '50%' }}>
-                    <Video size={40} color="var(--primary)" style={{ opacity: 0.6 }} />
+            <GlassCard level="float" style={{ height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px', borderRadius: 'var(--radius-xl)' }}>
+                <div style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    border: '1.5px solid rgba(79, 111, 255, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    animation: 'phosphorPulse 4s ease-in-out infinite',
+                }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--phosphor)', opacity: 0.6 }} />
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                    <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>No visuals yet</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Share a dream to see its animation here!</p>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 'var(--text-lg)', marginBottom: '8px' }}>Your reel is empty</h3>
+                    <p style={{ fontFamily: 'var(--font-body)', color: 'var(--fog)', fontSize: 'var(--text-sm)', lineHeight: 1.6 }}>Post your first dream to generate a visual.<br/>It takes about 30 seconds.</p>
                 </div>
             </GlassCard>
         );
@@ -105,7 +114,7 @@ const Visuals = ({ initialDreamId, onViewProfile }) => {
                 overflowY: 'scroll',
                 scrollSnapType: 'y mandatory',
                 borderRadius: 'var(--radius-xl)',
-                background: '#050508',
+                background: 'var(--ink)',
                 border: 'var(--glass-border)'
             }}
             className="hide-scrollbar"
@@ -254,8 +263,11 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#050508',
-            overflow: 'hidden'
+            background: 'var(--ink)',
+            overflow: 'hidden',
+            outline: isActive ? '1px solid rgba(79, 111, 255, 0.18)' : 'none',
+            boxShadow: isActive ? '0 0 28px rgba(79, 111, 255, 0.12) inset' : 'none',
+            transition: 'box-shadow 0.6s ease',
         }}>
             {/* Media Area */}
             {shouldLoad ? (
@@ -495,33 +507,37 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
                         @{dream.user?.username}
                     </div>
                     
-                    {/* Generated label */}
+                    {/* AI badge - phosphor colored */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '4px',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(99, 102, 241, 0.3) 100%)',
-                        border: '1px solid rgba(139, 92, 246, 0.4)',
+                        padding: '4px 9px',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--phosphor-subtle)',
+                        border: '1px solid rgba(79, 111, 255, 0.25)',
                         fontSize: '9px',
-                        fontWeight: 800,
-                        color: '#c084fc',
+                        fontFamily: 'var(--font-body)',
+                        fontWeight: 600,
+                        color: 'var(--phosphor)',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
+                        letterSpacing: '0.06em',
                     }}>
-                        <Sparkles size={10} />
+                        <Sparkles size={9} />
                         {dream.videoProvider || 'AI Generated'}
                     </div>
                 </div>
 
-                {/* Dream Title */}
+                {/* Dream Title — Fraunces display font */}
                 <div style={{ 
-                    fontSize: '18px', 
-                    fontWeight: 800, 
-                    color: 'white', 
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 'var(--text-md)',
+                    fontWeight: 600, 
+                    fontStyle: 'italic',
+                    color: 'rgba(196, 205, 232, 0.95)', 
                     marginBottom: '6px', 
-                    textShadow: '0 2px 4px rgba(0,0,0,0.8)' 
+                    textShadow: '0 2px 6px rgba(0,0,0,0.8)',
+                    letterSpacing: '-0.01em',
                 }}>
                     {dream.theme ? `${dream.theme.charAt(0).toUpperCase() + dream.theme.slice(1)} Dream` : 'Dream Vision'}
                 </div>

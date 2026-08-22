@@ -14,7 +14,7 @@ const Register = () => {
         username: '',
         password: '',
         age: '',
-        gender: 'prefer-not-to-say'
+        gender: 'prefer-not-to-say',
     });
     const { register } = useAuth();
     const navigate = useNavigate();
@@ -24,7 +24,7 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.fullName || !formData.username || !formData.password || !formData.age) {
-            setError('Please fill in all required fields');
+            setError('Fill in all fields to continue.');
             return;
         }
         setError('');
@@ -33,10 +33,25 @@ const Register = () => {
             await register(formData);
             navigate('/');
         } catch (err) {
-            setError(err.message || 'Registration failed');
+            setError(err.message || 'Something went wrong. Try again.');
         } finally {
             setLoading(false);
         }
+    };
+
+    const selectStyle = {
+        width: '100%',
+        fontFamily: 'var(--font-body)',
+        padding: '13px 16px',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--input-border)',
+        background: 'var(--input-bg)',
+        fontSize: 'var(--text-base)',
+        height: '50px',
+        outline: 'none',
+        color: 'var(--text-primary)',
+        cursor: 'pointer',
+        transition: 'all var(--transition-fast)',
     };
 
     return (
@@ -48,9 +63,18 @@ const Register = () => {
             padding: '20px',
             position: 'relative',
             overflow: 'hidden',
-            background: 'var(--bg-dark)'
+            background: 'var(--bg-dark)',
         }}>
-            {/* Top Right Floating Theme Toggle */}
+            {/* Ambient glow — no particles */}
+            <div style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: 'radial-gradient(ellipse at 70% 25%, var(--phosphor-glow) 0%, transparent 55%), radial-gradient(ellipse at 30% 75%, var(--afterimage-glow) 0%, transparent 55%)',
+                zIndex: 0,
+                pointerEvents: 'none',
+            }} />
+
+            {/* Theme toggle */}
             <button
                 onClick={toggleTheme}
                 title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -60,74 +84,40 @@ const Register = () => {
                     top: '24px',
                     right: '24px',
                     zIndex: 10,
-                    background: 'var(--glass-bg)',
-                    color: theme === 'dark' ? '#fbbf24' : 'var(--primary)',
-                    padding: '10px 14px',
-                    borderRadius: '100px',
-                    border: 'var(--glass-border)',
-                    cursor: 'pointer',
+                    background: 'var(--glass-float-bg)',
+                    color: theme === 'dark' ? 'var(--afterimage)' : 'var(--phosphor)',
+                    padding: '9px 14px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: 'var(--glass-float-border)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    boxShadow: 'none',
-                    transform: 'none'
+                    gap: '7px',
+                    fontSize: 'var(--text-sm)',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 500,
+                    boxShadow: 'var(--shadow-low)',
+                    transform: 'none',
+                    backdropFilter: 'var(--glass-float-blur)',
                 }}
-                className="hover-scale"
             >
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
                 <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
-            {/* Ambient Cosmic Background */}
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundImage: 'radial-gradient(circle at 30% 70%, var(--primary-glow) 0%, transparent 60%), radial-gradient(circle at 70% 30%, rgba(217, 70, 239, 0.1) 0%, transparent 60%)',
-                zIndex: 0,
-                pointerEvents: 'none'
-            }} />
-
-            {/* Glowing floating particle animation backdrops */}
-            <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden', opacity: 0.4 }}>
-                {[...Array(12)].map((_, i) => (
-                    <motion.div
-                        key={i}
-                        animate={{
-                            y: [Math.random() * 800, Math.random() * -200],
-                            x: [Math.random() * 1000, Math.random() * 1000 + 50],
-                            opacity: [0, 0.8, 0]
-                        }}
-                        transition={{
-                            duration: 15 + Math.random() * 15,
-                            repeat: Infinity,
-                            ease: 'linear'
-                        }}
-                        style={{
-                            position: 'absolute',
-                            width: `${2 + Math.random() * 4}px`,
-                            height: `${2 + Math.random() * 4}px`,
-                            borderRadius: '50%',
-                            background: 'white',
-                            boxShadow: '0 0 10px white'
-                        }}
-                    />
-                ))}
-            </div>
 
             <motion.div
-                initial={{ opacity: 0, y: 24, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 style={{ width: '100%', maxWidth: '420px', zIndex: 1 }}
             >
-                <GlassCard style={{ padding: '40px 32px', background: 'var(--glass-bg)', border: 'var(--glass-border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                <GlassCard level="float" style={{ padding: '44px 36px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
                         <Link
                             to="/login"
+                            aria-label="Back to sign in"
                             style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                color: 'var(--text-primary)',
+                                background: 'var(--glass-whisper-bg)',
+                                color: 'var(--text-secondary)',
                                 border: 'none',
                                 borderRadius: '50%',
                                 width: '32px',
@@ -136,51 +126,65 @@ const Register = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: 'none',
                                 textDecoration: 'none',
-                                fontWeight: 'bold'
+                                fontWeight: 500,
+                                fontSize: '16px',
+                                flexShrink: 0,
                             }}
                         >
                             ←
                         </Link>
-                        <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>Create Account</span>
+                        <span style={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: 'var(--text-xs)',
+                            color: 'var(--fog)',
+                            fontWeight: 500,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                        }}>Create Account</span>
                     </div>
 
-                    <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                    <div style={{ marginBottom: '32px' }}>
                         <h2 style={{
-                            fontSize: '28px',
-                            fontWeight: 800,
+                            fontFamily: 'var(--font-display)',
+                            fontSize: 'var(--text-xl)',
+                            fontWeight: 600,
                             color: 'var(--text-primary)',
-                            letterSpacing: '-0.03em',
-                            marginBottom: '8px'
-                        }}>Get Started</h2>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-                            Begin capturing and connecting your dreams.
+                            letterSpacing: '-0.02em',
+                            marginBottom: '6px',
+                        }}>Start dreaming</h2>
+                        <p style={{
+                            fontFamily: 'var(--font-body)',
+                            color: 'var(--fog)',
+                            fontSize: 'var(--text-sm)',
+                        }}>
+                            Join and find others who share your inner world.
                         </p>
                     </div>
 
                     <AnimatePresence mode="wait">
                         {error && (
                             <motion.div
-                                initial={{ opacity: 0, y: -10, height: 0 }}
-                                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
                                 style={{ overflow: 'hidden' }}
                             >
                                 <div style={{
-                                    padding: '14px 16px',
-                                    background: 'rgba(220, 38, 38, 0.1)',
-                                    color: '#fc8181',
+                                    padding: '13px 15px',
+                                    background: 'var(--alert-glow)',
+                                    color: 'var(--alert)',
                                     borderRadius: 'var(--radius-md)',
                                     marginBottom: '20px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '10px',
-                                    fontSize: '13px',
-                                    border: '1px solid rgba(220, 38, 38, 0.2)',
-                                    fontWeight: 500
+                                    fontSize: 'var(--text-sm)',
+                                    border: '1px solid rgba(248, 113, 113, 0.2)',
+                                    fontFamily: 'var(--font-body)',
+                                    fontWeight: 500,
                                 }}>
-                                    <AlertCircle size={16} style={{ flexShrink: 0 }} /> <span>{error}</span>
+                                    <AlertCircle size={15} style={{ flexShrink: 0 }} /> <span>{error}</span>
                                 </div>
                             </motion.div>
                         )}
@@ -189,7 +193,7 @@ const Register = () => {
                     <form onSubmit={handleSubmit}>
                         <Input
                             icon={Smile}
-                            placeholder="Full Name"
+                            placeholder="Full name"
                             value={formData.fullName}
                             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                             required
@@ -202,10 +206,9 @@ const Register = () => {
                             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                             required
                             disabled={loading}
-                            style={{ marginTop: '16px' }}
                         />
 
-                        <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+                        <div style={{ display: 'flex', gap: '14px' }}>
                             <div style={{ flex: 1 }}>
                                 <Input
                                     type="number"
@@ -217,40 +220,26 @@ const Register = () => {
                                     disabled={loading}
                                 />
                             </div>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ flex: 1 }}>
                                 <select
                                     value={formData.gender}
                                     aria-label="Gender"
                                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                                     disabled={loading}
-                                    style={{
-                                        width: '100%',
-                                        padding: '14px 16px',
-                                        borderRadius: 'var(--radius-md)',
-                                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                                        background: 'rgba(255, 255, 255, 0.03)',
-                                        fontSize: '15px',
-                                        height: '50px',
-                                        outline: 'none',
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        transition: 'all var(--transition-fast)'
-                                    }}
+                                    style={selectStyle}
                                     onFocus={(e) => {
-                                        e.target.style.border = '1px solid var(--primary)';
+                                        e.target.style.border = '1px solid var(--phosphor)';
                                         e.target.style.boxShadow = 'var(--focus-ring)';
-                                        e.target.style.background = 'rgba(0, 0, 0, 0.4)';
                                     }}
                                     onBlur={(e) => {
-                                        e.target.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                                        e.target.style.border = '1px solid var(--input-border)';
                                         e.target.style.boxShadow = 'none';
-                                        e.target.style.background = 'rgba(255, 255, 255, 0.03)';
                                     }}
                                 >
-                                    <option value="male" style={{ background: '#0a0a0f', color: 'white' }}>Male</option>
-                                    <option value="female" style={{ background: '#0a0a0f', color: 'white' }}>Female</option>
-                                    <option value="other" style={{ background: '#0a0a0f', color: 'white' }}>Other</option>
-                                    <option value="prefer-not-to-say" style={{ background: '#0a0a0f', color: 'white' }}>Prefer not to say</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                    <option value="prefer-not-to-say">Prefer not to say</option>
                                 </select>
                             </div>
                         </div>
@@ -263,51 +252,47 @@ const Register = () => {
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             required
                             disabled={loading}
-                            style={{ marginTop: '16px' }}
                         />
 
-                        <motion.button
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
+                        <button
                             type="submit"
                             disabled={loading}
                             style={{
                                 width: '100%',
-                                padding: '16px',
+                                padding: '15px',
                                 borderRadius: 'var(--radius-md)',
-                                fontSize: '15px',
-                                fontWeight: 700,
-                                marginTop: '32px',
+                                fontSize: 'var(--text-base)',
+                                fontWeight: 600,
+                                marginTop: '24px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '8px',
-                                transition: 'all var(--transition-fast)',
                                 opacity: loading ? 0.8 : 1,
                                 cursor: loading ? 'not-allowed' : 'pointer',
                                 background: 'var(--primary-gradient)',
-                                boxShadow: '0 8px 20px var(--primary-glow)'
+                                boxShadow: '0 6px 20px var(--phosphor-glow)',
+                                fontFamily: 'var(--font-body)',
                             }}
                         >
                             {loading ? (
-                                <div className="loading-spinner" style={{ width: '18px', height: '18px', borderWidth: '2px', borderTopColor: 'white' }} />
+                                <div className="loading-spinner" style={{ width: '18px', height: '18px' }} />
                             ) : (
-                                <>Sign Up <ArrowRight size={16} /></>
+                                <>Create account <ArrowRight size={16} /></>
                             )}
-                        </motion.button>
+                        </button>
                     </form>
 
-                    <div style={{ marginTop: '32px', textAlign: 'center' }}>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                    <div style={{ marginTop: '28px', textAlign: 'center' }}>
+                        <span style={{ fontFamily: 'var(--font-body)', color: 'var(--fog)', fontSize: 'var(--text-sm)' }}>
                             Already have an account?{' '}
                             <Link to="/login" style={{
-                                color: 'var(--primary)',
+                                color: 'var(--phosphor)',
                                 textDecoration: 'none',
                                 fontWeight: 600,
                                 marginLeft: '4px',
-                                transition: 'color var(--transition-fast)'
                             }}>
-                                Sign In
+                                Sign in
                             </Link>
                         </span>
                     </div>

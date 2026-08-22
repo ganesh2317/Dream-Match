@@ -74,23 +74,20 @@ const Matches = ({ onMessage, onViewProfile }) => {
     if (matches.length === 0) {
         return (
             <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '24px', textAlign: 'center' }}>Dream Match</h2>
-                <GlassCard style={{ textAlign: 'center', padding: '64px 32px', border: 'var(--glass-border)', borderRadius: 'var(--radius-xl)' }}>
-                    <div style={{
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '50%',
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 20px'
-                    }}>
-                        <Sparkles size={32} color="var(--primary)" style={{ opacity: 0.6 }} />
-                    </div>
-                    <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>A match will surely find you</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '320px', margin: '0 auto', lineHeight: 1.5 }}>
-                        When someone shares a similar vision to yours, they'll appear here automatically.
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '24px', textAlign: 'center' }}>Dream Match</h2>
+                <GlassCard level="float" style={{ textAlign: 'center', padding: '72px 32px', borderRadius: 'var(--radius-xl)' }}>
+                    <p style={{
+                        fontFamily: 'var(--font-display)',
+                        fontStyle: 'italic',
+                        fontSize: 'var(--text-3xl)',
+                        color: 'var(--fog)',
+                        opacity: 0.3,
+                        marginBottom: '24px',
+                        lineHeight: 1,
+                    }}>~</p>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 'var(--text-lg)', marginBottom: '10px' }}>Your first match is forming</h3>
+                    <p style={{ fontFamily: 'var(--font-body)', color: 'var(--fog)', fontSize: 'var(--text-sm)', maxWidth: '300px', margin: '0 auto', lineHeight: 1.6 }}>
+                        The algorithm needs more of your dreams. Share what you saw last night.
                     </p>
                 </GlassCard>
             </div>
