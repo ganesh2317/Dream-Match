@@ -239,6 +239,13 @@ select:focus-visible {
     text-overflow: ellipsis;
 }
 
+/* ── Responsive Helpers ─────────────────────────────── */
+@media (min-width: 993px) {
+    .hide-on-desktop {
+        display: none !important;
+    }
+}
+
 /* ── Mobile Background Fix ───────────────────────────── */
 @media (max-width: 992px) {
     body {

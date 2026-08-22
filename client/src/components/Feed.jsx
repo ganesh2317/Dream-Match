@@ -144,7 +144,7 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual, onViewProfile, unreadM
                         transform: 'none',
                         transition: 'all var(--transition-fast)'
                     }}
-                    className="hover-scale"
+                    className="hide-on-desktop hover-scale"
                 >
                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
