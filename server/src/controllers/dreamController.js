@@ -466,13 +466,14 @@ const generateSingleImage = async (req, res) => {
 
 const createDream = async (req, res) => {
     try {
-        const { description, imageUrl: rawImageUrl, videoUrl } = req.body;
+        const { description, imageUrl, videoUrl } = req.body;
         const userId = req.user.id;
 
-        // Normalize imageUrl — the schema marks it nullable so null is valid.
-        // The real client always sends a generated image URL; the field is null
-        // only when called without image generation (e.g. from the verify script).
-        const imageUrl = rawImageUrl || null;
+        // imageUrl is required — the real client always generates an image before posting.
+        // Missing imageUrl is an incomplete API call, not a supported product case.
+        if (!imageUrl) {
+            return res.status(400).json({ message: 'Image is required to post a dream. Generate an image first.' });
+        }
 
         const dream = await prisma.dream.create({
             data: {
