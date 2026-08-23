@@ -67,7 +67,7 @@ model Follow {
 model Dream {
   id            String      @id @default(uuid())
   description   String
-  imageUrl      String
+  imageUrl      String?   // nullable — populated after AI image generation
   videoUrl      String?
   videoStatus   String?
   videoProvider String?

@@ -466,34 +466,25 @@ const generateSingleImage = async (req, res) => {
 
 const createDream = async (req, res) => {
     try {
-        const { description, imageUrl, videoUrl } = req.body;
+        const { description, imageUrl: rawImageUrl, videoUrl } = req.body;
         const userId = req.user.id;
 
-        // Create the dream first with a fallback for schema mismatches
-        let dream;
-        try {
-            dream = await prisma.dream.create({
-                data: {
-                    description,
-                    imageUrl,
-                    userId,
-                    videoUrl: videoUrl || '',
-                    videoStatus: videoUrl ? 'COMPLETED' : 'PENDING',
-                    videoProvider: videoUrl ? 'AI Generated' : 'Luma Dream Machine',
-                    videoDuration: videoUrl ? 5.0 : 0.0
-                },
-            });
-        } catch (dbError) {
-            console.error('Database Error (likely missing videoUrl column):', dbError);
-            // Fallback: save without videoUrl if the column doesn't exist yet
-            dream = await prisma.dream.create({
-                data: {
-                    description,
-                    imageUrl,
-                    userId,
-                },
-            });
-        }
+        // Normalize imageUrl — the schema marks it nullable so null is valid.
+        // The real client always sends a generated image URL; the field is null
+        // only when called without image generation (e.g. from the verify script).
+        const imageUrl = rawImageUrl || null;
+
+        const dream = await prisma.dream.create({
+            data: {
+                description,
+                imageUrl,
+                userId,
+                videoUrl: videoUrl || null,
+                videoStatus: videoUrl ? 'COMPLETED' : 'PENDING',
+                videoProvider: videoUrl ? 'AI Generated' : 'Luma Dream Machine',
+                videoDuration: videoUrl ? 5.0 : 0.0
+            },
+        });
 
         // Increment streak only if user hasn't posted today
         const currentUser = await prisma.user.findUnique({
