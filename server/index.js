@@ -14,9 +14,20 @@ const os = require('os');
 const http = require('http');
 const { Server } = require('socket.io');
 
+const { execSync } = require('child_process');
+
 dotenv.config();
 
+// Ensure Database Schema columns are automatically in sync with Prisma schema on startup
+try {
+    console.log('[DB] Synchronizing database schema with Prisma db push...');
+    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+} catch (dbErr) {
+    console.warn('[DB] Automatic prisma db push notice:', dbErr.message);
+}
+
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 
 // Trust reverse proxies (Vercel, Render) for accurate client IP rate-limiting
