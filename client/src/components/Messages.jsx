@@ -277,6 +277,15 @@ const Messages = ({ initialUser, onClearInitial, onViewProfile }) => {
                                     border: isMe ? 'none' : 'var(--glass-border)',
                                     boxShadow: isMe ? '0 4px 12px var(--primary-glow)' : 'none'
                                 }}>
+                                    {msg.attachmentUrl && (
+                                        <div style={{ marginBottom: '6px', borderRadius: '10px', overflow: 'hidden' }}>
+                                            <img 
+                                                src={msg.attachmentUrl} 
+                                                alt="Attachment" 
+                                                style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '8px', objectFit: 'cover' }} 
+                                            />
+                                        </div>
+                                    )}
                                     <div style={{ lineHeight: '1.4', wordBreak: 'break-word', fontSize: '13px' }}>{msg.content}</div>
                                     <div style={{
                                         display: 'flex',
@@ -314,6 +323,56 @@ const Messages = ({ initialUser, onClearInitial, onViewProfile }) => {
                     border: 'var(--glass-border)',
                     alignItems: 'center'
                 }}>
+                    <label style={{ cursor: 'pointer', opacity: 0.7, padding: '4px' }} className="hover-scale">
+                        <span style={{ fontSize: '18px' }}>📎</span>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={async (e) => {
+                                const file = e.target.files[0];
+                                if (file && selectedUser) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = async () => {
+                                        try {
+                                            const token = localStorage.getItem('token');
+                                            const uploadRes = await fetch('/api/messages/attachment', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    Authorization: `Bearer ${token}`
+                                                },
+                                                body: JSON.stringify({ fileBase64: reader.result, mimeType: file.type })
+                                            });
+                                            if (uploadRes.ok) {
+                                                const attData = await uploadRes.json();
+                                                const res = await fetch(`/api/messages/${selectedUser.id}`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        Authorization: `Bearer ${token}`
+                                                    },
+                                                    body: JSON.stringify({
+                                                        content: '📷 Image',
+                                                        attachmentUrl: attData.attachmentUrl,
+                                                        attachmentType: attData.attachmentType
+                                                    })
+                                                });
+                                                if (res.ok) {
+                                                    fetchMessages(selectedUser.id);
+                                                    fetchConversations();
+                                                }
+                                            }
+                                        } catch (err) {
+                                            console.error('Error sending attachment:', err);
+                                        }
+                                    };
+                                    reader.readAsDataURL(file);
+                                }
+                            }}
+                        />
+                    </label>
+
                     <input
                         value={input}
                         onChange={e => setInput(e.target.value)}
@@ -355,6 +414,7 @@ const Messages = ({ initialUser, onClearInitial, onViewProfile }) => {
             </div>
         );
     }
+
 
     const sortedConversations = [...conversations]
         .filter(conv => conv && conv.otherUser)

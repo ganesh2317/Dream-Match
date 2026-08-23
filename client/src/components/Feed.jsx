@@ -399,8 +399,55 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
         }
     };
 
+    const [toast, setToast] = useState('');
+
+    const handleSaveToggle = async () => {
+        setIsBookmarked(!isBookmarked);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/dreams/${dream.id}/save`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setIsBookmarked(data.saved);
+                setToast(data.saved ? 'Dream saved to bookmarks' : 'Dream removed from bookmarks');
+                setTimeout(() => setToast(''), 2500);
+            }
+        } catch (e) {
+            console.error('Error toggling dream save:', e);
+        }
+    };
+
+    const handleShare = async () => {
+        const shareUrl = `${window.location.origin}/?dream=${dream.id}`;
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setToast('Link copied to clipboard!');
+        } catch {
+            setToast('Share link: ' + shareUrl);
+        }
+        setTimeout(() => setToast(''), 2500);
+    };
+
+
     return (
-        <div className="dream-surface" style={{ width: '100%' }}>
+        <div className="dream-surface" style={{ width: '100%', position: 'relative' }}>
+            {toast && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                        position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)',
+                        background: 'var(--phosphor)', color: '#000', fontSize: '12px', fontWeight: 700,
+                        padding: '6px 16px', borderRadius: '100px', zIndex: 50, boxShadow: '0 4px 14px rgba(0,0,0,0.3)'
+                    }}
+                >
+                    {toast}
+                </motion.div>
+            )}
             <GlassCard level="float" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-xl)' }} className="hover-scale-subtle">
                 {/* Card Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px' }}>
@@ -531,26 +578,27 @@ const FeedItem = ({ dream, onLike, onRefresh, onViewVisual, onViewProfile, onVie
                         </button>
 
                         <button 
-                            onClick={() => setIsBookmarked(!isBookmarked)}
+                            onClick={handleSaveToggle}
                             style={{ 
                                 background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '6px', 
                                 color: isBookmarked ? 'var(--primary)' : 'var(--text-secondary)', 
-                                fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none' 
+                                fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none', cursor: 'pointer'
                             }}
                         >
                             <Bookmark size={18} fill={isBookmarked ? 'var(--primary)' : 'none'} />
                         </button>
 
                         <button 
-                            onClick={() => alert('Post link shared!')}
+                            onClick={handleShare}
                             style={{ 
                                 marginLeft: 'auto', background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: '6px', 
-                                color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none' 
+                                color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, boxShadow: 'none', transform: 'none', cursor: 'pointer'
                             }}
                         >
                             <Share2 size={18} />
                         </button>
                     </div>
+
 
                     {/* Comments Section */}
                     <AnimatePresence>

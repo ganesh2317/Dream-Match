@@ -119,6 +119,34 @@ app.get('/api/videos/:filename', async (req, res, next) => {
     }
 });
 
+// Persistent Media Binary Serving Endpoint (avatars, message attachments)
+app.use('/api/media', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+});
+
+app.get('/api/media/:id', async (req, res, next) => {
+    try {
+        const prisma = require('./src/utils/prisma');
+        const media = await prisma.mediaBlob.findUnique({
+            where: { id: req.params.id }
+        });
+        if (!media || !media.data) {
+            return res.status(404).json({ message: 'Media binary not found' });
+        }
+        const buffer = Buffer.from(media.data, 'base64');
+        res.setHeader('Content-Type', media.mimeType || 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.send(buffer);
+    } catch (err) {
+        next(err);
+    }
+});
+
+
 // Rate Limiting (configured with trust proxy support)
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes

@@ -11,7 +11,11 @@ const {
     triggerVideoGeneration,
     getVideoStatus,
     getVisualsFeed,
-    getIndividualVideo
+    getIndividualVideo,
+    saveDream,
+    getSavedDreams,
+    getComments,
+    passMatch
 } = require('../controllers/dreamController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -22,6 +26,8 @@ router.post('/generate', protect, generateDreamImages);
 router.post('/generate-single', protect, generateSingleImage);
 router.get('/visuals', protect, getVisualsFeed);
 router.get('/matches', protect, getMatches);
+router.post('/matches/pass', protect, passMatch);
+router.get('/saved', protect, getSavedDreams);
 
 router.post('/', protect, createDream);
 router.get('/', protect, getFeed);
@@ -31,7 +37,9 @@ router.post('/:id/generate-video', protect, triggerVideoGeneration);
 router.get('/:id/video-status', protect, getVideoStatus);
 router.get('/:id/video', protect, getIndividualVideo);
 router.post('/:id/like', protect, likeDream);
+router.post('/:id/save', protect, saveDream);
 router.post('/:id/comment', protect, commentDream);
+router.get('/:id/comments', protect, getComments);
 router.post('/:id/view', protect, viewDream);
 
 module.exports = router;

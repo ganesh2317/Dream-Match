@@ -199,12 +199,36 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
         fetchUserProfile();
     }, [propUser, propUser?.id, propUser?.username, contextUser, contextUser?.username]);
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreview(reader.result);
+            reader.onloadend = async () => {
+                const base64 = reader.result;
+                setPreview(base64);
+                
+                // Upload persistently to Neon DB via MediaBlob
+                try {
+                    const token = localStorage.getItem('token');
+                    const res = await fetch('/api/users/avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            imageBase64: base64,
+                            mimeType: file.type || 'image/png'
+                        })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        updateUser({ avatarUrl: data.avatarUrl });
+                        setUser(prev => ({ ...prev, avatarUrl: data.avatarUrl }));
+                    }
+                } catch (err) {
+                    console.error('Failed persistent avatar upload:', err);
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -222,7 +246,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
                 },
                 body: JSON.stringify({ 
                     bio, 
-                    avatarUrl: preview,
+                    avatarUrl: preview || user.avatarUrl,
                     age: age !== '' ? parseInt(age) : null,
                     gender
                 })
@@ -243,6 +267,7 @@ const Profile = ({ user: propUser, onBack, onMessage, onViewVisual, onSettings, 
             setIsEditing(false);
         }
     };
+
 
 
     if (!user) return (

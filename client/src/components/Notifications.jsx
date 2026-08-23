@@ -66,9 +66,45 @@ const Notifications = ({ onViewProfile }) => {
     const unread = notifications.filter(n => !n.read);
     const read = notifications.filter(n => n.read);
 
+    const markAllAsRead = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch('/api/notifications/read-all', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        } catch (error) {
+            console.error('Error marking all notifications read:', error);
+        }
+    };
+
     return (
         <div style={{ maxWidth: '640px', margin: '0 auto', paddingBottom: '80px' }} className="fade-in">
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '24px', textAlign: 'center' }}>Notifications</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div style={{ width: '40px' }} />
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.02em', margin: 0 }}>Notifications</h2>
+                {unread.length > 0 ? (
+                    <button
+                        onClick={markAllAsRead}
+                        style={{
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            color: 'var(--text-primary)',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Mark all read
+                    </button>
+                ) : (
+                    <div style={{ width: '40px' }} />
+                )}
+            </div>
+
 
             {notifications.length === 0 ? (
                 <GlassCard level="float" style={{ textAlign: 'center', padding: '72px 32px', borderRadius: 'var(--radius-xl)' }}>

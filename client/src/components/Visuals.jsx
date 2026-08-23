@@ -249,9 +249,87 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
         setIsMuted(nextMuted);
     };
 
-    const handleSave = (e) => {
-        e.stopPropagation();
-        setIsSaved(!isSaved);
+    const [toast, setToast] = useState('');
+    const [showCommentsDrawer, setShowCommentsDrawer] = useState(false);
+    const [commentsList, setCommentsList] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [loadingComments, setLoadingComments] = useState(false);
+
+    const handleSave = async (e) => {
+        if (e) e.stopPropagation();
+        const nextSaved = !isSaved;
+        setIsSaved(nextSaved);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(getMediaUrl(`/api/dreams/${dream.id}/save`), {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setIsSaved(data.saved);
+                setToast(data.saved ? 'Reel saved to bookmarks' : 'Reel removed from bookmarks');
+                setTimeout(() => setToast(''), 2500);
+            }
+        } catch (err) {
+            console.error('Error toggling reel save:', err);
+        }
+    };
+
+    const handleShare = async (e) => {
+        if (e) e.stopPropagation();
+        const shareUrl = `${window.location.origin}/?visual=${dream.id}`;
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setToast('Visual reel link copied!');
+        } catch {
+            setToast('Reel link: ' + shareUrl);
+        }
+        setTimeout(() => setToast(''), 2500);
+    };
+
+
+    const openComments = async (e) => {
+        if (e) e.stopPropagation();
+        setShowCommentsDrawer(true);
+        setLoadingComments(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(getMediaUrl(`/api/dreams/${dream.id}/comments`), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCommentsList(data);
+            }
+        } catch (err) {
+            console.error('Error fetching comments:', err);
+        } finally {
+            setLoadingComments(false);
+        }
+    };
+
+    const submitComment = async (e) => {
+        e.preventDefault();
+        if (!newComment.trim()) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(getMediaUrl(`/api/dreams/${dream.id}/comment`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ text: newComment.trim() })
+            });
+            if (res.ok) {
+                setNewComment('');
+                openComments();
+                if (onRefresh) onRefresh();
+            }
+        } catch (err) {
+            console.error('Error submitting comment:', err);
+        }
     };
 
     return (
@@ -269,6 +347,21 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
             boxShadow: isActive ? '0 0 28px rgba(79, 111, 255, 0.12) inset' : 'none',
             transition: 'box-shadow 0.6s ease',
         }}>
+            {toast && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                        position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)',
+                        background: 'var(--phosphor)', color: '#000', fontSize: '12px', fontWeight: 700,
+                        padding: '6px 16px', borderRadius: '100px', zIndex: 50, boxShadow: '0 4px 14px rgba(0,0,0,0.4)'
+                    }}
+                >
+                    {toast}
+                </motion.div>
+            )}
+
             {/* Media Area */}
             {shouldLoad ? (
                 <div 
@@ -454,7 +547,7 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                     <motion.div 
                         whileHover={{ scale: 1.1 }}
-                        onClick={() => alert('Comments drawer toggles')}
+                        onClick={openComments}
                         style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center' }}
                     >
                         <MessageCircle size={20} color="white" />
@@ -478,12 +571,63 @@ const VisualItem = ({ dream, isActive, shouldLoad, onRefresh, onViewProfile }) =
                 {/* Share */}
                 <motion.div 
                     whileHover={{ scale: 1.1 }}
-                    onClick={() => alert('Dream visual shared!')}
+                    onClick={handleShare}
                     style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center' }}
                 >
                     <Share2 size={18} color="white" />
                 </motion.div>
             </div>
+
+            {/* Comments Modal Drawer */}
+            <AnimatePresence>
+                {showCommentsDrawer && (
+                    <div style={{
+                        position: 'absolute', inset: 0, zIndex: 30, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'flex-end'
+                    }} onClick={() => setShowCommentsDrawer(false)}>
+                        <motion.div 
+                            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            style={{ height: '65%', background: '#0a0a0f', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column' }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'white' }}>Comments ({commentsList.length})</h3>
+                                <button onClick={() => setShowCommentsDrawer(false)} style={{ background: 'transparent', border: 'none', color: 'var(--fog)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                            </div>
+                            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+                                {loadingComments ? (
+                                    <div style={{ textAlign: 'center', color: 'var(--fog)', padding: '20px' }}>Loading comments...</div>
+                                ) : commentsList.length === 0 ? (
+                                    <div style={{ textAlign: 'center', color: 'var(--fog)', padding: '30px 0' }}>No comments yet. Be the first!</div>
+                                ) : (
+                                    commentsList.map(c => (
+                                        <div key={c.id} style={{ display: 'flex', gap: '10px' }}>
+                                            <img src={c.user?.avatarUrl} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: '13px', color: 'white' }}>@{c.user?.username}</div>
+                                                <div style={{ fontSize: '13px', color: 'var(--fog)', marginTop: '2px' }}>{c.text}</div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                            <form onSubmit={submitComment} style={{ display: 'flex', gap: '10px' }}>
+                                <input 
+                                    type="text" 
+                                    placeholder="Add a comment..." 
+                                    value={newComment} 
+                                    onChange={e => setNewComment(e.target.value)}
+                                    style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', outline: 'none' }}
+                                />
+                                <button type="submit" disabled={!newComment.trim()} style={{ padding: '12px 18px', borderRadius: '12px', background: 'var(--primary)', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+                                    Post
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
 
             {/* Bottom Info Overlay */}
             <div style={{

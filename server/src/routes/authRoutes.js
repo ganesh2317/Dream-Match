@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, getMe, updateProfile } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, changePassword } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -27,9 +27,17 @@ router.get('/me', protect, getMe);
 
 /**
  * @route   PUT /api/auth/profile
- * @desc    Update user profile details (bio, avatarUrl)
+ * @desc    Update user profile details (bio, avatarUrl, preferences)
  * @access  Private
  */
 router.put('/profile', protect, updateProfile);
 
+/**
+ * @route   POST /api/auth/change-password
+ * @desc    Change authenticated user password and invalidate old JWT sessions
+ * @access  Private
+ */
+router.post('/change-password', protect, changePassword);
+
 module.exports = router;
+

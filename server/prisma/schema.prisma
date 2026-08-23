@@ -11,75 +11,81 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  email        String?  @unique
-  password     String
-  fullName     String
-  gender       String?
-  age          Int?
-  avatarUrl    String?  @default("https://ui-avatars.com/api/?background=007AFF&color=fff")
-  bio          String?
-  streakCount  Int      @default(0)
-  lastPostedAt DateTime?
-  role         String   @default("USER")
-  status       String   @default("ACTIVE") // ACTIVE, SUSPENDED, BANNED
-  
-  dreams       Dream[]
-  likes        Like[]
-  comments     Comment[]
-  
-  // Basic relationship for matches (simplified for MVP)
+  id                       String    @id @default(uuid())
+  username                 String    @unique
+  email                    String?   @unique
+  password                 String
+  fullName                 String
+  gender                   String?
+  age                      Int?
+  avatarUrl                String?   @default("https://ui-avatars.com/api/?background=007AFF&color=fff")
+  bio                      String?
+  streakCount              Int       @default(0)
+  lastPostedAt             DateTime?
+  role                     String    @default("USER")
+  status                   String    @default("ACTIVE") // ACTIVE, SUSPENDED, BANNED
+  pushNotificationsEnabled Boolean   @default(true)
+  language                 String    @default("English")
+  contentPreference        String    @default("all")
+  passwordChangedAt        DateTime?
 
-  sentMatches     Match[]  @relation("Sender")
-  receivedMatches Match[]  @relation("Receiver")
+  dreams          Dream[]
+  likes           Like[]
+  comments        Comment[]
+  savedDreams     SavedDream[]
 
-  // Following Social System
-  followers Follow[] @relation("Following")
-  following Follow[] @relation("Follower")
-  
-  notifications Notification[] @relation("NotificationRecipient")
+  sentMatches     Match[]   @relation("Sender")
+  receivedMatches Match[]   @relation("Receiver")
+
+  followers       Follow[]  @relation("Following")
+  following       Follow[]  @relation("Follower")
+
+  notifications     Notification[] @relation("NotificationRecipient")
   sentNotifications Notification[] @relation("NotificationSender")
-  
-  sentMessages Message[] @relation("MessageSender")
-  receivedMessages Message[] @relation("MessageReceiver")
-  conversations Conversation[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  sentMessages     Message[]      @relation("MessageSender")
+  receivedMessages Message[]      @relation("MessageReceiver")
+  conversations    Conversation[]
+
+  blockedUsers BlockedUser[] @relation("Blocker")
+  blockedBy    BlockedUser[] @relation("BlockedUser")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Follow {
   followerId  String
   followingId String
-  follower    User   @relation("Follower", fields: [followerId], references: [id])
-  following   User   @relation("Following", fields: [followingId], references: [id])
+  follower    User   @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User   @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 
   @@id([followerId, followingId])
 }
 
 model Dream {
-  id          String   @id @default(uuid())
-  description String
-  imageUrl    String
+  id            String      @id @default(uuid())
+  description   String
+  imageUrl      String
   videoUrl      String?
   videoStatus   String?
   videoProvider String?
   videoDuration Float?
   theme         String?
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
-  views       Int      @default(0)
-  status      String   @default("VISIBLE") // VISIBLE, HIDDEN
-  isFeatured  Boolean  @default(false)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  views       Int         @default(0)
+  status      String      @default("VISIBLE") // VISIBLE, HIDDEN
+  isFeatured  Boolean     @default(false)
   likes       Like[]
   comments    Comment[]
+  savedBy     SavedDream[]
 
-  videoBlob     VideoBlob?
+  videoBlob   VideoBlob?
 
-  createdAt   DateTime @default(now())
+  createdAt   DateTime    @default(now())
 }
 
 model VideoBlob {
@@ -90,15 +96,53 @@ model VideoBlob {
   createdAt DateTime @default(now())
 }
 
+model MediaBlob {
+  id        String   @id @default(uuid())
+  mimeType  String   @default("image/png")
+  data      String
+  createdAt DateTime @default(now())
+}
+
+model SavedDream {
+  id        String   @id @default(uuid())
+  userId    String
+  dreamId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dream     Dream    @relation(fields: [dreamId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dreamId])
+}
+
+model BlockedUser {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+}
+
+model PassedMatch {
+  id        String   @id @default(uuid())
+  userId    String
+  targetId  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, targetId])
+}
+
 model Like {
   id        String   @id @default(uuid())
   userId    String
   dreamId   String
-  user      User     @relation(fields: [userId], references: [id])
-  dream     Dream    @relation(fields: [dreamId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dream     Dream    @relation(fields: [dreamId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
-  @@unique([userId, dreamId]) // Prevent duplicate likes
+  @@unique([userId, dreamId])
 }
 
 model Comment {
@@ -106,52 +150,52 @@ model Comment {
   text      String
   userId    String
   dreamId   String
-  user      User     @relation(fields: [userId], references: [id])
-  dream     Dream    @relation(fields: [dreamId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dream     Dream    @relation(fields: [dreamId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
 
 model Match {
-  id        String   @id @default(uuid())
-  senderId  String
+  id         String   @id @default(uuid())
+  senderId   String
   receiverId String
-  sender    User     @relation("Sender", fields: [senderId], references: [id])
-  receiver  User     @relation("Receiver", fields: [receiverId], references: [id])
-  score     Float    // Compatibility score
-  status    String   @default("pending") // pending, accepted, rejected
-  
+  sender     User     @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  score      Float
+  status     String   @default("pending") // pending, accepted, rejected
+
   createdAt DateTime @default(now())
 }
 
 model Notification {
-  id          String   @id @default(uuid())
-  type        String   // LIKE, FOLLOW, MATCH, COMMENT
-  senderId    String
-  receiverId  String
-  dreamId     String?
-  message     String?
-  read        Boolean  @default(false)
-  
-  sender      User     @relation("NotificationSender", fields: [senderId], references: [id])
-  receiver    User     @relation("NotificationRecipient", fields: [receiverId], references: [id])
-  
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  type       String   // LIKE, FOLLOW, MATCH, COMMENT
+  senderId   String
+  receiverId String
+  dreamId    String?
+  message    String?
+  read       Boolean  @default(false)
+
+  sender   User @relation("NotificationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("NotificationRecipient", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 model Conversation {
-  id          String    @id @default(uuid())
-  userId      String
-  otherUserId String
-  lastMessage String?
+  id            String    @id @default(uuid())
+  userId        String
+  otherUserId   String
+  lastMessage   String?
   lastMessageAt DateTime?
-  unreadCount Int       @default(0)
-  
-  user        User      @relation(fields: [userId], references: [id])
-  messages    Message[]
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  unreadCount   Int       @default(0)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([userId, otherUserId])
 }
 
@@ -161,13 +205,16 @@ model Message {
   senderId       String
   receiverId     String
   content        String
+  attachmentUrl  String?
+  attachmentType String?
   read           Boolean      @default(false)
-  
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  sender         User         @relation("MessageSender", fields: [senderId], references: [id])
-  receiver       User         @relation("MessageReceiver", fields: [receiverId], references: [id])
-  
-  createdAt      DateTime     @default(now())
+  readAt         DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver     User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 model PendingVerification {

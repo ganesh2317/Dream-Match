@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
-import { Sparkles, MessageCircle, Zap, User, ArrowRight } from 'lucide-react';
+import { Sparkles, MessageCircle, Zap, User, ArrowRight, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const Matches = ({ onMessage, onViewProfile }) => {
     const { user } = useAuth();
@@ -34,13 +34,11 @@ const Matches = ({ onMessage, onViewProfile }) => {
         fetchMatches();
     }, []);
 
-    // Active twin user to showcase
     const activeMatch = matches[selectedTwinIndex];
     const twinUser = activeMatch 
         ? (activeMatch.senderId === user.id ? activeMatch.receiver : activeMatch.sender)
         : null;
 
-    // Fetch active twin's dreams dynamically to extract a similar dream description
     useEffect(() => {
         if (!twinUser) return;
         const fetchTwinProfile = async () => {
@@ -62,6 +60,25 @@ const Matches = ({ onMessage, onViewProfile }) => {
         };
         fetchTwinProfile();
     }, [twinUser]);
+
+    const handlePassMatch = async () => {
+        if (!twinUser) return;
+        try {
+            const token = localStorage.getItem('token');
+            await fetch('/api/dreams/matches/pass', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ targetId: twinUser.id })
+            });
+            setMatches(prev => prev.filter((_, i) => i !== selectedTwinIndex));
+            setSelectedTwinIndex(0);
+        } catch (e) {
+            console.error('Error passing match:', e);
+        }
+    };
 
     if (loading) {
         return (
@@ -94,7 +111,6 @@ const Matches = ({ onMessage, onViewProfile }) => {
         );
     }
 
-    // Similar dream text extraction
     const similarDreamText = twinDreams.length > 0 
         ? twinDreams[0].description
         : "I was flying over a city at sunset and felt truly free.";
@@ -103,7 +119,6 @@ const Matches = ({ onMessage, onViewProfile }) => {
         <div style={{ maxWidth: '640px', margin: '0 auto', paddingBottom: '80px' }} className="fade-in">
             <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '24px', textAlign: 'center' }}>Dream Match</h2>
 
-            {/* Featured Match Twin Card */}
             {twinUser && (
                 <GlassCard style={{
                     padding: '36px 28px',
@@ -119,7 +134,6 @@ const Matches = ({ onMessage, onViewProfile }) => {
                 }}>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, marginBottom: '20px' }}>Your Dream Twin</span>
                     
-                    {/* Glowing Circular Avatar */}
                     <div style={{ position: 'relative', marginBottom: '18px' }}>
                         <div style={{
                             position: 'absolute',
@@ -157,7 +171,6 @@ const Matches = ({ onMessage, onViewProfile }) => {
                         <Zap size={14} fill="var(--primary)" /> {Math.round(activeMatch.score * 100)}% Match
                     </div>
 
-                    {/* Similar Dream Display */}
                     <div style={{
                         width: '100%',
                         padding: '18px',
@@ -173,31 +186,52 @@ const Matches = ({ onMessage, onViewProfile }) => {
                         </p>
                     </div>
 
-                    <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => onMessage(twinUser)}
-                        style={{
-                            width: '100%',
-                            padding: '16px',
-                            background: 'var(--primary-gradient)',
-                            color: 'white',
-                            fontSize: '14px',
-                            fontWeight: 700,
-                            borderRadius: 'var(--radius-md)',
-                            boxShadow: '0 8px 20px var(--primary-glow)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px'
-                        }}
-                    >
-                        Start Conversation <ArrowRight size={16} />
-                    </motion.button>
+                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => onMessage(twinUser)}
+                            style={{
+                                flex: 1,
+                                padding: '14px',
+                                background: 'var(--primary-gradient)',
+                                color: 'white',
+                                fontSize: '14px',
+                                fontWeight: 700,
+                                borderRadius: 'var(--radius-md)',
+                                boxShadow: '0 8px 20px var(--primary-glow)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                border: 'none',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Start Conversation <ArrowRight size={16} />
+                        </motion.button>
+
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handlePassMatch}
+                            style={{
+                                padding: '14px 20px',
+                                background: 'rgba(255,255,255,0.06)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                color: 'var(--fog)',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                borderRadius: 'var(--radius-md)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Pass Twin
+                        </motion.button>
+                    </div>
                 </GlassCard>
             )}
 
-            {/* More Dreamers Like You Section */}
             {matches.length > 1 && (
                 <div>
                     <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '0.2px' }}>

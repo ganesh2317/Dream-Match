@@ -132,7 +132,7 @@ const getMessages = async (req, res) => {
                 receiverId: userId,
                 read: false
             },
-            data: { read: true }
+            data: { read: true, readAt: new Date() }
         });
 
         // Reset unread count for current user's conversation
@@ -157,13 +157,15 @@ const sendMessage = async (req, res) => {
     try {
         const senderId = req.user.id;
         const { userId: receiverId } = req.params;
-        const { content } = req.body;
+        const { content, attachmentUrl, attachmentType } = req.body;
 
-        if (!content || content.trim() === '') {
-            return res.status(400).json({ message: 'Message content is required' });
+        if ((!content || content.trim() === '') && !attachmentUrl) {
+            return res.status(400).json({ message: 'Message content or attachment is required' });
         }
 
-        // Find or create conversation for sender using high-perf findUnique
+        const messageContent = content ? content.trim() : (attachmentType === 'image' ? '📷 Image' : '📎 Attachment');
+
+        // Find or create conversation for sender
         let senderConversation = await prisma.conversation.findUnique({
             where: {
                 userId_otherUserId: {
@@ -229,7 +231,9 @@ const sendMessage = async (req, res) => {
                 conversationId: senderConversation.id,
                 senderId,
                 receiverId,
-                content
+                content: messageContent,
+                attachmentUrl: attachmentUrl || null,
+                attachmentType: attachmentType || null
             },
             include: {
                 sender: {
@@ -248,7 +252,7 @@ const sendMessage = async (req, res) => {
         await prisma.conversation.update({
             where: { id: senderConversation.id },
             data: {
-                lastMessage: content,
+                lastMessage: messageContent,
                 lastMessageAt: now
             }
         });
@@ -256,7 +260,7 @@ const sendMessage = async (req, res) => {
         await prisma.conversation.update({
             where: { id: receiverConversation.id },
             data: {
-                lastMessage: content,
+                lastMessage: messageContent,
                 lastMessageAt: now,
                 unreadCount: { increment: 1 }
             }
@@ -266,14 +270,12 @@ const sendMessage = async (req, res) => {
         const io = req.app.get('io');
         const userSockets = req.app.get('userSockets');
         if (io && userSockets) {
-            // Recipient
             const recipientSockets = userSockets.get(receiverId);
             if (recipientSockets) {
                 recipientSockets.forEach(socketId => {
                     io.to(socketId).emit('message_received', message);
                 });
             }
-            // Sender (other sessions/tabs)
             const senderSockets = userSockets.get(senderId);
             if (senderSockets) {
                 senderSockets.forEach(socketId => {
@@ -289,4 +291,46 @@ const sendMessage = async (req, res) => {
     }
 };
 
-module.exports = { getConversations, getMessages, sendMessage };
+const getUnreadCount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const result = await prisma.conversation.aggregate({
+            where: { userId },
+            _sum: { unreadCount: true }
+        });
+        const unreadCount = result._sum.unreadCount || 0;
+        res.json({ unreadCount });
+    } catch (error) {
+        console.error('Unread count error:', error);
+        res.status(500).json({ message: 'Error calculating unread count' });
+    }
+};
+
+const uploadAttachment = async (req, res) => {
+    try {
+        const { fileBase64, mimeType } = req.body;
+        if (!fileBase64) {
+            return res.status(400).json({ message: 'File data is required' });
+        }
+
+        const cleanBase64 = fileBase64.replace(/^data:\w+\/\w+;base64,/, '');
+
+        const mediaBlob = await prisma.mediaBlob.create({
+            data: {
+                data: cleanBase64,
+                mimeType: mimeType || 'image/png'
+            }
+        });
+
+        const attachmentUrl = `/api/media/${mediaBlob.id}`;
+        const attachmentType = (mimeType && mimeType.startsWith('image/')) ? 'image' : 'file';
+
+        res.json({ success: true, attachmentUrl, attachmentType });
+    } catch (error) {
+        console.error('Attachment upload error:', error);
+        res.status(500).json({ message: 'Error uploading attachment' });
+    }
+};
+
+module.exports = { getConversations, getMessages, sendMessage, getUnreadCount, uploadAttachment };
+

@@ -249,8 +249,8 @@ const getMe = async (req, res) => {
  */
 const updateProfile = async (req, res) => {
     try {
-        const { bio, avatarUrl, age, gender } = req.body;
-        // Basic validation
+        const { bio, avatarUrl, age, gender, fullName, pushNotificationsEnabled, language, contentPreference } = req.body;
+        
         if (bio && bio.length > 100) {
             return res.status(400).json({ message: 'Bio must be under 100 characters' });
         }
@@ -271,10 +271,14 @@ const updateProfile = async (req, res) => {
         const updatedUser = await prisma.user.update({
             where: { id: req.user.id },
             data: {
+                fullName: fullName !== undefined ? (fullName ? fullName.trim() : undefined) : undefined,
                 bio: bio !== undefined ? (bio ? bio.trim() : null) : undefined,
                 avatarUrl: avatarUrl || undefined,
                 age: parsedAge !== undefined ? parsedAge : undefined,
-                gender: gender !== undefined ? gender : undefined
+                gender: gender !== undefined ? gender : undefined,
+                pushNotificationsEnabled: pushNotificationsEnabled !== undefined ? Boolean(pushNotificationsEnabled) : undefined,
+                language: language !== undefined ? String(language) : undefined,
+                contentPreference: contentPreference !== undefined ? String(contentPreference) : undefined,
             },
             include: {
                 _count: {
@@ -295,5 +299,50 @@ const updateProfile = async (req, res) => {
     }
 };
 
+/**
+ * Changes user password, verifying current password and invalidating active sessions.
+ */
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
 
-module.exports = { register, login, getMe, updateProfile };
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'Current password and new password are required' });
+        }
+
+        if (typeof newPassword !== 'string' || newPassword.length < 8) {
+            return res.status(400).json({ message: 'New password must be at least 8 characters' });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.id }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Current password is incorrect' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data: {
+                password: hashedPassword,
+                passwordChangedAt: new Date()
+            }
+        });
+
+        res.json({ message: 'Password changed successfully. All previous sessions invalidated.' });
+    } catch (error) {
+        console.error('Password change error:', error);
+        res.status(500).json({ message: 'Error changing password' });
+    }
+};
+
+module.exports = { register, login, getMe, updateProfile, changePassword };
+

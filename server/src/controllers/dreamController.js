@@ -854,6 +854,104 @@ const getIndividualVideo = async (req, res) => {
     }
 };
 
+const saveDream = async (req, res) => {
+    try {
+        const { id: dreamId } = req.params;
+        const userId = req.user.id;
+
+        const existingSave = await prisma.savedDream.findUnique({
+            where: {
+                userId_dreamId: { userId, dreamId }
+            }
+        });
+
+        if (existingSave) {
+            await prisma.savedDream.delete({
+                where: {
+                    userId_dreamId: { userId, dreamId }
+                }
+            });
+            return res.json({ saved: false, message: 'Dream unsaved' });
+        } else {
+            await prisma.savedDream.create({
+                data: { userId, dreamId }
+            });
+            return res.json({ saved: true, message: 'Dream saved' });
+        }
+    } catch (error) {
+        console.error('Save Dream Error:', error);
+        res.status(500).json({ message: 'Error saving dream' });
+    }
+};
+
+const getSavedDreams = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const saved = await prisma.savedDream.findMany({
+            where: { userId },
+            include: {
+                dream: {
+                    include: {
+                        user: {
+                            select: { id: true, username: true, fullName: true, avatarUrl: true }
+                        },
+                        _count: {
+                            select: { likes: true, comments: true }
+                        }
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(saved.map(s => s.dream));
+    } catch (error) {
+        console.error('Get Saved Dreams Error:', error);
+        res.status(500).json({ message: 'Error fetching saved dreams' });
+    }
+};
+
+const getComments = async (req, res) => {
+    try {
+        const { id: dreamId } = req.params;
+        const comments = await prisma.comment.findMany({
+            where: { dreamId },
+            include: {
+                user: {
+                    select: { id: true, username: true, fullName: true, avatarUrl: true }
+                }
+            },
+            orderBy: { createdAt: 'asc' }
+        });
+        res.json(comments);
+    } catch (error) {
+        console.error('Get Comments Error:', error);
+        res.status(500).json({ message: 'Error fetching comments' });
+    }
+};
+
+const passMatch = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { targetId } = req.body;
+        if (!targetId) {
+            return res.status(400).json({ message: 'Target user ID is required' });
+        }
+
+        await prisma.passedMatch.upsert({
+            where: {
+                userId_targetId: { userId, targetId }
+            },
+            create: { userId, targetId },
+            update: {}
+        });
+
+        res.json({ success: true, message: 'Match passed' });
+    } catch (error) {
+        console.error('Pass Match Error:', error);
+        res.status(500).json({ message: 'Error passing match' });
+    }
+};
+
 module.exports = { 
     generateDreamImages, 
     generateSingleImage, 
@@ -866,5 +964,10 @@ module.exports = {
     triggerVideoGeneration,
     getVideoStatus,
     getVisualsFeed,
-    getIndividualVideo
+    getIndividualVideo,
+    saveDream,
+    getSavedDreams,
+    getComments,
+    passMatch
 };
+

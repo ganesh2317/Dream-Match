@@ -11,6 +11,41 @@ const { protect } = require('../middleware/authMiddleware');
 router.get('/search', protect, userController.searchUsers);
 
 /**
+ * @route   GET /api/users/profile-completion
+ * @desc    Get profile completion percentage and missing items for authenticated user
+ * @access  Private
+ */
+router.get('/profile-completion', protect, userController.getProfileCompletion);
+
+/**
+ * @route   POST /api/users/avatar
+ * @desc    Upload profile picture binary persistently to MediaBlob model
+ * @access  Private
+ */
+router.post('/avatar', protect, userController.uploadAvatar);
+
+/**
+ * @route   GET /api/users/blocked
+ * @desc    Get list of users blocked by the authenticated user
+ * @access  Private
+ */
+router.get('/blocked', protect, userController.getBlockedUsers);
+
+/**
+ * @route   POST /api/users/block/:id
+ * @desc    Block a user by ID
+ * @access  Private
+ */
+router.post('/block/:id', protect, userController.blockUser);
+
+/**
+ * @route   POST /api/users/unblock/:id
+ * @desc    Unblock a user by ID
+ * @access  Private
+ */
+router.post('/unblock/:id', protect, userController.unblockUser);
+
+/**
  * @route   GET /api/users/profile/:username
  * @desc    Get user profile details by username
  * @access  Private
@@ -51,12 +86,5 @@ router.get('/:id/following', protect, userController.getFollowing);
  * @access  Private
  */
 router.get('/dreams/:id/likes', protect, userController.getDreamLikes);
-
-/**
- * @route   GET /api/users/profile-completion
- * @desc    Get profile completion percentage and missing items for authenticated user
- * @access  Private
- */
-router.get('/profile-completion', protect, userController.getProfileCompletion);
 
 module.exports = router;

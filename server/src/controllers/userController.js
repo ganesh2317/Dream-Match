@@ -345,4 +345,111 @@ const getProfileCompletion = async (req, res) => {
     }
 };
 
-module.exports = { searchUsers, followUser, unfollowUser, getProfile, getFollowers, getFollowing, getDreamLikes, getProfileCompletion };
+/**
+ * Uploads a profile avatar and stores binary data persistently in MediaBlob model.
+ */
+const uploadAvatar = async (req, res) => {
+    try {
+        const { imageBase64, mimeType } = req.body;
+        if (!imageBase64) {
+            return res.status(400).json({ message: 'Image data is required' });
+        }
+
+        // Clean base64 string if data URL prefix exists
+        const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+
+        const mediaBlob = await prisma.mediaBlob.create({
+            data: {
+                data: cleanBase64,
+                mimeType: mimeType || 'image/png'
+            }
+        });
+
+        const avatarUrl = `/api/media/${mediaBlob.id}`;
+
+        const updatedUser = await prisma.user.update({
+            where: { id: req.user.id },
+            data: { avatarUrl },
+            select: { id: true, username: true, fullName: true, avatarUrl: true, bio: true, age: true, gender: true }
+        });
+
+        res.json({ success: true, avatarUrl: updatedUser.avatarUrl, user: updatedUser });
+    } catch (error) {
+        console.error('Avatar upload error:', error);
+        res.status(500).json({ message: 'Error uploading profile picture' });
+    }
+};
+
+const getBlockedUsers = async (req, res) => {
+    try {
+        const blockerId = req.user.id;
+        const blocked = await prisma.blockedUser.findMany({
+            where: { blockerId },
+            include: {
+                blocked: {
+                    select: { id: true, username: true, fullName: true, avatarUrl: true }
+                }
+            }
+        });
+        res.json(blocked.map(b => b.blocked));
+    } catch (error) {
+        console.error('Error fetching blocked users:', error);
+        res.status(500).json({ message: 'Error fetching blocked users' });
+    }
+};
+
+const blockUser = async (req, res) => {
+    try {
+        const blockerId = req.user.id;
+        const { id: blockedId } = req.params;
+
+        if (blockerId === blockedId) {
+            return res.status(400).json({ message: 'Cannot block yourself' });
+        }
+
+        await prisma.blockedUser.upsert({
+            where: {
+                blockerId_blockedId: { blockerId, blockedId }
+            },
+            create: { blockerId, blockedId },
+            update: {}
+        });
+
+        res.json({ success: true, message: 'User blocked' });
+    } catch (error) {
+        console.error('Error blocking user:', error);
+        res.status(500).json({ message: 'Error blocking user' });
+    }
+};
+
+const unblockUser = async (req, res) => {
+    try {
+        const blockerId = req.user.id;
+        const { id: blockedId } = req.params;
+
+        await prisma.blockedUser.deleteMany({
+            where: { blockerId, blockedId }
+        });
+
+        res.json({ success: true, message: 'User unblocked' });
+    } catch (error) {
+        console.error('Error unblocking user:', error);
+        res.status(500).json({ message: 'Error unblocking user' });
+    }
+};
+
+module.exports = { 
+    searchUsers, 
+    followUser, 
+    unfollowUser, 
+    getProfile, 
+    getFollowers, 
+    getFollowing, 
+    getDreamLikes, 
+    getProfileCompletion,
+    uploadAvatar,
+    getBlockedUsers,
+    blockUser,
+    unblockUser
+};
+
