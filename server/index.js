@@ -14,17 +14,12 @@ const os = require('os');
 const http = require('http');
 const { Server } = require('socket.io');
 
-const { execSync } = require('child_process');
-
 dotenv.config();
-
-// Ensure Database Schema columns are automatically in sync with Prisma schema on startup
-try {
-    console.log('[DB] Synchronizing database schema with Prisma db push...');
-    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
-} catch (dbErr) {
-    console.warn('[DB] Automatic prisma db push notice:', dbErr.message);
-}
+// NOTE: Schema sync (prisma db push) is intentionally run only during
+// the build/install step (postinstall script), NOT on every server boot.
+// TODO: Migrate to `prisma migrate dev` / `prisma migrate deploy` so
+// schema changes are tracked in migration files, reviewable, and
+// never silently drop data.
 
 const app = express();
 
