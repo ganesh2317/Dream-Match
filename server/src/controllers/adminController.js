@@ -1,4 +1,4 @@
-const prisma = require('../utils/prisma');
+    const prisma = require('../utils/prisma');
 
 /**
  * Helper to generate consistent distribution based on string input (stable mock fallback).
@@ -36,31 +36,30 @@ const getDashboardStats = async (req, res) => {
         const totalMessages = await prisma.message.count();
         const totalMatches = await prisma.match.count();
 
-        // Analytics Trend Data (last 7 days)
-        const trends = [];
+        // Analytics Trend Data (last 7 days - fetched concurrently)
+        const trendPromises = [];
         for (let i = 6; i >= 0; i--) {
             const date = new Date();
             date.setDate(date.getDate() - i);
             const startOfDay = new Date(date.setHours(0, 0, 0, 0));
             const endOfDay = new Date(date.setHours(23, 59, 59, 999));
 
-            const dailyUsers = await prisma.user.count({
-                where: { createdAt: { gte: startOfDay, lte: endOfDay } }
-            });
-            const dailyDreams = await prisma.dream.count({
-                where: { createdAt: { gte: startOfDay, lte: endOfDay } }
-            });
-            const dailyMessages = await prisma.message.count({
-                where: { createdAt: { gte: startOfDay, lte: endOfDay } }
-            });
+            trendPromises.push((async () => {
+                const [dailyUsers, dailyDreams, dailyMessages] = await Promise.all([
+                    prisma.user.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } }),
+                    prisma.dream.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } }),
+                    prisma.message.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } })
+                ]);
 
-            trends.push({
-                day: startOfDay.toLocaleDateString('en-US', { weekday: 'short' }),
-                users: dailyUsers + (Math.floor(totalUsers / 10) || 1), // offset by active base
-                dreams: dailyDreams,
-                messages: dailyMessages
-            });
+                return {
+                    day: startOfDay.toLocaleDateString('en-US', { weekday: 'short' }),
+                    users: dailyUsers + (Math.floor(totalUsers / 10) || 1),
+                    dreams: dailyDreams,
+                    messages: dailyMessages
+                };
+            })());
         }
+        const trends = await Promise.all(trendPromises);
 
         res.json({
             totals: {

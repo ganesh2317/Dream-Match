@@ -31,25 +31,28 @@ const getConversations = async (req, res) => {
             orderBy: { lastMessageAt: 'desc' }
         });
 
-        // Fetch other user details for each conversation
-        const conversationsWithUsers = await Promise.all(
-            conversations.map(async (conv) => {
-                const otherUser = await prisma.user.findUnique({
-                    where: { id: conv.otherUserId },
-                    select: {
-                        id: true,
-                        username: true,
-                        fullName: true,
-                        avatarUrl: true
-                    }
-                });
+        if (conversations.length === 0) {
+            return res.json([]);
+        }
 
-                return {
-                    ...conv,
-                    otherUser
-                };
-            })
-        );
+        // Single batched query for all other users to eliminate N+1 overhead
+        const otherUserIds = [...new Set(conversations.map(conv => conv.otherUserId))];
+        const otherUsers = await prisma.user.findMany({
+            where: { id: { in: otherUserIds } },
+            select: {
+                id: true,
+                username: true,
+                fullName: true,
+                avatarUrl: true
+            }
+        });
+
+        const userMap = new Map(otherUsers.map(u => [u.id, u]));
+
+        const conversationsWithUsers = conversations.map(conv => ({
+            ...conv,
+            otherUser: userMap.get(conv.otherUserId) || null
+        }));
 
         res.json(conversationsWithUsers);
     } catch (error) {

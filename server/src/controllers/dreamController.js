@@ -536,60 +536,63 @@ const createDream = async (req, res) => {
             }
         }
 
-        // --- DREAM MATCHING LOGIC (Refined) ---
-        const keywords = description.toLowerCase()
-            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
-            .split(/\s+/)
-            .filter(w => w.length > 4); // Only match specific longer keywords
+        // --- DREAM MATCHING LOGIC (Background / Non-blocking) ---
+        setImmediate(async () => {
+            try {
+                const keywords = description.toLowerCase()
+                    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+                    .split(/\s+/)
+                    .filter(w => w.length > 4);
 
-        if (keywords.length > 0) {
-            const potentialMatches = await prisma.dream.findMany({
-                where: {
-                    userId: { not: userId },
-                    OR: keywords.map(kw => ({
-                        description: { contains: kw }
-                    }))
-                },
-                take: 10,
-                include: { user: true }
-            });
+                if (keywords.length > 0) {
+                    const potentialMatches = await prisma.dream.findMany({
+                        where: {
+                            userId: { not: userId },
+                            OR: keywords.map(kw => ({
+                                description: { contains: kw }
+                            }))
+                        },
+                        take: 5,
+                        select: { id: true, userId: true }
+                    });
 
-            // Create match records for unique users
-            const matchedUserIds = [...new Set(potentialMatches.map(pm => pm.userId))];
+                    const matchedUserIds = [...new Set(potentialMatches.map(pm => pm.userId))];
 
-            for (const targetUserId of matchedUserIds) {
-                // Check if match already exists
-                const existing = await prisma.match.findFirst({
-                    where: {
-                        OR: [
-                            { senderId: userId, receiverId: targetUserId },
-                            { senderId: targetUserId, receiverId: userId }
-                        ]
+                    for (const targetUserId of matchedUserIds) {
+                        const existing = await prisma.match.findFirst({
+                            where: {
+                                OR: [
+                                    { senderId: userId, receiverId: targetUserId },
+                                    { senderId: targetUserId, receiverId: userId }
+                                ]
+                            }
+                        });
+
+                        if (!existing) {
+                            await prisma.match.create({
+                                data: {
+                                    senderId: userId,
+                                    receiverId: targetUserId,
+                                    score: 0.99,
+                                    status: 'pending'
+                                }
+                            });
+
+                            await prisma.notification.create({
+                                data: {
+                                    type: 'MATCH',
+                                    senderId: userId,
+                                    receiverId: targetUserId,
+                                    message: 'shared a similar dream with you!'
+                                }
+                            });
+                        }
                     }
-                });
-
-                if (!existing) {
-                    await prisma.match.create({
-                        data: {
-                            senderId: userId,
-                            receiverId: targetUserId,
-                            score: 0.99, // High score for match
-                            status: 'pending'
-                        }
-                    });
-
-                    // Also create a notification for the match
-                    await prisma.notification.create({
-                        data: {
-                            type: 'MATCH',
-                            senderId: userId,
-                            receiverId: targetUserId,
-                            message: 'shared a similar dream with you!'
-                        }
-                    });
                 }
+            } catch (bgErr) {
+                console.error('Background match processing error:', bgErr);
             }
-        }
+        });
 
         res.status(201).json({ ...dream, newStreak: user.streakCount });
     } catch (error) {
@@ -600,38 +603,64 @@ const createDream = async (req, res) => {
 
 const getFeed = async (req, res) => {
     try {
-        const dreams = await prisma.dream.findMany({
-            include: {
-                user: {
-                    select: { id: true, username: true, avatarUrl: true, streakCount: true }
-                },
-                _count: {
-                    select: { likes: true, comments: true }
-                },
-                likes: {
-                    where: { userId: req.user ? req.user.id : undefined }, // Check if current user liked
-                    select: { userId: true }
-                },
-                comments: {
-                    include: {
-                        user: {
-                            select: { id: true, username: true, avatarUrl: true }
-                        }
-                    },
-                    orderBy: { createdAt: 'asc' }
-                }
-            },
-            orderBy: { createdAt: 'desc' }
-        });
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 15));
+        const skip = (page - 1) * limit;
 
-        // Transform to add "isLiked"
+        const [totalCount, dreams] = await Promise.all([
+            prisma.dream.count({ where: { status: 'VISIBLE' } }),
+            prisma.dream.findMany({
+                where: { status: 'VISIBLE' },
+                skip,
+                take: limit,
+                include: {
+                    user: {
+                        select: { id: true, username: true, avatarUrl: true, streakCount: true }
+                    },
+                    _count: {
+                        select: { likes: true, comments: true }
+                    },
+                    likes: {
+                        where: { userId: req.user ? req.user.id : undefined },
+                        select: { userId: true }
+                    },
+                    comments: {
+                        take: 3,
+                        include: {
+                            user: {
+                                select: { id: true, username: true, avatarUrl: true }
+                            }
+                        },
+                        orderBy: { createdAt: 'desc' }
+                    }
+                },
+                orderBy: { createdAt: 'desc' }
+            })
+        ]);
+
+        // Transform to add "isLiked" and place comments in chronological order
         const finalDreams = dreams.map(d => ({
             ...d,
+            comments: [...d.comments].reverse(),
             isLiked: d.likes.length > 0
         }));
 
-        res.json(finalDreams);
+        const hasMore = skip + dreams.length < totalCount;
+
+        // Support explicit legacy mode if requested via ?all=true
+        if (req.query.all === 'true') {
+            return res.json(finalDreams);
+        }
+
+        res.json({
+            dreams: finalDreams,
+            page,
+            limit,
+            totalCount,
+            hasMore
+        });
     } catch (error) {
+        console.error('Error fetching feed:', error);
         res.status(500).json({ message: 'Error fetching feed' });
     }
 };

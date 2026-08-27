@@ -103,7 +103,7 @@ const UserListModal = ({ title, endpoint, onClose, onViewProfile }) => {
     );
 };
 
-const Feed = ({ dreams, loading, onRefresh, onViewVisual, onViewProfile, unreadMessages, onNavigateTab }) => {
+const Feed = ({ dreams, loading, onRefresh, onLoadMore, hasMore, loadingMore, onViewVisual, onViewProfile, unreadMessages, onNavigateTab }) => {
     const { theme, toggleTheme } = useTheme();
     const [feedTab, setFeedTab] = useState('foryou'); // 'following' or 'foryou'
     const [likesDreamId, setLikesDreamId] = useState(null);
@@ -281,6 +281,29 @@ const Feed = ({ dreams, loading, onRefresh, onViewVisual, onViewProfile, unreadM
                             onViewLikes={setLikesDreamId}
                         />
                     ))}
+                    {hasMore && onLoadMore && (
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '12px' }}>
+                            <button
+                                onClick={onLoadMore}
+                                disabled={loadingMore}
+                                style={{
+                                    padding: '12px 28px',
+                                    borderRadius: '100px',
+                                    background: 'var(--glass-bg)',
+                                    border: 'var(--glass-border)',
+                                    color: 'var(--text-primary)',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    cursor: loadingMore ? 'default' : 'pointer',
+                                    boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                                    transition: 'all var(--transition-fast)'
+                                }}
+                                className="hover-scale"
+                            >
+                                {loadingMore ? 'Loading more dreams...' : 'Load More Dreams'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 

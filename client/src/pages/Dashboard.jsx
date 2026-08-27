@@ -27,21 +27,47 @@ const Dashboard = () => {
 
     const [unreadMessages, setUnreadMessages] = useState(0);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
+    const [feedPage, setFeedPage] = useState(1);
+    const [hasMoreFeed, setHasMoreFeed] = useState(true);
+    const [loadingMoreFeed, setLoadingMoreFeed] = useState(false);
 
-    const fetchDreams = async () => {
+    const fetchDreams = async (pageNum = 1, append = false) => {
         try {
             const token = localStorage.getItem('token');
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const res = await fetch('/api/dreams', { headers });
+            const res = await fetch(`/api/dreams?page=${pageNum}&limit=15`, { headers });
             if (res.ok) {
                 const data = await res.json();
-                const validDreams = (data || []).filter(d => d && d.user);
-                setDreams(validDreams);
+                const rawDreams = Array.isArray(data) ? data : (data.dreams || []);
+                const validDreams = rawDreams.filter(d => d && d.user);
+
+                if (append) {
+                    setDreams(prev => {
+                        const existingIds = new Set(prev.map(d => d.id));
+                        const newItems = validDreams.filter(d => !existingIds.has(d.id));
+                        return [...prev, ...newItems];
+                    });
+                } else {
+                    setDreams(validDreams);
+                }
+
+                if (data.hasMore !== undefined) {
+                    setHasMoreFeed(data.hasMore);
+                }
+                setFeedPage(pageNum);
             }
         } catch (error) {
             console.error(error);
         } finally {
             setLoading(false);
+            setLoadingMoreFeed(false);
+        }
+    };
+
+    const handleLoadMoreFeed = () => {
+        if (!loadingMoreFeed && hasMoreFeed) {
+            setLoadingMoreFeed(true);
+            fetchDreams(feedPage + 1, true);
         }
     };
 
@@ -89,14 +115,14 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
-        fetchDreams();
+        fetchDreams(1, false);
         fetchMatches();
         fetchUnreadMessagesCount();
         const interval = setInterval(() => {
-            fetchDreams();
+            fetchDreams(1, false);
             fetchMatches();
             fetchUnreadMessagesCount();
-        }, 10000);
+        }, 15000);
 
         const handleResize = () => {
             setIsMobile(window.innerWidth <= 992);
@@ -135,7 +161,7 @@ const Dashboard = () => {
 
         switch (activeTab) {
             case 'feed': 
-                return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
+                return <Feed dreams={dreams} loading={loading} onRefresh={() => fetchDreams(1, false)} onLoadMore={handleLoadMoreFeed} hasMore={hasMoreFeed} loadingMore={loadingMoreFeed} onViewVisual={(id) => {
                     setInitialVisualId(id);
                     setActiveTab('visuals');
                 }} onViewProfile={setViewingUser} unreadMessages={unreadMessages} onNavigateTab={setActiveTab} />;
@@ -148,7 +174,7 @@ const Dashboard = () => {
             case 'notifications': 
                 return <Notifications onViewProfile={setViewingUser} />;
             case 'visuals': 
-                return <Visuals dreams={dreams} onRefresh={fetchDreams} initialDreamId={initialVisualId} onViewProfile={setViewingUser} />;
+                return <Visuals dreams={dreams} onRefresh={() => fetchDreams(1, false)} initialDreamId={initialVisualId} onViewProfile={setViewingUser} />;
             case 'profile': 
                 return <Profile user={user} onViewVisual={(id) => {
                     setInitialVisualId(id);
@@ -157,7 +183,7 @@ const Dashboard = () => {
             case 'settings':
                 return <Settings onBack={() => setActiveTab('profile')} />;
             default: 
-                return <Feed dreams={dreams} loading={loading} onRefresh={fetchDreams} onViewVisual={(id) => {
+                return <Feed dreams={dreams} loading={loading} onRefresh={() => fetchDreams(1, false)} onLoadMore={handleLoadMoreFeed} hasMore={hasMoreFeed} loadingMore={loadingMoreFeed} onViewVisual={(id) => {
                     setInitialVisualId(id);
                     setActiveTab('visuals');
                 }} onViewProfile={setViewingUser} unreadMessages={unreadMessages} />;

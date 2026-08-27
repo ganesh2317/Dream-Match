@@ -7,8 +7,8 @@
     "test": "jest --runInBand --detectOpenHandles --forceExit",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "build": "prisma generate && prisma db push --accept-data-loss",
-    "postinstall": "prisma generate && prisma db push --accept-data-loss"
+    "build": "prisma generate && prisma migrate deploy",
+    "postinstall": "prisma generate && prisma migrate deploy"
   },
 
   "prisma": {

@@ -131,6 +131,7 @@ const getProfile = async (req, res) => {
             where: { username },
             include: {
                 dreams: {
+                    take: 20,
                     orderBy: { createdAt: 'desc' },
                     include: {
                         _count: {

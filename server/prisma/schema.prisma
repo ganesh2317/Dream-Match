@@ -86,6 +86,10 @@ model Dream {
   videoBlob   VideoBlob?
 
   createdAt   DateTime    @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([status])
 }
 
 model VideoBlob {
@@ -143,6 +147,8 @@ model Like {
   createdAt DateTime @default(now())
 
   @@unique([userId, dreamId])
+  @@index([dreamId])
+  @@index([userId])
 }
 
 model Comment {
@@ -153,6 +159,8 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   dream     Dream    @relation(fields: [dreamId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([dreamId, createdAt])
 }
 
 model Match {
@@ -180,6 +188,8 @@ model Notification {
   receiver User @relation("NotificationRecipient", fields: [receiverId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
+  @@index([receiverId, createdAt])
 }
 
 model Conversation {
@@ -197,6 +207,7 @@ model Conversation {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, otherUserId])
+  @@index([userId, lastMessageAt])
 }
 
 model Message {
@@ -215,6 +226,9 @@ model Message {
   receiver     User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, receiverId])
 }
 
 model PendingVerification {
